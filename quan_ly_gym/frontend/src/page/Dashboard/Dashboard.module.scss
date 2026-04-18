@@ -1,0 +1,272 @@
+.page {
+  padding: 24px;
+}
+
+/* Heading */
+.pageHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #5a5c69;
+}
+.headActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dateText {
+  font-size: 1.3rem;
+  color: #858796;
+}
+
+/* Stat cards */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+  @media (max-width: 1200px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 600px) { grid-template-columns: 1fr; }
+}
+
+.statCard {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-left: 4px solid transparent;
+}
+.borderBlue    { border-left-color: #4e73df; }
+.borderGreen   { border-left-color: #1cc88a; }
+.borderInfo    { border-left-color: #36b9cc; }
+.borderWarning { border-left-color: #f6c23e; }
+
+.statInfo { flex: 1; }
+.statLabel {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #858796;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.statValue {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #5a5c69;
+  margin-bottom: 4px;
+}
+.statSub { font-size: 1.2rem; color: #858796; }
+.statIcon { color: #d1d3e2; flex-shrink: 0; }
+
+/* Progress */
+.progressWrap {
+  height: 6px;
+  background: #eaecf4;
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.progressBar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s;
+}
+
+/* Charts */
+.chartGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+  @media (max-width: 900px) { grid-template-columns: 1fr; }
+}
+
+/* Table grid */
+.tableGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+  @media (max-width: 1100px) { grid-template-columns: 1fr; }
+}
+.aiCard { display: flex; flex-direction: column; }
+
+/* Card */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f0f2f8;
+}
+.cardTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #4e73df;
+  display: flex;
+  align-items: center;
+}
+.cardBody { padding: 16px 20px; }
+
+/* Table */
+.tableWrap { overflow-x: auto; }
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.3rem;
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #f0f2f8; }
+  thead th { background: #f8f9fc; color: #5a5c69; font-weight: 600; font-size: 1.2rem; }
+  tbody tr:hover td { background: #f8f9fc; }
+  tbody tr:last-child td { border-bottom: none; }
+}
+
+/* Member cell */
+.memberCell { display: flex; align-items: center; gap: 10px; }
+.initials {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e2e6ff;
+  color: #4e73df;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.memberName { font-weight: 600; font-size: 1.3rem; color: #5a5c69; }
+.memberEmail { font-size: 1.2rem; color: #b7b9cc; }
+.ptName { font-size: 1.3rem; color: #5a5c69; }
+
+/* Badges */
+.tierBadge {
+  display: inline-block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.tier-gold     { background: #fff3cd; color: #856404; }
+.tier-platinum { background: #e8e4ff; color: #5a3fb5; }
+.tier-silver   { background: #e2e3e5; color: #383d41; }
+
+.statusBadge {
+  display: inline-block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.specBadge {
+  display: inline-block;
+  font-size: 1.1rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #e2e6ff;
+  color: #4e73df;
+  margin-right: 4px;
+}
+
+/* Buttons */
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #4e73df;
+  color: #fff;
+  border: 0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover { background: #3a5bcb; }
+}
+.btnSmPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #4e73df;
+  color: #fff;
+  border: 0;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover { background: #3a5bcb; }
+}
+.btnXs {
+  background: #f0f3ff;
+  border: 1px solid #d1d8ff;
+  color: #4e73df;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover { background: #4e73df; color: #fff; }
+}
+
+/* AI Section */
+.aiRow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.aiLabel { font-size: 1.3rem; font-weight: 600; color: #5a5c69; }
+.aiValue { font-size: 1.3rem; font-weight: 700; color: #4e73df; }
+.progressTrack {
+  height: 8px;
+  background: #eaecf4;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #4e73df, #36b9cc);
+  border-radius: 4px;
+}
+.aiStats { display: flex; gap: 0; text-align: center; }
+.aiStat { flex: 1; padding: 8px; border-right: 1px solid #f0f2f8; &:last-child { border-right: none; } }
+.aiStatVal { font-size: 1.6rem; font-weight: 700; margin-bottom: 2px; }
+.aiStatLabel { font-size: 1.2rem; color: #858796; }
+
+/* Activity */
+.activityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+  &:last-child { margin-bottom: 0; }
+}
+.activityDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.activityTitle { font-size: 1.3rem; font-weight: 600; color: #5a5c69; }
+.activitySub { font-size: 1.2rem; color: #b7b9cc; margin-top: 2px; }
+
+/* Legend */
+.legend { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+.legendItem { display: flex; align-items: center; gap: 6px; font-size: 1.2rem; color: #858796; }
+.legendDot { width: 10px; height: 10px; border-radius: 50%; }

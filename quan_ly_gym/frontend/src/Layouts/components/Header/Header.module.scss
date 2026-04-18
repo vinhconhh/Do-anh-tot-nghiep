@@ -1,0 +1,138 @@
+.header {
+  height: 56px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconBtn {
+  position: relative;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: #858796;
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  border-radius: 8px;
+  &:hover { color: #4e73df; background: #f0f3ff; }
+}
+
+.badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #e74a3b;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.divider {
+  width: 1px;
+  height: 32px;
+  background: #e3e6f0;
+}
+
+.userBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: #858796;
+  font-size: 1.4rem;
+  padding: 4px 8px;
+  border-radius: 8px;
+  &:hover { color: #4e73df; background: #f0f3ff; }
+}
+
+.userName {
+  font-weight: 600;
+  color: #5a5c69;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Alert modal */
+.alertList { display: flex; flex-direction: column; gap: 12px; }
+
+.alertItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8f9fc;
+}
+
+.alertIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.alertText { font-size: 1.4rem; font-weight: 500; color: #5a5c69; }
+.alertTime { font-size: 1.2rem; color: #b7b9cc; margin-top: 2px; }
+
+/* User modal */
+.userCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  background: #f0f3ff;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.avatarLg {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.userCardName { font-size: 1.5rem; font-weight: 700; color: #5a5c69; }
+.userCardRole { font-size: 1.2rem; color: #858796; }
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1.4rem;
+  color: #5a5c69;
+  &:hover { background: #f0f3ff; color: #4e73df; }
+}

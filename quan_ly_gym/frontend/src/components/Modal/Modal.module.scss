@@ -1,0 +1,54 @@
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eef1ff;
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #4e73df;
+}
+
+.closeBtn {
+  background: none;
+  border: 0;
+  font-size: 2.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #858796;
+  &:hover { color: #4e73df; }
+}
+
+.body {
+  padding: 20px;
+}
