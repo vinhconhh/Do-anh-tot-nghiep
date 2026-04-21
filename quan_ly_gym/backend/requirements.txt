@@ -7,3 +7,6 @@ pydantic==2.9.2
 pydantic-settings==2.6.1
 python-jose[cryptography]==3.3.0
 bcrypt==4.2.1
+openfoodfacts
+llama-cpp-python
+sentence-transformers

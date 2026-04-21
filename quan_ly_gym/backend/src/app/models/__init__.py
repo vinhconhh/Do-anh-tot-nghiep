@@ -8,3 +8,5 @@ from .log import LogWorkout, LogWorkoutDetail, BodyMetric, ProgressPhoto
 from .finance import Invoice, Transaction, DietPlan, Meal, MealItem
 from .ai import AIRequest, AIResponse
 from .notification import Notification, AuditLog
+from .pt_request import PTRequest, PTScoreLog
+from .streak import MemberStreak, CheckInLog

@@ -16,6 +16,9 @@ import {
   LogOut,
   UserCheck,
   ClipboardList,
+  Activity,
+  HandshakeIcon,
+  MessageSquare,
 } from "lucide-react";
 import styles from "./Sidebar.module.scss";
 import { AuthContext } from "../../../../context/AuthContext";
@@ -90,9 +93,8 @@ export default function Sidebar() {
           <div className={styles.group}>
             <button
               type="button"
-              className={`${styles.item} ${styles.groupHeader} ${
-                openGroup === "members" ? styles.expanded : ""
-              }`}
+              className={`${styles.item} ${styles.groupHeader} ${openGroup === "members" ? styles.expanded : ""
+                }`}
               onClick={() => toggleGroup("members")}
             >
               <Users className={styles.icon} />
@@ -106,9 +108,8 @@ export default function Sidebar() {
               </span>
             </button>
             <div
-              className={`${styles.sub} ${
-                openGroup === "members" ? styles.subOpen : ""
-              } ${collapsed ? styles.subCollapsed : ""}`}
+              className={`${styles.sub} ${openGroup === "members" ? styles.subOpen : ""
+                } ${collapsed ? styles.subCollapsed : ""}`}
             >
               <NavLink
                 to="/members"
@@ -192,9 +193,19 @@ export default function Sidebar() {
           </NavLink>
         )}
 
-        {/* Member: lịch sử tập */}
+        {/* Member: lịch sử tập và các mục khác */}
         {isMember && (
           <>
+            <NavLink
+              to="/my-dashboard"
+              className={({ isActive }) =>
+                `${styles.item} ${isActive ? styles.active : ""}`
+              }
+            >
+              <Activity className={styles.icon} />
+              <span className={styles.label}>Bài tập hàng ngày</span>
+            </NavLink>
+
             <NavLink
               to="/my-workout-schedule"
               className={({ isActive }) =>
@@ -214,20 +225,52 @@ export default function Sidebar() {
               <Bot className={styles.icon} />
               <span className={styles.label}>Mua thêm lượt AI</span>
             </NavLink>
+
+            <NavLink
+              to="/pt-requests"
+              className={({ isActive }) =>
+                `${styles.item} ${isActive ? styles.active : ""}`
+              }
+            >
+              <HandshakeIcon className={styles.icon} />
+              <span className={styles.label}>Thuê PT</span>
+            </NavLink>
           </>
         )}
 
         {/* PT */}
         {isPT && (
-          <NavLink
-            to="/my-schedule"
-            className={({ isActive }) =>
-              `${styles.item} ${isActive ? styles.active : ""}`
-            }
-          >
-            <CalendarCheck className={styles.icon} />
-            <span className={styles.label}>Lịch dạy của tôi</span>
-          </NavLink>
+          <>
+            <NavLink
+              to="/my-schedule"
+              className={({ isActive }) =>
+                `${styles.item} ${isActive ? styles.active : ""}`
+              }
+            >
+              <CalendarCheck className={styles.icon} />
+              <span className={styles.label}>Lịch dạy của tôi</span>
+            </NavLink>
+
+            <NavLink
+              to="/pt-requests"
+              className={({ isActive }) =>
+                `${styles.item} ${isActive ? styles.active : ""}`
+              }
+            >
+              <ClipboardList className={styles.icon} />
+              <span className={styles.label}>Yêu cầu thuê PT</span>
+            </NavLink>
+
+            <NavLink
+              to="/my-clients"
+              className={({ isActive }) =>
+                `${styles.item} ${isActive ? styles.active : ""}`
+              }
+            >
+              <Users className={styles.icon} />
+              <span className={styles.label}>Khách hàng của tôi</span>
+            </NavLink>
+          </>
         )}
 
         {/* Admin/Manager: lịch tổng */}
@@ -242,6 +285,17 @@ export default function Sidebar() {
             <span className={styles.label}>Lịch tổng</span>
           </NavLink>
         )}
+
+        {/* AI Chat - cho tất cả role */}
+        <NavLink
+          to="/ai-chat"
+          className={({ isActive }) =>
+            `${styles.item} ${isActive ? styles.active : ""}`
+          }
+        >
+          <MessageSquare className={styles.icon} />
+          <span className={styles.label}>Hỏi đáp AI</span>
+        </NavLink>
       </nav>
 
       <div className={styles.line} />

@@ -12,6 +12,10 @@ from .routes.schedules import router as schedules_router
 from .routes.bookings import router as bookings_router
 from .routes.users import router as users_router
 from .routes.notifications import router as notifications_router
+from .routes.exercises import router as exercises_router
+from .routes.pt_requests import router as pt_requests_router
+from .routes.streaks import router as streaks_router
+from .routes.ai import router as ai_router
 
 app = FastAPI(
     title="QLGym API",
@@ -37,6 +41,10 @@ app.include_router(schedules_router)
 app.include_router(bookings_router)
 app.include_router(users_router)
 app.include_router(notifications_router)
+app.include_router(exercises_router)
+app.include_router(pt_requests_router)
+app.include_router(streaks_router)
+app.include_router(ai_router)
 
 
 @app.get("/")

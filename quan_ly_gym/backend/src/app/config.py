@@ -7,7 +7,8 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
-    DB_SERVER: str = os.getenv("DB_SERVER", "db")
+    DB_SERVER: str = os.getenv("DB_SERVER", "host.docker.internal")
+    DB_PORT: str = os.getenv("DB_PORT", "1433")
     DB_NAME: str = os.getenv("DB_NAME", "QLGymDB")
     DB_USER: str = os.getenv("DB_USER", "sa")
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "111111")
@@ -24,7 +25,7 @@ class Settings(BaseSettings):
         pwd = quote_plus(self.DB_PASSWORD)
         return (
             f"mssql+pyodbc://{self.DB_USER}:{pwd}"
-            f"@{self.DB_SERVER}/{self.DB_NAME}"
+            f"@{self.DB_SERVER},{self.DB_PORT}/{self.DB_NAME}"
             f"?driver={driver}&TrustServerCertificate=yes"
         )
 

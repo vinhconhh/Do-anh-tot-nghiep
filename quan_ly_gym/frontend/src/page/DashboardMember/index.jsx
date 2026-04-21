@@ -17,6 +17,11 @@ const RPE_MSGS = {
   10: ["RPE = 10 — Kiệt sức! AI sẽ điều chỉnh toàn bộ kế hoạch tuần tới.", "#e74a3b"],
 };
 
+// Placeholder data – sẽ được thay bằng API sau
+const WEEK = [];
+const WEIGHT_DATA = [];
+const PR_LIST = [];
+
 export default function DashboardMember() {
   const { user } = useContext(AuthContext) ?? {};
   const displayName = user?.hoTen || "Hội viên";

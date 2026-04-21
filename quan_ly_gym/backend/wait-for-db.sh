@@ -2,12 +2,17 @@
 # wait-for-db.sh – Wait for SQL Server to be ready, then init DB and run seeds
 set -e
 
-echo "⏳ Waiting for SQL Server to be ready..."
+# DB_SERVER defaults to host.docker.internal (SQL Server on host machine)
+DB_HOST="${DB_SERVER:-host.docker.internal}"
+DB_PORT_NUM="${DB_PORT:-1433}"
+SQL_SERVER="${DB_HOST},${DB_PORT_NUM}"
+
+echo "⏳ Waiting for SQL Server at ${SQL_SERVER} to be ready..."
 MAX_RETRIES=30
 RETRY=0
 
 while [ $RETRY -lt $MAX_RETRIES ]; do
-    if /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$DB_PASSWORD" -C -Q "SELECT 1" > /dev/null 2>&1; then
+    if /opt/mssql-tools18/bin/sqlcmd -S "$SQL_SERVER" -U sa -P "$DB_PASSWORD" -C -Q "SELECT 1" > /dev/null 2>&1; then
         echo "✅ SQL Server is ready!"
         break
     fi
@@ -24,14 +29,14 @@ fi
 
 # Run SQL init scripts if DB doesn't exist yet
 echo "🔍 Checking if database exists..."
-DB_EXISTS=$(/opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$DB_PASSWORD" -C -Q "SELECT COUNT(*) FROM sys.databases WHERE name='$DB_NAME'" -h -1 -W 2>/dev/null | head -1 | tr -d '[:space:]')
+DB_EXISTS=$(/opt/mssql-tools18/bin/sqlcmd -S "$SQL_SERVER" -U sa -P "$DB_PASSWORD" -C -Q "SELECT COUNT(*) FROM sys.databases WHERE name='$DB_NAME'" -h -1 -W 2>/dev/null | head -1 | tr -d '[:space:]')
 
 if [ "$DB_EXISTS" = "0" ] || [ -z "$DB_EXISTS" ]; then
     echo "📦 Creating database and seeding..."
     for f in /docker-entrypoint-initdb.d/*.sql; do
         if [ -f "$f" ]; then
             echo "   Running: $(basename $f)"
-            /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$DB_PASSWORD" -C -i "$f" || echo "⚠️  Warning: $f had errors"
+            /opt/mssql-tools18/bin/sqlcmd -S "$SQL_SERVER" -U sa -P "$DB_PASSWORD" -C -i "$f" || echo "⚠️  Warning: $f had errors"
         fi
     done
     echo "✅ Database initialized!"

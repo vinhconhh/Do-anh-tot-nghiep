@@ -16,10 +16,12 @@ import Trainers from "../../page/Trainers";
 import Billing from "../../page/Billing";
 import Exercises from "../../page/Exercises";
 import PtRequests from "../../page/PtRequests";
+import MyClients from "../../page/MyClients";
 import Settings from "../../page/Settings";
 import MySchedule from "../../page/MySchedule";
 import MyWorkoutSchedule from "../../page/MyWorkoutSchedule";
 import Schedules from "../../page/Schedules";
+import AiChat from "../../page/AiChat";
 import NotFound from "../../page/NotFound";
 
 function AppRoutes() {
@@ -117,12 +119,21 @@ function AppRoutes() {
             <Route
               path="/pt-requests"
               element={
-                <RequireRole roles={["ADMIN", "MANAGER"]}>
+                <RequireRole roles={["ADMIN", "MANAGER", "MEMBER", "PT"]}>
                   <PtRequests />
                 </RequireRole>
               }
             />
+            <Route
+              path="/my-clients"
+              element={
+                <RequireRole roles={["PT"]}>
+                  <MyClients />
+                </RequireRole>
+              }
+            />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/ai-chat" element={<AiChat />} />
             <Route
               path="/schedules"
               element={

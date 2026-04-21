@@ -1,20 +1,4 @@
-version: '3.8'
-
 services:
-  db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: qlgym_db
-    ports:
-      - "1434:1433"
-    environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD}
-      - MSSQL_PID=Developer
-    volumes:
-      - sqlserver_data:/var/opt/mssql
-    networks:
-      - qlgym_network
-
   backend:
     build: ./backend
     container_name: qlgym_backend
@@ -23,16 +7,18 @@ services:
     volumes:
       - ./backend:/app
       - ./database:/docker-entrypoint-initdb.d
+      - ../AI_local:/app/AI_local
     environment:
-      - DB_SERVER=db
+      - DB_SERVER=host.docker.internal
+      - DB_PORT=1433
       - DB_NAME=${DB_NAME}
       - DB_USER=sa
       - DB_PASSWORD=${MSSQL_SA_PASSWORD}
       - DB_DRIVER=ODBC Driver 18 for SQL Server
       - JWT_SECRET=${JWT_SECRET}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
-    depends_on:
-      - db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - qlgym_network
 
@@ -45,7 +31,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_BASE_URL=http://backend:8000
+      - VITE_API_TARGET=http://backend:8000
     depends_on:
       - backend
     networks:
@@ -54,6 +40,3 @@ services:
 networks:
   qlgym_network:
     driver: bridge
-
-volumes:
-  sqlserver_data:

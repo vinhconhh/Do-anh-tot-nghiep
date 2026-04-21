@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Numeric
 from sqlalchemy.orm import relationship
 from ..database import Base
 
@@ -22,5 +22,7 @@ class PTProfile(Base):
     ExperienceYears = Column(Integer)
     Certifications = Column(String)  # NVARCHAR(MAX)
     Specialty = Column(String(255))
+    TotalScore = Column(Integer, default=100)
+    ResponseRate = Column(Numeric(5, 2), default=100.00)
 
     user = relationship("User", back_populates="pt_profile")
