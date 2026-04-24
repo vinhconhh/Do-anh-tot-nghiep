@@ -1,4 +1,23 @@
 services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: qlgym_db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - qlgym_network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   backend:
     build: ./backend
     container_name: qlgym_backend
@@ -7,9 +26,8 @@ services:
     volumes:
       - ./backend:/app
       - ./database:/docker-entrypoint-initdb.d
-      - ../AI_local:/app/AI_local
     environment:
-      - DB_SERVER=host.docker.internal
+      - DB_SERVER=db
       - DB_PORT=1433
       - DB_NAME=${DB_NAME}
       - DB_USER=sa
@@ -17,8 +35,10 @@ services:
       - DB_DRIVER=ODBC Driver 18 for SQL Server
       - JWT_SECRET=${JWT_SECRET}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - qlgym_network
 
@@ -40,3 +60,6 @@ services:
 networks:
   qlgym_network:
     driver: bridge
+
+volumes:
+  mssql_data:

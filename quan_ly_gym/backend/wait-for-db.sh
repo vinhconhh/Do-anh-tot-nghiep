@@ -1,9 +1,8 @@
 #!/bin/bash
-# wait-for-db.sh – Wait for SQL Server to be ready, then init DB and run seeds
+# wait-for-db.sh – Wait for SQL Server to be ready, then init DB and start app
 set -e
 
-# DB_SERVER defaults to host.docker.internal (SQL Server on host machine)
-DB_HOST="${DB_SERVER:-host.docker.internal}"
+DB_HOST="${DB_SERVER:-db}"
 DB_PORT_NUM="${DB_PORT:-1433}"
 SQL_SERVER="${DB_HOST},${DB_PORT_NUM}"
 
@@ -40,8 +39,6 @@ if [ "$DB_EXISTS" = "0" ] || [ -z "$DB_EXISTS" ]; then
         fi
     done
     echo "✅ Database initialized!"
-    echo "🔑 Setting correct password hashes..."
-    cd /app && python fix_passwords.py || echo "⚠️  Password fix had issues, check manually"
 else
     echo "✅ Database '$DB_NAME' already exists, skipping init."
 fi

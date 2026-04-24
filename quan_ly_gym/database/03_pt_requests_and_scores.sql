@@ -1,5 +1,7 @@
 USE QLGymDB;
 GO
+SET QUOTED_IDENTIFIER ON;
+GO
 
 -- =============================================
 -- MIGRATION: PT Requests + Scoring + Streaks
