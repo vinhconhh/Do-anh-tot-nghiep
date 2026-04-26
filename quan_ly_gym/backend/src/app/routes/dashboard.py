@@ -10,6 +10,7 @@ from ..models.booking import Booking
 from ..models.workout import Schedule
 from ..models.log import BodyMetric
 from ..middleware.auth import get_current_user
+from datetime import datetime
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
@@ -146,6 +147,20 @@ def get_member_stats(
         .first()
     )
 
+    metrics = (
+        db.query(BodyMetric)
+        .filter(BodyMetric.UserID == current_user.UserID)
+        .order_by(BodyMetric.MeasuredAt.asc())
+        .limit(12)
+        .all()
+    )
+    weight_chart = []
+    for i, m in enumerate(metrics):
+        weight_chart.append({
+            "week": f"Lần {i+1}",
+            "weight": m.Weight,
+        })
+
     return {
         "aiQuota": profile.AIQuota if profile else 0,
         "aiUsed": ai_used,
@@ -153,8 +168,126 @@ def get_member_stats(
         "totalSchedules": total_schedules,
         "streak": 0,
         "weight": latest_metric.Weight if latest_metric else (profile.Weight if profile else None),
+        "height": profile.Height if profile else None,
+        "bodyFat": latest_metric.BodyFat if latest_metric else None,
+        "referralCode": current_user.ReferralCode,
+        "weightChart": weight_chart
     }
 
+from pydantic import BaseModel
+class BodyMetricsUpdate(BaseModel):
+    weight: float = None
+    fat: float = None
+    height: float = None
+    muscle: float = None
+
+@router.post("/member-stats/metrics")
+def update_member_metrics(
+    metrics: BodyMetricsUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile = db.query(MemberProfile).filter(MemberProfile.UserID == current_user.UserID).first()
+    if profile:
+        if metrics.height is not None and metrics.height > 0:
+            profile.Height = metrics.height
+        if metrics.weight is not None and metrics.weight > 0:
+            profile.Weight = metrics.weight
+    
+    # Calculate BMI
+    bmi = None
+    height_m = (profile.Height / 100) if profile and profile.Height and profile.Height > 0 else (metrics.height / 100 if metrics.height and metrics.height > 0 else None)
+    if height_m and metrics.weight and metrics.weight > 0:
+        bmi = metrics.weight / (height_m ** 2)
+
+    new_metric = BodyMetric(
+        UserID=current_user.UserID,
+        Weight=metrics.weight,
+        BodyFat=metrics.fat,
+        BMI=bmi,
+        MeasuredAt=datetime.utcnow()
+    )
+    db.add(new_metric)
+    db.commit()
+    
+    return {"message": "Cập nhật chỉ số thành công"}
+
+
+@router.get("/workout-log")
+def get_workout_log(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Lấy nhật ký tập luyện chi tiết của member hiện tại."""
+    from ..models.log import LogWorkout, LogWorkoutDetail
+    from ..models.exercise import Exercise
+
+    logs = (
+        db.query(LogWorkout)
+        .filter(LogWorkout.UserID == current_user.UserID)
+        .order_by(LogWorkout.WorkoutDate.desc())
+        .limit(50)
+        .all()
+    )
+
+    result = []
+    for log in logs:
+        date_str = log.WorkoutDate.strftime("%d/%m/%Y") if log.WorkoutDate else ""
+        for detail in log.details:
+            exercise_name = detail.exercise.TenBaiTap if detail.exercise else f"ID {detail.ExerciseID}"
+            sets = detail.SetNumber or 0
+            reps = detail.Reps or 0
+            weight = detail.Weight or 0
+            volume = round(sets * reps * weight, 1)
+            result.append({
+                "date": date_str,
+                "exercise": exercise_name,
+                "sets": sets,
+                "reps": reps,
+                "weight": weight,
+                "volume": volume,
+                "rpe": log.RPE,
+            })
+
+    return result
+
+
+@router.post("/workout-log")
+def save_workout_log(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Lưu nhật ký buổi tập (RPE) cho member hiện tại."""
+    from ..models.log import LogWorkout
+
+    # Tìm log hôm nay
+    today = datetime.utcnow().date()
+    existing = (
+        db.query(LogWorkout)
+        .filter(
+            LogWorkout.UserID == current_user.UserID,
+            func.date(LogWorkout.WorkoutDate) == today,
+        )
+        .first()
+    )
+
+    rpe = payload.get("rpe")
+
+    if existing:
+        existing.RPE = rpe
+        db.commit()
+        return {"message": "Đã cập nhật RPE cho buổi tập hôm nay", "log_id": existing.LogID}
+    else:
+        new_log = LogWorkout(
+            UserID=current_user.UserID,
+            WorkoutDate=datetime.utcnow(),
+            RPE=rpe,
+        )
+        db.add(new_log)
+        db.commit()
+        db.refresh(new_log)
+        return {"message": "Đã lưu nhật ký buổi tập", "log_id": new_log.LogID}
 
 @router.get("/member-report/list")
 def member_report_list(

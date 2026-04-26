@@ -1,3 +1,4 @@
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from ..database import get_db
@@ -52,6 +53,16 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     if not role:
         raise HTTPException(status_code=400, detail=f"Vai trò '{req.vaiTro}' không hợp lệ")
 
+    # Kiểm tra mã giới thiệu (nếu có)
+    referred_by_id = None
+    if req.referralCode:
+        referrer = db.query(User).filter(User.ReferralCode == req.referralCode.strip(), User.IsActive == 1).first()
+        if referrer:
+            referred_by_id = referrer.UserID
+            # Thêm 10 lượt AI cho người giới thiệu nếu họ là MEMBER
+            if referrer.role and referrer.role.RoleCode == "MEMBER" and referrer.member_profile:
+                referrer.member_profile.AIQuota = (referrer.member_profile.AIQuota or 0) + 10
+
     new_user = User(
         FullName=req.hoTen,
         Email=req.email,
@@ -59,6 +70,8 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         RoleID=role.RoleID,
         IsActive=1,
         IsDeleted=0,
+        ReferralCode=str(uuid.uuid4())[:8],
+        ReferredBy=referred_by_id
     )
     db.add(new_user)
     db.flush()

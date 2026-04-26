@@ -1,6 +1,6 @@
 .page {
   padding: 24px;
-  background: #f8f9fc;
+  background: var(--theme-bg);
   min-height: calc(100vh - 70px);
 }
 
@@ -12,12 +12,12 @@
 .title {
   font-size: 2.2rem;
   font-weight: 800;
-  color: #4e73df;
+  color: var(--theme-primary);
   margin-bottom: 8px;
 }
 
 .subtitle {
-  color: #858796;
+  color: var(--theme-text);
   font-size: 1.1rem;
 }
 
@@ -30,7 +30,7 @@
 }
 
 .tierCard {
-  background: #fff;
+  background: var(--theme-surface);
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
@@ -46,8 +46,8 @@
   }
 
   &.silver { border-top-color: #bdc3c7; }
-  &.gold { border-top-color: #f6c23e; }
-  &.platinum { border-top-color: #4e73df; }
+  &.gold { border-top-color: var(--theme-primary); }
+  &.platinum { border-top-color: var(--theme-primary); }
 }
 
 .tierHeader {
@@ -66,7 +66,7 @@
 .price {
   font-size: 2.5rem;
   font-weight: 900;
-  color: #5a5c69;
+  color: var(--theme-text-dark);
   span { font-size: 1rem; opacity: 0.6; }
 }
 
@@ -81,10 +81,10 @@
   gap: 10px;
   margin-bottom: 12px;
   font-size: 1rem;
-  color: #5a5c69;
+  color: var(--theme-text-dark);
 }
 
-.icon { color: #1cc88a; }
+.icon { color: theme('colors.emerald.500'); }
 
 .selectBtn {
   width: 100%;
@@ -93,13 +93,13 @@
   border: 2px solid #edeff2;
   background: transparent;
   font-weight: 700;
-  color: #5a5c69;
+  color: var(--theme-text-dark);
   transition: all 0.2s;
 
   &:hover {
-    background: #4e73df;
-    color: #fff;
-    border-color: #4e73df;
+    background: var(--theme-primary);
+    color: var(--theme-surface);
+    border-color: var(--theme-primary);
   }
 }
 
@@ -119,8 +119,8 @@
   flex-direction: column;
   gap: 4px;
 
-  strong { color: #4e73df; }
-  span { font-size: 0.9rem; color: #858796; }
+  strong { color: var(--theme-primary); }
+  span { font-size: 0.9rem; color: var(--theme-text); }
 
   &:last-child { border-bottom: 0; }
 }

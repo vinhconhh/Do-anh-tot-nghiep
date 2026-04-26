@@ -35,7 +35,7 @@ if [ "$DB_EXISTS" = "0" ] || [ -z "$DB_EXISTS" ]; then
     for f in /docker-entrypoint-initdb.d/*.sql; do
         if [ -f "$f" ]; then
             echo "   Running: $(basename $f)"
-            /opt/mssql-tools18/bin/sqlcmd -S "$SQL_SERVER" -U sa -P "$DB_PASSWORD" -C -i "$f" || echo "⚠️  Warning: $f had errors"
+            /opt/mssql-tools18/bin/sqlcmd -S "$SQL_SERVER" -U sa -P "$DB_PASSWORD" -C -f 65001 -i "$f" || echo "⚠️  Warning: $f had errors"
         fi
     done
     echo "✅ Database initialized!"

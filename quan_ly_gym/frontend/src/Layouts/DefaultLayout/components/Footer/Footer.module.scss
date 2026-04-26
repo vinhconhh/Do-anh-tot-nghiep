@@ -1,8 +1,8 @@
 .footer {
-  background: #fff;
-  border-top: 1px solid #e3e6f0;
+  background: var(--theme-surface);
+  border-top: 1px solid var(--theme-border);
   padding: 14px 20px;
   text-align: center;
   font-size: 1.3rem;
-  color: #858796;
+  color: var(--theme-text);
 }

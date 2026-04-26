@@ -16,7 +16,7 @@
 .content {
   position: relative;
   z-index: 1;
-  background: #fff;
+  background: var(--theme-surface);
   border-radius: 16px;
   width: 90%;
   max-width: 560px;
@@ -30,13 +30,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid #eef1ff;
+  border-bottom: 1px solid var(--theme-border);
 }
 
 .title {
   font-size: 1.6rem;
   font-weight: 700;
-  color: #4e73df;
+  color: var(--theme-primary);
 }
 
 .closeBtn {
@@ -46,7 +46,7 @@
   line-height: 1;
   cursor: pointer;
   color: #858796;
-  &:hover { color: #4e73df; }
+  &:hover { color: var(--theme-primary); }
 }
 
 .body {

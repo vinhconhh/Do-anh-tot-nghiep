@@ -19,13 +19,12 @@ const RPE_MSGS = {
 
 // Placeholder data – sẽ được thay bằng API sau
 const WEEK = [];
-const WEIGHT_DATA = [];
 const PR_LIST = [];
 
 export default function DashboardMember() {
   const { user } = useContext(AuthContext) ?? {};
   const displayName = user?.hoTen || "Hội viên";
-  const { getMemberStats } = useDashboardApi();
+  const { getMemberStats, updateMemberMetrics } = useDashboardApi();
 
   const [memberStats, setMemberStats] = useState({
     aiQuota: 0,
@@ -34,25 +33,68 @@ export default function DashboardMember() {
     totalSchedules: 0,
     streak: 0,
     weight: 0,
+    referralCode: "",
+    weightChart: [],
   });
   const [exercises, setExercises] = useState([]);
   const [rpe, setRpe] = useState(5);
   const [metricsOpen, setMetricsOpen] = useState(false);
   const [metrics, setMetrics] = useState({ weight: 0, fat: 0, muscle: 0, height: 0 });
+  const [workoutLog, setWorkoutLog] = useState([]);
   const [checkedIn, setCheckedIn] = useState(false);
 
-  useEffect(() => {
+  const fetchStats = () => {
     getMemberStats()
       .then((s) => {
         setMemberStats(s);
-        if (s.weight) setMetrics((m) => ({ ...m, weight: s.weight }));
+        setMetrics((m) => ({
+          ...m,
+          weight: s.weight || m.weight,
+          height: s.height || m.height,
+          fat: s.bodyFat || m.fat,
+        }));
       })
       .catch((err) => console.error("Member stats error:", err));
+  };
+
+  const fetchWorkoutLog = () => {
+    import("../../api/axiosClient").then(({ default: api }) => {
+      api.get("/dashboard/workout-log")
+        .then((res) => setWorkoutLog(res.data))
+        .catch(() => setWorkoutLog([]));
+    });
+  };
+
+  useEffect(() => {
+    fetchStats();
+    fetchWorkoutLog();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleSaveMetrics = async () => {
+    try {
+      await updateMemberMetrics(metrics);
+      alert("Đã cập nhật chỉ số cơ thể!");
+      setMetricsOpen(false);
+      fetchStats();
+    } catch (err) {
+      alert("Lỗi khi cập nhật chỉ số: " + err.message);
+    }
+  };
+
   const handleLog = (idx) => {
     setExercises((prev) => prev.map((e, i) => i === idx ? { ...e, done: true } : e));
+  };
+
+  const handleCheckin = async () => {
+    try {
+      const { default: api } = await import("../../api/axiosClient");
+      await api.post("/dashboard/workout-log", { rpe });
+      setCheckedIn(true);
+      fetchWorkoutLog();
+    } catch {
+      setCheckedIn(true);
+    }
   };
 
   const [rpeMsg, rpeColor] = RPE_MSGS[rpe] || ["", "#858796"];
@@ -68,6 +110,22 @@ export default function DashboardMember() {
             <p className={styles.subtitle}>Chưa có lịch tập hôm nay.</p>
           </div>
           <div className={styles.welcomeActions}>
+            {memberStats.referralCode && (
+              <div className="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                <span className="text-slate-400 text-sm">Mã giới thiệu:</span>
+                <strong className="text-sky-400 tracking-wider">{memberStats.referralCode}</strong>
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(memberStats.referralCode);
+                    alert("Đã copy mã giới thiệu!");
+                  }}
+                  className="text-slate-500 hover:text-sky-400 transition-colors ml-1"
+                  title="Copy mã giới thiệu"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+              </div>
+            )}
             <span className={styles.tierTag}>Hội viên</span>
           </div>
         </div>
@@ -148,7 +206,7 @@ export default function DashboardMember() {
                 )}
                 <button
                   className={`${styles.checkinBtn} ${checkedIn ? styles.checkedIn : ""}`}
-                  onClick={() => setCheckedIn(true)}
+                  onClick={handleCheckin}
                   disabled={checkedIn}
                 >
                   {checkedIn ? "✅ Đã check-in thành công!" : "✔ Hoàn thành buổi tập & Check-in"}
@@ -188,12 +246,12 @@ export default function DashboardMember() {
                 <h6 className={styles.cardTitle}>📈 Tiến độ cân nặng</h6>
               </div>
               <div className={styles.cardBody}>
-                {WEIGHT_DATA.length > 0 ? (
+                {memberStats.weightChart && memberStats.weightChart.length > 0 ? (
                   <ResponsiveContainer width="100%" height={150}>
-                    <LineChart data={WEIGHT_DATA}>
+                    <LineChart data={memberStats.weightChart}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis dataKey="week" tick={{ fontSize: 11 }} />
-                      <YAxis domain={[56, 62]} tick={{ fontSize: 11 }} />
+                      <YAxis domain={['auto', 'auto']} tick={{ fontSize: 11 }} />
                       <Tooltip formatter={(v) => [`${v} kg`, "Cân nặng"]} />
                       <Line type="monotone" dataKey="weight" stroke="#1cc88a" strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
@@ -238,39 +296,61 @@ export default function DashboardMember() {
           </div>
         </div>
 
-        {/* Personal Records */}
+        {/* Nhật ký tập luyện chi tiết */}
         <div className={styles.card} style={{ marginTop: 20 }}>
           <div className={styles.cardHeader}>
-            <h6 className={styles.cardTitle}>🏆 Personal Records (PR) — Mức tạ cao nhất từng đạt</h6>
+            <h6 className={styles.cardTitle}>📋 Nhật ký tập luyện — Chi tiết bài tập đã hoàn thành</h6>
           </div>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
+                  <th>Ngày tập</th>
                   <th>Bài tập</th>
-                  <th>Nhóm cơ</th>
-                  <th>Mức tạ PR</th>
-                  <th>Ngày đạt</th>
-                  <th>Tiến bộ</th>
+                  <th>Hiệp × Lần</th>
+                  <th>Mức tạ (kg)</th>
+                  <th>Tổng Volume (kg)</th>
+                  <th>RPE</th>
                 </tr>
               </thead>
               <tbody>
-                {PR_LIST.length === 0 && (
-                  <tr><td colSpan={5} style={{ textAlign: "center", padding: "20px", color: "#858796" }}>Chưa có dữ liệu</td></tr>
+                {workoutLog.length === 0 && (
+                  <tr><td colSpan={6} style={{ textAlign: "center", padding: "24px", color: "#858796" }}>Chưa có dữ liệu — Hoàn thành buổi tập đầu tiên để ghi nhận nhật ký!</td></tr>
                 )}
-                {PR_LIST.map((pr) => (
-                  <tr key={pr.name}>
-                    <td><strong>{pr.name}</strong></td>
-                    <td><span className={styles.muscleBadge}>{pr.muscle}</span></td>
-                    <td><strong style={{ color: "#1cc88a", fontSize: "1.5rem" }}>{pr.weight}</strong></td>
-                    <td>{pr.date}</td>
-                    <td>
-                      <div className={styles.progressTrack} style={{ width: 120 }}>
-                        <div className={styles.progressFill} style={{ width: `${pr.pct}%`, background: "#1cc88a" }} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {workoutLog.map((entry, idx) => {
+                  const rpeVal = entry.rpe;
+                  let rpeBg = "#1cc88a22"; let rpeClr = "#1cc88a";
+                  if (rpeVal >= 8 && rpeVal <= 9) { rpeBg = "#f6c23e22"; rpeClr = "#f6c23e"; }
+                  if (rpeVal === 10) { rpeBg = "#e74a3b22"; rpeClr = "#e74a3b"; }
+                  return (
+                    <tr key={idx}>
+                      <td style={{ whiteSpace: "nowrap" }}>{entry.date}</td>
+                      <td><strong>{entry.exercise}</strong></td>
+                      <td style={{ textAlign: "center" }}>{entry.sets} × {entry.reps}</td>
+                      <td style={{ textAlign: "center" }}>{entry.weight} kg</td>
+                      <td style={{ textAlign: "center" }}>
+                        <strong style={{ color: "#36b9cc" }}>{entry.volume} kg</strong>
+                      </td>
+                      <td style={{ textAlign: "center" }}>
+                        {rpeVal != null ? (
+                          <span style={{
+                            display: "inline-block",
+                            minWidth: 32,
+                            padding: "2px 10px",
+                            borderRadius: 20,
+                            background: rpeBg,
+                            color: rpeClr,
+                            fontWeight: 700,
+                            fontSize: "0.82rem",
+                            border: `1px solid ${rpeClr}44`
+                          }}>
+                            {rpeVal}
+                          </span>
+                        ) : <span style={{ color: "#858796" }}>—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -300,7 +380,7 @@ export default function DashboardMember() {
           </div>
           <div className={styles.metricsActions}>
             <button className={styles.btnGhost} onClick={() => setMetricsOpen(false)}>Hủy</button>
-            <button className={styles.btnPrimary} onClick={() => setMetricsOpen(false)}>💾 Lưu</button>
+            <button className={styles.btnPrimary} onClick={handleSaveMetrics}>💾 Lưu</button>
           </div>
         </div>
       </Modal>

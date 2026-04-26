@@ -1,9 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
 
-import Login from "../../page/Login";
-import Register from "../../page/Register";
+import LandingPage from "../../page/LandingPage";
 import ForgotPassword from "../../page/ForgotPassword";
 import DefaultLayout from "../../Layouts/DefaultLayout";
 import Dashboard from "../../page/Dashboard";
@@ -13,7 +12,9 @@ import DashboardMember from "../../page/DashboardMember";
 import AiPurchase from "../../page/AiPurchase";
 import MemberReport from "../../page/MemberReport";
 import Trainers from "../../page/Trainers";
-import Billing from "../../page/Billing";
+import PackageManagement from "../../page/PackageManagement";
+import AiPackageManagement from "../../page/AiPackageManagement";
+import PromotionManagement from "../../page/PromotionManagement";
 import Exercises from "../../page/Exercises";
 import PtRequests from "../../page/PtRequests";
 import MyClients from "../../page/MyClients";
@@ -23,30 +24,39 @@ import MyWorkoutSchedule from "../../page/MyWorkoutSchedule";
 import Schedules from "../../page/Schedules";
 import AiChat from "../../page/AiChat";
 import NotFound from "../../page/NotFound";
+import EquipmentManagement from "../../page/EquipmentManagement";
+import GymExerciseManagement from "../../page/GymExerciseManagement";
+import GymClassManagement from "../../page/GymClassManagement";
 
 function AppRoutes() {
   const { token, user } = useContext(AuthContext) ?? {};
   const role = (user?.vaiTro || user?.role || "").toUpperCase();
 
+  useEffect(() => {
+    // Tailwind manages colors via classes and CSS Variables now
+  }, [role, token]);
+
   const RequireAuth = ({ children }) =>
-    token ? children : <Navigate to="/login" replace />;
+    token ? children : <Navigate to="/" replace />;
 
   const RequireRole = ({ roles, children }) => {
-    if (!token) return <Navigate to="/login" replace />;
+    if (!token) return <Navigate to="/" replace />;
     if (!roles?.length) return children;
     return roles.includes(role) ? children : <Navigate to="/dashboard" replace />;
   };
 
   return (
     <BrowserRouter>
-      <div className="container">
+      <div className="flex min-h-screen w-full">
         <Routes>
+          {/*
+           * TRANG CHỦ (Landing Page)
+           * - Luôn hiển thị Landing Page ở trang chủ (/)
+           */}
           <Route
             path="/"
-            element={token ? <Navigate to="/dashboard" /> : <Navigate to="/login" />}
+            element={<LandingPage />}
           />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="*" element={<NotFound />} />
 
@@ -101,12 +111,40 @@ function AppRoutes() {
               }
             />
             <Route
-              path="/billing"
+              path="/package-management"
               element={
                 <RequireRole roles={["ADMIN", "MANAGER"]}>
-                  <Billing />
+                  <PackageManagement />
                 </RequireRole>
               }
+            />
+            <Route
+              path="/ai-package-management"
+              element={
+                <RequireRole roles={["ADMIN", "MANAGER"]}>
+                  <AiPackageManagement />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/promotion-management"
+              element={
+                <RequireRole roles={["ADMIN", "MANAGER"]}>
+                  <PromotionManagement />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/equipment-management"
+              element={<RequireRole roles={["ADMIN", "MANAGER"]}><EquipmentManagement /></RequireRole>}
+            />
+            <Route
+              path="/gym-exercise-management"
+              element={<RequireRole roles={["ADMIN", "MANAGER"]}><GymExerciseManagement /></RequireRole>}
+            />
+            <Route
+              path="/gym-class-management"
+              element={<RequireRole roles={["ADMIN", "MANAGER"]}><GymClassManagement /></RequireRole>}
             />
             <Route
               path="/exercises"

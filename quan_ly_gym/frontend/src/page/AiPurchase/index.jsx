@@ -11,15 +11,11 @@ const STATUS_META = {
   failed:  { label: "Thất bại",  color: "#e74a3b" },
 };
 
-const PACKAGES_UI = [
-  { id: 1, label: "Gói nhỏ",    qty: 20,  price: 240000,  savings: "12,000đ/lượt",  desc: "30 ngày hỗ trợ",       color: "#4e73df" },
-  { id: 2, label: "Gói phổ biến", qty: 50, price: 600000, savings: "Ưu đãi 5%",    desc: "60 ngày hỗ trợ",       color: "#1cc88a", popular: true },
-];
-
 export default function AiPurchase() {
   const { token, logout } = useContext(AuthContext) ?? {};
   const [quota, setQuota] = useState({ quota: 0, used: 0, remaining: 0 });
   const [history, setHistory] = useState([]);
+  const [packages, setPackages] = useState([]);
   const [q, setQ] = useState("");
   const [buying, setBuying] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,12 +35,14 @@ export default function AiPurchase() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [q, h] = await Promise.all([
+      const [qData, hData, pkgsData] = await Promise.all([
         aj("/api/ai/quota"),
         aj("/api/ai/purchase-history"),
+        aj("/api/packages/ai")
       ]);
-      setQuota(q);
-      setHistory(h);
+      setQuota(qData);
+      setHistory(hData);
+      setPackages(pkgsData);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, [aj]);
@@ -115,36 +113,39 @@ export default function AiPurchase() {
 
             {/* Packages */}
             <div className={styles.packagesGrid}>
-              {PACKAGES_UI.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className={`${styles.packageCard} ${pkg.popular ? styles.popular : ""}`}
-                  style={{ borderColor: pkg.popular ? pkg.color : undefined }}
-                >
-                  {pkg.popular && (
-                    <div className={styles.popularBadge} style={{ background: pkg.color }}>
-                      ⭐ Phổ biến nhất
-                    </div>
-                  )}
-                  <div className={styles.pkgLabel} style={{ color: pkg.color }}>{pkg.label}</div>
-                  <div className={styles.pkgQty}>{pkg.qty} lượt</div>
-                  <div className={styles.pkgPrice}>{pkg.price.toLocaleString("vi-VN")}đ</div>
-                  <ul className={styles.pkgFeatures}>
-                    <li>✅ Thêm {pkg.qty} lượt AI</li>
-                    <li>✅ {pkg.desc}</li>
-                    <li>✅ {pkg.savings}</li>
-                    <li>✅ Lượt không bao giờ hết hạn</li>
-                  </ul>
-                  <button
-                    className={styles.buyBtn}
-                    style={{ background: pkg.color }}
-                    onClick={() => handleBuy(pkg)}
-                    disabled={buying === pkg.id}
+              {packages.map((pkg, idx) => {
+                const popular = idx === 1; // Highlight the 2nd package or modify logic based on pkg data
+                const color = popular ? "#1cc88a" : "#4e73df";
+                return (
+                  <div
+                    key={pkg.MaGoiAi}
+                    className={`${styles.packageCard} ${popular ? styles.popular : ""}`}
+                    style={{ borderColor: popular ? color : undefined }}
                   >
-                    {buying === pkg.id ? "Đang xử lý..." : "Chọn gói này"}
-                  </button>
-                </div>
-              ))}
+                    {popular && (
+                      <div className={styles.popularBadge} style={{ background: color }}>
+                        ⭐ Phổ biến nhất
+                      </div>
+                    )}
+                    <div className={styles.pkgLabel} style={{ color: color }}>{pkg.TenGoi}</div>
+                    <div className={styles.pkgQty}>{pkg.SoLuot} lượt</div>
+                    <div className={styles.pkgPrice}>{pkg.Gia.toLocaleString("vi-VN")}đ</div>
+                    <ul className={styles.pkgFeatures}>
+                      <li>✅ Thêm {pkg.SoLuot} lượt AI</li>
+                      <li>✅ {pkg.MoTa}</li>
+                      <li>✅ Lượt không bao giờ hết hạn</li>
+                    </ul>
+                    <button
+                      className={styles.buyBtn}
+                      style={{ background: color }}
+                      onClick={() => handleBuy({ id: pkg.MaGoiAi, label: pkg.TenGoi, qty: pkg.SoLuot, price: pkg.Gia })}
+                      disabled={buying === pkg.MaGoiAi}
+                    >
+                      {buying === pkg.MaGoiAi ? "Đang xử lý..." : "Chọn gói này"}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
             {/* History table */}

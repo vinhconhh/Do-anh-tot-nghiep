@@ -44,6 +44,8 @@ class User(Base):
     RoleID = Column(Integer, ForeignKey("Roles.RoleID"))
     IsActive = Column(Integer, default=1)  # BIT
     IsDeleted = Column(Integer, default=0)  # BIT
+    ReferralCode = Column(String(20), unique=True, nullable=True)
+    ReferredBy = Column(Integer, ForeignKey("Users.UserID"), nullable=True)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
     role = relationship("Role", back_populates="users")
