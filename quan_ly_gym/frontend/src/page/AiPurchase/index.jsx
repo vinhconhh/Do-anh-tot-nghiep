@@ -118,7 +118,7 @@ export default function AiPurchase() {
                 const color = popular ? "#1cc88a" : "#4e73df";
                 return (
                   <div
-                    key={pkg.MaGoiAi}
+                    key={pkg.PackageID}
                     className={`${styles.packageCard} ${popular ? styles.popular : ""}`}
                     style={{ borderColor: popular ? color : undefined }}
                   >
@@ -127,21 +127,21 @@ export default function AiPurchase() {
                         ⭐ Phổ biến nhất
                       </div>
                     )}
-                    <div className={styles.pkgLabel} style={{ color: color }}>{pkg.TenGoi}</div>
-                    <div className={styles.pkgQty}>{pkg.SoLuot} lượt</div>
-                    <div className={styles.pkgPrice}>{pkg.Gia.toLocaleString("vi-VN")}đ</div>
+                    <div className={styles.pkgLabel} style={{ color: color }}>{pkg.Name}</div>
+                    <div className={styles.pkgQty}>{pkg.Credits} lượt</div>
+                    <div className={styles.pkgPrice}>{pkg.Price.toLocaleString("vi-VN")}đ</div>
                     <ul className={styles.pkgFeatures}>
-                      <li>✅ Thêm {pkg.SoLuot} lượt AI</li>
-                      <li>✅ {pkg.MoTa}</li>
+                      <li>✅ Thêm {pkg.Credits} lượt AI</li>
+                      <li>✅ {pkg.Description}</li>
                       <li>✅ Lượt không bao giờ hết hạn</li>
                     </ul>
                     <button
                       className={styles.buyBtn}
                       style={{ background: color }}
-                      onClick={() => handleBuy({ id: pkg.MaGoiAi, label: pkg.TenGoi, qty: pkg.SoLuot, price: pkg.Gia })}
-                      disabled={buying === pkg.MaGoiAi}
+                      onClick={() => handleBuy({ id: pkg.PackageID, label: pkg.Name, qty: pkg.Credits, price: pkg.Price })}
+                      disabled={buying === pkg.PackageID}
                     >
-                      {buying === pkg.MaGoiAi ? "Đang xử lý..." : "Chọn gói này"}
+                      {buying === pkg.PackageID ? "Đang xử lý..." : "Chọn gói này"}
                     </button>
                   </div>
                 );

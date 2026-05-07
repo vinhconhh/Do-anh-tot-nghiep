@@ -25,6 +25,11 @@ class CheckInLog(Base):
     CheckInDate = Column(Date, nullable=False)
     Points = Column(Integer, default=0)
     StreakDay = Column(Integer, default=1)
+    ExercisesCompleted = Column(Integer, default=0)
+    TotalSets = Column(Integer, default=0)
+    RPE = Column(Integer, nullable=True)
+    PTID = Column(Integer, ForeignKey("Users.UserID"), nullable=True)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", foreign_keys=[UserID])
+    pt = relationship("User", foreign_keys=[PTID])

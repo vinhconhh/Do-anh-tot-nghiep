@@ -14,7 +14,7 @@
 
 .title {
   margin: 0;
-  font-size: 1.8rem;
+  font-size: 2.0rem;
   font-weight: 800;
   color: var(--theme-text);
 }
@@ -22,7 +22,7 @@
 .sub {
   margin: 2px 0 0;
   color: var(--theme-text);
-  font-size: 1.3rem;
+  font-size: 1.5rem;
 }
 
 .nav {
@@ -39,12 +39,12 @@
   padding: 8px 12px;
   cursor: pointer;
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   &:hover { background: var(--theme-bg); }
 }
 
 .range {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--theme-text);
 }
@@ -66,14 +66,14 @@
 
 .hCell {
   padding: 12px 12px;
-  font-size: 1.35rem;
+  font-size: 1.6rem;
   font-weight: 800;
   color: var(--theme-primary);
 }
 
 .hSub {
   display: block;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--theme-text);
   margin-top: 2px;
@@ -81,7 +81,7 @@
 
 .tzCell {
   padding: 12px;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: 800;
   color: var(--theme-text);
   display: flex;
@@ -108,7 +108,7 @@
   align-items: flex-start;
   justify-content: center;
   padding-top: 6px;
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   color: var(--theme-text);
   font-weight: 800;
 }
@@ -140,13 +140,13 @@
 
 .evTitle {
   font-weight: 900;
-  font-size: 1.35rem;
+  font-size: 1.6rem;
   color: var(--theme-text-dark);
   line-height: 1.25;
 }
 .evMeta {
   margin-top: 2px;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--theme-text);
 }
@@ -162,7 +162,7 @@
   gap: 10px;
   align-items: center;
   color: var(--theme-text);
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: 700;
 }
 

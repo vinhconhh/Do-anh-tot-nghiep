@@ -12,24 +12,15 @@ router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
 @router.post("/login")
 def login(req: LoginRequest, db: Session = Depends(get_db)):
-    user = (
-        db.query(User)
-        .filter(User.Email == req.tenDangNhap, User.IsDeleted == 0)
-        .first()
-    )
-    if not user:
-        raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
-
-    if not verify_password(req.matKhau, user.PasswordHash or ""):
-        raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
+    user = db.query(User).filter(User.Email == req.tenDangNhap, User.IsDeleted == 0).first()
+    
+    if not user or not verify_password(req.matKhau, user.PasswordHash or ""):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email hoặc mật khẩu không đúng")
 
     if not user.IsActive:
-        raise HTTPException(status_code=403, detail="Tài khoản đã bị khóa")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tài khoản đã bị khóa")
 
-    role_code = ""
-    if user.role:
-        role_code = user.role.RoleCode or ""
-
+    role_code = user.role.RoleCode if user.role else ""
     token = create_access_token({"sub": str(user.UserID), "role": role_code})
 
     return {
@@ -43,25 +34,26 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     }
 
 
+def _process_referral(db: Session, referral_code: str):
+    """Xử lý mã giới thiệu và cộng điểm AI Quota cho người giới thiệu."""
+    referrer = db.query(User).filter(User.ReferralCode == referral_code.strip(), User.IsActive == 1).first()
+    if referrer:
+        if referrer.role and referrer.role.RoleCode == "MEMBER" and referrer.member_profile:
+            referrer.member_profile.AIQuota = (referrer.member_profile.AIQuota or 0) + 10
+        return referrer.UserID
+    return None
+
+
 @router.post("/register")
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.Email == req.email).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Email đã tồn tại")
+    if db.query(User).filter(User.Email == req.email).first():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email đã tồn tại")
 
     role = db.query(Role).filter(Role.RoleCode == req.vaiTro.upper()).first()
     if not role:
-        raise HTTPException(status_code=400, detail=f"Vai trò '{req.vaiTro}' không hợp lệ")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Vai trò '{req.vaiTro}' không hợp lệ")
 
-    # Kiểm tra mã giới thiệu (nếu có)
-    referred_by_id = None
-    if req.referralCode:
-        referrer = db.query(User).filter(User.ReferralCode == req.referralCode.strip(), User.IsActive == 1).first()
-        if referrer:
-            referred_by_id = referrer.UserID
-            # Thêm 10 lượt AI cho người giới thiệu nếu họ là MEMBER
-            if referrer.role and referrer.role.RoleCode == "MEMBER" and referrer.member_profile:
-                referrer.member_profile.AIQuota = (referrer.member_profile.AIQuota or 0) + 10
+    referred_by_id = _process_referral(db, req.referralCode) if req.referralCode else None
 
     new_user = User(
         FullName=req.hoTen,
@@ -76,15 +68,12 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     db.add(new_user)
     db.flush()
 
-    # Create member profile for MEMBER role
     if role.RoleCode == "MEMBER":
-        profile = MemberProfile(UserID=new_user.UserID, AIQuota=10)
-        db.add(profile)
+        db.add(MemberProfile(UserID=new_user.UserID, AIQuota=10))
 
     db.commit()
     db.refresh(new_user)
 
-    token = create_access_token({"sub": str(new_user.UserID), "role": role.RoleCode})
     return {
         "user": {
             "UserID": new_user.UserID,
@@ -92,5 +81,5 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
             "email": new_user.Email,
             "vaiTro": role.RoleCode,
         },
-        "token": token,
+        "token": create_access_token({"sub": str(new_user.UserID), "role": role.RoleCode}),
     }

@@ -1,4 +1,4 @@
-USE QLGymDB;
+﻿USE QLGymDB;
 GO
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -337,4 +337,10 @@ BEGIN CATCH
     PRINT 'Dòng: ' + CAST(ERROR_LINE() AS VARCHAR);
     THROW;
 END CATCH;
+GO
+USE QLGymDB;
+GO
+UPDATE MembershipPackages 
+SET QuyenLoi = N'["Tập không giới hạn 24/7", "Sử dụng toàn bộ thiết bị hiện đại", "Ứng dụng The Pro Gym"]' 
+WHERE MaGoi = 1;
 GO

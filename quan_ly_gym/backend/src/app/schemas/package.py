@@ -4,28 +4,28 @@ from datetime import datetime
 
 # --- Membership Package Schemas ---
 class MembershipPackageBase(BaseModel):
-    TenGoi: str
-    Gia: float
-    ThoiHan: int
-    MoTa: Optional[str] = None
-    QuyenLoi: Optional[str] = None
-    HienThi: Optional[bool] = True
-    NoiBat: Optional[bool] = False
+    Name: str
+    Price: float
+    DurationMonths: int
+    Description: Optional[str] = None
+    Benefits: Optional[str] = None
+    IsVisible: Optional[bool] = True
+    IsFeatured: Optional[bool] = False
 
 class MembershipPackageCreate(MembershipPackageBase):
     pass
 
 class MembershipPackageUpdate(BaseModel):
-    TenGoi: Optional[str] = None
-    Gia: Optional[float] = None
-    ThoiHan: Optional[int] = None
-    MoTa: Optional[str] = None
-    QuyenLoi: Optional[str] = None
-    HienThi: Optional[bool] = None
-    NoiBat: Optional[bool] = None
+    Name: Optional[str] = None
+    Price: Optional[float] = None
+    DurationMonths: Optional[int] = None
+    Description: Optional[str] = None
+    Benefits: Optional[str] = None
+    IsVisible: Optional[bool] = None
+    IsFeatured: Optional[bool] = None
 
 class MembershipPackageResponse(MembershipPackageBase):
-    MaGoi: int
+    PackageID: int
     CreatedAt: Optional[datetime]
 
     class Config:
@@ -33,24 +33,24 @@ class MembershipPackageResponse(MembershipPackageBase):
 
 # --- AI Package Schemas ---
 class AIPackageBase(BaseModel):
-    TenGoi: str
-    Gia: float
-    SoLuot: int
-    MoTa: Optional[str] = None
-    HienThi: Optional[bool] = True
+    Name: str
+    Price: float
+    Credits: int
+    Description: Optional[str] = None
+    IsVisible: Optional[bool] = True
 
 class AIPackageCreate(AIPackageBase):
     pass
 
 class AIPackageUpdate(BaseModel):
-    TenGoi: Optional[str] = None
-    Gia: Optional[float] = None
-    SoLuot: Optional[int] = None
-    MoTa: Optional[str] = None
-    HienThi: Optional[bool] = None
+    Name: Optional[str] = None
+    Price: Optional[float] = None
+    Credits: Optional[int] = None
+    Description: Optional[str] = None
+    IsVisible: Optional[bool] = None
 
 class AIPackageResponse(AIPackageBase):
-    MaGoiAi: int
+    PackageID: int
     CreatedAt: Optional[datetime]
 
     class Config:
@@ -85,4 +85,4 @@ class PromotionResponse(PromotionBase):
 
 class VerifyCodeRequest(BaseModel):
     code: str
-    package_price: Optional[float] = None # Giá tiền gói nếu tính theo phần trăm
+    package_price: Optional[float] = None

@@ -25,10 +25,13 @@ def _check_streak_reset(db: Session, streak: MemberStreak):
 
 @router.post("/checkin")
 def checkin(
+    payload: dict = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Member: check in for today."""
+    """Member: check in for today. Requires all assigned exercises to be completed."""
+    from ..models.facility import AssignedExercise
+
     today = date.today()
 
     # Check if already checked in today
@@ -38,6 +41,38 @@ def checkin(
     ).first()
     if existing:
         raise HTTPException(status_code=400, detail="Bạn đã check-in hôm nay rồi!")
+
+    # Get today's assigned exercises
+    today_exercises = (
+        db.query(AssignedExercise)
+        .filter(
+            AssignedExercise.MemberID == current_user.UserID,
+            AssignedExercise.AssignedDate == today,
+        )
+        .all()
+    )
+
+    # No exercises assigned → cannot check-in
+    if len(today_exercises) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="no_exercises"
+        )
+
+    # Check all exercises completed
+    incomplete = [e for e in today_exercises if e.Status != "Completed"]
+    if incomplete:
+        names = [e.exercise.AssignmentName or e.exercise.Name if e.exercise else f"ID {e.ExerciseID}" for e in incomplete]
+        raise HTTPException(
+            status_code=400,
+            detail=f"incomplete_exercises:{','.join(names)}"
+        )
+
+    # All exercises done — proceed with check-in
+    exercises_completed = len(today_exercises)
+    total_sets = sum(e.Sets or 0 for e in today_exercises)
+    pt_id = today_exercises[0].PTID if today_exercises else None
+    rpe = (payload or {}).get("rpe")
 
     # Get or create streak
     streak = db.query(MemberStreak).filter(
@@ -63,14 +98,41 @@ def checkin(
     points += bonus
     streak.TotalPoints += points
 
-    # Create log
+    # Create check-in log with exercise progress
     log = CheckInLog(
         UserID=current_user.UserID,
         CheckInDate=today,
         Points=points,
         StreakDay=streak.CurrentStreak,
+        ExercisesCompleted=exercises_completed,
+        TotalSets=total_sets,
+        RPE=rpe,
+        PTID=pt_id,
     )
     db.add(log)
+
+    # Also save workout log (RPE) for backward compatibility
+    from ..models.log import LogWorkout
+    from sqlalchemy import cast, Date as SADate
+    existing_log = (
+        db.query(LogWorkout)
+        .filter(
+            LogWorkout.UserID == current_user.UserID,
+            cast(LogWorkout.WorkoutDate, SADate) == today,
+        )
+        .first()
+    )
+    if existing_log:
+        existing_log.RPE = rpe
+    else:
+        from datetime import datetime
+        new_log = LogWorkout(
+            UserID=current_user.UserID,
+            WorkoutDate=datetime.utcnow(),
+            RPE=rpe,
+        )
+        db.add(new_log)
+
     db.commit()
 
     bonus_msg = f" (+{bonus} bonus chuỗi {streak.CurrentStreak} ngày!)" if bonus else ""
@@ -80,6 +142,9 @@ def checkin(
         "currentStreak": streak.CurrentStreak,
         "longestStreak": streak.LongestStreak,
         "totalPoints": streak.TotalPoints,
+        "exercisesCompleted": exercises_completed,
+        "totalSets": total_sets,
+        "reportedToPT": pt_id is not None,
     }
 
 

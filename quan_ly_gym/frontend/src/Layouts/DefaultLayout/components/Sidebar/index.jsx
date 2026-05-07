@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Logs,
@@ -46,6 +46,20 @@ export default function Sidebar() {
   const isAdmin = ["ADMIN", "MANAGER"].includes(role);
   const isMember = role === "MEMBER";
   const isPT = role === "PT";
+
+  // Check if member has an approved PT
+  const [hasApprovedPT, setHasApprovedPT] = useState(false);
+  useEffect(() => {
+    if (!isMember) return;
+    import("../../../../api/axiosClient").then(({ default: api }) => {
+      api.get("/pt-requests/my-requests")
+        .then(res => {
+          const reqs = Array.isArray(res.data) ? res.data : [];
+          setHasApprovedPT(reqs.some(r => r.status === "approved"));
+        })
+        .catch(() => {});
+    });
+  }, [isMember]);
 
   return (
     <aside
@@ -309,7 +323,7 @@ export default function Sidebar() {
               }
             >
               <HandshakeIcon className="w-[18px] h-[18px] shrink-0" />
-              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Thuê PT</span>
+              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>{hasApprovedPT ? "PT & Lớp học" : "Thuê PT"}</span>
             </NavLink>
           </>
         )}
@@ -348,6 +362,28 @@ export default function Sidebar() {
             >
               <Users className="w-[18px] h-[18px] shrink-0" />
               <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Khách hàng của tôi</span>
+            </NavLink>
+
+            <NavLink
+              to="/pt-assignments"
+              className={({ isActive }) =>
+                `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
+                }`
+              }
+            >
+              <Dumbbell className="w-[18px] h-[18px] shrink-0" />
+              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Phân bài tập</span>
+            </NavLink>
+
+            <NavLink
+              to="/training-progress"
+              className={({ isActive }) =>
+                `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
+                }`
+              }
+            >
+              <BarChart2 className="w-[18px] h-[18px] shrink-0" />
+              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Tiến độ học viên</span>
             </NavLink>
           </>
         )}

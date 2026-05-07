@@ -7,7 +7,7 @@ export default function AiPackageManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPkg, setEditingPkg] = useState(null);
   const [formData, setFormData] = useState({
-    TenGoi: "", Gia: 0, SoLuot: 10, MoTa: "", HienThi: true
+    Name: "", Price: 0, Credits: 10, Description: "", IsVisible: true
   });
 
   const fetchPackages = async () => {
@@ -27,16 +27,16 @@ export default function AiPackageManagement() {
     if (pkg) {
       setEditingPkg(pkg);
       setFormData({
-        TenGoi: pkg.TenGoi,
-        Gia: pkg.Gia,
-        SoLuot: pkg.SoLuot,
-        MoTa: pkg.MoTa || "",
-        HienThi: pkg.HienThi
+        Name: pkg.Name,
+        Price: pkg.Price,
+        Credits: pkg.Credits,
+        Description: pkg.Description || "",
+        IsVisible: pkg.IsVisible
       });
     } else {
       setEditingPkg(null);
       setFormData({
-        TenGoi: "", Gia: 0, SoLuot: 50, MoTa: "", HienThi: true
+        Name: "", Price: 0, Credits: 50, Description: "", IsVisible: true
       });
     }
     setIsModalOpen(true);
@@ -46,7 +46,7 @@ export default function AiPackageManagement() {
     e.preventDefault();
     try {
       if (editingPkg) {
-        await api.put(`/packages/ai/${editingPkg.MaGoiAi}`, formData);
+        await api.put(`/packages/ai/${editingPkg.PackageID}`, formData);
       } else {
         await api.post("/packages/ai", formData);
       }
@@ -93,18 +93,18 @@ export default function AiPackageManagement() {
           </thead>
           <tbody>
             {packages.map((pkg) => (
-              <tr key={pkg.MaGoiAi} className="border-b border-slate-700 hover:bg-slate-700/50">
-                <td className="p-4">{pkg.TenGoi}</td>
-                <td className="p-4">{pkg.Gia.toLocaleString()} đ</td>
-                <td className="p-4">{pkg.SoLuot} lượt</td>
+              <tr key={pkg.PackageID} className="border-b border-slate-700 hover:bg-slate-700/50">
+                <td className="p-4">{pkg.Name}</td>
+                <td className="p-4">{pkg.Price.toLocaleString()} đ</td>
+                <td className="p-4">{pkg.Credits} lượt</td>
                 <td className="p-4">
-                  {pkg.HienThi ? <span className="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-sm">Hiển thị</span> : <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-sm">Ẩn</span>}
+                  {pkg.IsVisible ? <span className="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-sm">Hiển thị</span> : <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-sm">Ẩn</span>}
                 </td>
                 <td className="p-4 flex items-center gap-3">
                   <button onClick={() => handleOpenModal(pkg)} className="text-sky-400 hover:text-sky-300">
                     <Edit size={18} />
                   </button>
-                  <button onClick={() => handleDelete(pkg.MaGoiAi)} className="text-red-400 hover:text-red-300">
+                  <button onClick={() => handleDelete(pkg.PackageID)} className="text-red-400 hover:text-red-300">
                     <Trash2 size={18} />
                   </button>
                 </td>
@@ -121,25 +121,25 @@ export default function AiPackageManagement() {
             <form onSubmit={handleSave} className="flex flex-col gap-4">
               <div>
                 <label className="block text-slate-400 mb-1">Tên Gói</label>
-                <input required type="text" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.TenGoi} onChange={e => setFormData({...formData, TenGoi: e.target.value})} />
+                <input required type="text" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.Name} onChange={e => setFormData({...formData, Name: e.target.value})} />
               </div>
               <div className="flex gap-4">
                 <div className="flex-1">
                   <label className="block text-slate-400 mb-1">Giá Tiền</label>
-                  <input required type="number" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.Gia} onChange={e => setFormData({...formData, Gia: e.target.value})} />
+                  <input required type="number" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.Price} onChange={e => setFormData({...formData, Price: e.target.value})} />
                 </div>
                 <div className="flex-1">
                   <label className="block text-slate-400 mb-1">Số Lượt AI</label>
-                  <input required type="number" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.SoLuot} onChange={e => setFormData({...formData, SoLuot: e.target.value})} />
+                  <input required type="number" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.Credits} onChange={e => setFormData({...formData, Credits: e.target.value})} />
                 </div>
               </div>
               <div>
                 <label className="block text-slate-400 mb-1">Mô Tả Ngắn</label>
-                <textarea rows={2} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.MoTa} onChange={e => setFormData({...formData, MoTa: e.target.value})} />
+                <textarea rows={2} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.Description} onChange={e => setFormData({...formData, Description: e.target.value})} />
               </div>
               <div>
                 <label className="flex items-center gap-2 text-slate-300 cursor-pointer">
-                  <input type="checkbox" checked={formData.HienThi} onChange={e => setFormData({...formData, HienThi: e.target.checked})} className="accent-sky-500 w-4 h-4" />
+                  <input type="checkbox" checked={formData.IsVisible} onChange={e => setFormData({...formData, IsVisible: e.target.checked})} className="accent-sky-500 w-4 h-4" />
                   Hiển thị trên mục Mua Lượt AI
                 </label>
               </div>

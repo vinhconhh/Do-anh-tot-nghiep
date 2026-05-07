@@ -5,25 +5,25 @@ from ..database import Base
 class MembershipPackage(Base):
     __tablename__ = "MembershipPackages"
 
-    MaGoi = Column(Integer, primary_key=True, autoincrement=True)
-    TenGoi = Column(String(100), nullable=False)
-    Gia = Column(Numeric(18, 2), nullable=False)
-    ThoiHan = Column(Integer, nullable=False)
-    MoTa = Column(String(500))
-    QuyenLoi = Column(String)  # JSON string
-    HienThi = Column(Boolean, default=True)
-    NoiBat = Column(Boolean, default=False)
+    PackageID = Column(Integer, primary_key=True, autoincrement=True)
+    Name = Column(String(100), nullable=False)
+    Price = Column(Numeric(18, 2), nullable=False)
+    DurationMonths = Column(Integer, nullable=False)
+    Description = Column(String(500))
+    Benefits = Column(String)  # JSON string
+    IsVisible = Column(Boolean, default=True)
+    IsFeatured = Column(Boolean, default=False)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
 class AIPackage(Base):
     __tablename__ = "AIPackages"
 
-    MaGoiAi = Column(Integer, primary_key=True, autoincrement=True)
-    TenGoi = Column(String(100), nullable=False)
-    Gia = Column(Numeric(18, 2), nullable=False)
-    SoLuot = Column(Integer, nullable=False)
-    MoTa = Column(String(500))
-    HienThi = Column(Boolean, default=True)
+    PackageID = Column(Integer, primary_key=True, autoincrement=True)
+    Name = Column(String(100), nullable=False)
+    Price = Column(Numeric(18, 2), nullable=False)
+    Credits = Column(Integer, nullable=False)
+    Description = Column(String(500))
+    IsVisible = Column(Boolean, default=True)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
 class Promotion(Base):

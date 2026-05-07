@@ -38,7 +38,7 @@ class EquipmentResponse(EquipmentBase):
 
 class ExerciseBase(BaseModel):
     Name:         str
-    TenBaiTap:    Optional[str] = None
+    AssignmentName: Optional[str] = None
     Type:         Optional[str] = None          # Cardio, Free Weights, Machine, ...
     TargetMuscle: Optional[str] = None
     MetValue:     Optional[float] = Field(default=0.0, ge=0)
@@ -49,7 +49,7 @@ class ExerciseCreate(ExerciseBase):
 
 class ExerciseUpdate(BaseModel):
     Name:         Optional[str] = None
-    TenBaiTap:    Optional[str] = None
+    AssignmentName: Optional[str] = None
     Type:         Optional[str] = None
     TargetMuscle: Optional[str] = None
     MetValue:     Optional[float] = None

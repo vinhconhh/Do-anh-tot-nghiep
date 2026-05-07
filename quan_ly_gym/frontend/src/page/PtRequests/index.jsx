@@ -214,14 +214,14 @@ export default function PtRequests() {
   const role = (user?.vaiTro || user?.role || "").toUpperCase();
 
   const title = {
-    MEMBER: "Thuê huấn luyện viên",
+    MEMBER: "Thuê PT & Tìm lớp học",
     PT: "Yêu cầu thuê PT",
     ADMIN: "Quản lý yêu cầu thuê PT",
     MANAGER: "Quản lý yêu cầu thuê PT",
   }[role] || "Yêu cầu thuê PT";
 
   const subtitle = {
-    MEMBER: "Tìm PT phù hợp với nhu cầu tập luyện của bạn và gửi yêu cầu thuê.",
+    MEMBER: "Quản lý PT và đăng ký lớp học nhóm.",
     PT: "Xem và phản hồi các yêu cầu thuê PT từ hội viên.",
     ADMIN: "Quản lý tất cả yêu cầu thuê PT, phân công lại khi quá hạn.",
     MANAGER: "Quản lý tất cả yêu cầu thuê PT, phân công lại khi quá hạn.",

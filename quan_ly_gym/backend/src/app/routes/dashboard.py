@@ -105,16 +105,17 @@ def get_recent_members(
     if not member_role:
         return []
 
-    members = (
-        db.query(User)
+    members_with_profiles = (
+        db.query(User, MemberProfile)
+        .outerjoin(MemberProfile, User.UserID == MemberProfile.UserID)
         .filter(User.RoleID == member_role.RoleID, User.IsDeleted == 0)
         .order_by(User.CreatedAt.desc())
         .limit(5)
         .all()
     )
+    
     results = []
-    for m in members:
-        profile = db.query(MemberProfile).filter(MemberProfile.UserID == m.UserID).first()
+    for m, profile in members_with_profiles:
         initials = "".join([w[0] for w in (m.FullName or "").split()[-2:]]).upper() or "--"
         results.append({
             "name": m.FullName,
@@ -189,16 +190,16 @@ def update_member_metrics(
 ):
     profile = db.query(MemberProfile).filter(MemberProfile.UserID == current_user.UserID).first()
     if profile:
-        if metrics.height is not None and metrics.height > 0:
+        if metrics.height and metrics.height > 0:
             profile.Height = metrics.height
-        if metrics.weight is not None and metrics.weight > 0:
+        if metrics.weight and metrics.weight > 0:
             profile.Weight = metrics.weight
     
     # Calculate BMI
     bmi = None
-    height_m = (profile.Height / 100) if profile and profile.Height and profile.Height > 0 else (metrics.height / 100 if metrics.height and metrics.height > 0 else None)
-    if height_m and metrics.weight and metrics.weight > 0:
-        bmi = metrics.weight / (height_m ** 2)
+    height_to_use = metrics.height or (profile.Height if profile else None)
+    if height_to_use and height_to_use > 0 and metrics.weight and metrics.weight > 0:
+        bmi = metrics.weight / ((height_to_use / 100) ** 2)
 
     new_metric = BodyMetric(
         UserID=current_user.UserID,
@@ -234,7 +235,7 @@ def get_workout_log(
     for log in logs:
         date_str = log.WorkoutDate.strftime("%d/%m/%Y") if log.WorkoutDate else ""
         for detail in log.details:
-            exercise_name = detail.exercise.TenBaiTap if detail.exercise else f"ID {detail.ExerciseID}"
+            exercise_name = (getattr(detail.exercise, 'AssignmentName', None) or getattr(detail.exercise, 'Name', None) or f"ID {detail.ExerciseID}") if detail.exercise else f"ID {detail.ExerciseID}"
             sets = detail.SetNumber or 0
             reps = detail.Reps or 0
             weight = detail.Weight or 0

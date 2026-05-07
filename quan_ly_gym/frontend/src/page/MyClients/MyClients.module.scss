@@ -24,14 +24,14 @@
 }
 
 .title {
-  font-size: 1.8rem;
+  font-size: 2.0rem;
   font-weight: 800;
   color: var(--theme-text-dark);
   margin: 0;
 }
 
 .subtitle {
-  font-size: 0.95rem;
+  font-size: 1.5rem;
   color: var(--theme-text);
   margin: 4px 0 0 0;
 }
@@ -41,12 +41,12 @@
   color: var(--theme-surface);
   padding: 12px 20px;
   border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 1.5rem;
   font-weight: 600;
 }
 
 .badge strong {
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   display: block;
 }
 
@@ -62,14 +62,14 @@
 }
 
 .emptyState p {
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   font-weight: 500;
   margin: 0 0 8px 0;
 }
 
 .emptyState small {
   display: block;
-  font-size: 0.9rem;
+  font-size: 1.4rem;
   color: #adb5bd;
 }
 
@@ -117,7 +117,7 @@
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 8px 12px 8px 40px;
-  font-size: 0.9rem;
+  font-size: 1.5rem;
   transition: border-color 0.2s;
 }
 
@@ -171,14 +171,14 @@
 .clientName {
   font-weight: 600;
   color: var(--theme-text-dark);
-  font-size: 0.95rem;
+  font-size: 1.5rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .clientGoal {
-  font-size: 0.8rem;
+  font-size: 1.4rem;
   color: var(--theme-text);
   white-space: nowrap;
   overflow: hidden;
@@ -213,13 +213,13 @@
 }
 
 .profileName {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
 }
 
 .profileEmail {
-  font-size: 0.9rem;
+  font-size: 1.4rem;
   opacity: 0.9;
   margin: 4px 0 0 0;
 }
@@ -229,7 +229,7 @@
 }
 
 .sectionTitle {
-  font-size: 0.95rem;
+  font-size: 1.4rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -247,7 +247,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 0.9rem;
+  font-size: 1.5rem;
 }
 
 .infoLabel {
@@ -278,7 +278,7 @@
 }
 
 .statLabel {
-  font-size: 0.8rem;
+  font-size: 1.3rem;
   opacity: 0.85;
   margin-bottom: 6px;
   text-transform: uppercase;
@@ -286,7 +286,7 @@
 }
 
 .statVal {
-  font-size: 1.5rem;
+  font-size: 1.7rem;
   font-weight: 700;
 }
 

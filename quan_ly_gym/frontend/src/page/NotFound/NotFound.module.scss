@@ -14,9 +14,9 @@
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
 }
 .icon { margin-bottom: 16px; }
-.code { font-size: 6rem; font-weight: 900; color: var(--theme-primary); line-height: 1; margin-bottom: 8px; }
-.title { font-size: 2rem; font-weight: 700; color: var(--theme-text-dark); margin-bottom: 8px; }
-.sub { font-size: 1.4rem; color: var(--theme-text); margin-bottom: 24px; }
+.code { font-size: 6.2rem; font-weight: 900; color: var(--theme-primary); line-height: 1; margin-bottom: 8px; }
+.title { font-size: 2.2rem; font-weight: 700; color: var(--theme-text-dark); margin-bottom: 8px; }
+.sub { font-size: 1.6rem; color: var(--theme-text); margin-bottom: 24px; }
 .btn {
   display: inline-flex;
   align-items: center;
@@ -26,7 +26,7 @@
   border: 0;
   padding: 11px 22px;
   border-radius: 10px;
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   font-weight: 600;
   cursor: pointer;
   &:hover { background: var(--theme-primary-hover); }

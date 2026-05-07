@@ -27,6 +27,8 @@ import NotFound from "../../page/NotFound";
 import EquipmentManagement from "../../page/EquipmentManagement";
 import GymExerciseManagement from "../../page/GymExerciseManagement";
 import GymClassManagement from "../../page/GymClassManagement";
+import PTAssignments from "../../page/PTAssignments";
+import TrainingProgress from "../../page/TrainingProgress";
 
 function AppRoutes() {
   const { token, user } = useContext(AuthContext) ?? {};
@@ -167,6 +169,22 @@ function AppRoutes() {
               element={
                 <RequireRole roles={["PT"]}>
                   <MyClients />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/pt-assignments"
+              element={
+                <RequireRole roles={["PT"]}>
+                  <PTAssignments />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/training-progress"
+              element={
+                <RequireRole roles={["PT"]}>
+                  <TrainingProgress />
                 </RequireRole>
               }
             />

@@ -40,6 +40,14 @@ export default function MemberView() {
   const [sending, setSending] = useState(false);
   const [q, setQ] = useState("");
   const [classDate, setClassDate] = useState(new Date().toISOString().slice(0, 10));
+  const [experienceLevel, setExperienceLevel] = useState("new");
+  const [bodyNote, setBodyNote] = useState("");
+
+  // Check if member has an approved PT
+  const hasApprovedPT = useMemo(
+    () => myReqs.some(r => r.status === "approved"),
+    [myReqs]
+  );
 
   const fetchPT = useCallback(async () => {
     setLoading(true);
@@ -64,6 +72,14 @@ export default function MemberView() {
   }, [classDate]);
 
   useEffect(() => { fetchPT(); }, [fetchPT]);
+
+  // Switch default tab to classes when PT is approved and still on browse
+  useEffect(() => {
+    if (hasApprovedPT && tab === "browse") {
+      setTab("classes");
+    }
+  }, [hasApprovedPT, tab]);
+
   useEffect(() => {
     if (tab === "classes" || tab === "myClasses") fetchClasses();
   }, [tab, fetchClasses]);
@@ -77,8 +93,8 @@ export default function MemberView() {
   const handleSend = async () => {
     if (!modal) return; setSending(true);
     try {
-      await ptApi.create(modal.UserID, goal, note);
-      alert("Đã gửi yêu cầu thuê PT!"); setModal(null); setGoal(""); setNote(""); fetchPT();
+      await ptApi.create(modal.UserID, goal, note, experienceLevel, bodyNote);
+      alert("Đã gửi yêu cầu thuê PT!"); setModal(null); setGoal(""); setNote(""); setExperienceLevel("new"); setBodyNote(""); fetchPT();
     } catch (e) { alert("Lỗi: " + (e.data?.detail || e.message)); }
     finally { setSending(false); }
   };
@@ -96,16 +112,19 @@ export default function MemberView() {
 
   if (loading) return <div className={styles.loadingState}><Loader2 className={styles.spinner}/><span>Đang tải...</span></div>;
 
+  // Build tabs dynamically: hide "Tìm PT" if member already has approved PT
+  const allTabs = [
+    ...(!hasApprovedPT ? [{ key: "browse", icon: <UserCog size={16}/>, label: "Tìm PT" }] : []),
+    { key: "myRequests", icon: <Clock size={16}/>,    label: `Yêu cầu PT (${myReqs.length})` },
+    { key: "classes",    icon: <Calendar size={16}/>, label: "Đăng ký Lớp học" },
+    { key: "myClasses",  icon: <Users size={16}/>,    label: `Lớp của tôi (${myClasses.length})` },
+  ];
+
   return (
     <>
       {/* Tabs */}
       <div className={styles.tabs}>
-        {[
-          { key: "browse",     icon: <UserCog size={16}/>,  label: "Tìm PT" },
-          { key: "myRequests", icon: <Clock size={16}/>,    label: `Yêu cầu PT (${myReqs.length})` },
-          { key: "classes",    icon: <Calendar size={16}/>, label: "Đăng ký Lớp học" },
-          { key: "myClasses",  icon: <Users size={16}/>,    label: `Lớp của tôi (${myClasses.length})` },
-        ].map(t => (
+        {allTabs.map(t => (
           <button key={t.key} className={`${styles.tabBtn} ${tab === t.key ? styles.tabActive : ""}`} onClick={() => setTab(t.key)}>
             {t.icon} {t.label}
           </button>
@@ -171,7 +190,7 @@ export default function MemberView() {
       {tab === "classes" && (
         <>
           <div style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
-            <label style={{ color: "#94a3b8", fontSize: "0.9rem" }}>Chọn ngày:</label>
+            <label style={{ color: "#94a3b8", fontSize: "1.1rem" }}>Chọn ngày:</label>
             <input type="date" value={classDate} onChange={e => setClassDate(e.target.value)}
               style={{ padding: "8px 12px", background: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", colorScheme: "dark" }}/>
           </div>
@@ -187,11 +206,11 @@ export default function MemberView() {
                       <div key={c.ClassID} style={{ background: "#1e293b", border: `1px solid ${c.IsEnrolled ? "#1cc88a55" : "#334155"}`, borderRadius: 14, padding: 20 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                           <strong style={{ color: "#f8fafc" }}>{c.Name}</strong>
-                          {c.IsEnrolled && <span style={{ background: "#1cc88a22", color: "#1cc88a", padding: "2px 8px", borderRadius: 20, fontSize: "0.7rem", fontWeight: 700 }}>✓ Đã đăng ký</span>}
+                          {c.IsEnrolled && <span style={{ background: "#1cc88a22", color: "#1cc88a", padding: "2px 8px", borderRadius: 20, fontSize: "0.9rem", fontWeight: 700 }}>✓ Đã đăng ký</span>}
                         </div>
-                        <div style={{ color: "#94a3b8", fontSize: "0.82rem", marginBottom: 4 }}>🎓 {c.InstructorName || "Chưa phân công"}</div>
-                        <div style={{ color: "#64748b", fontSize: "0.8rem", marginBottom: 4 }}>🕐 {fmtTime(c.StartTime)} – {fmtTime(c.EndTime)}</div>
-                        <div style={{ color: "#64748b", fontSize: "0.8rem", marginBottom: 10 }}>📍 {c.StudioRoom || "—"} · {c.CurrentEnrolled}/{c.MaxCapacity} chỗ</div>
+                        <div style={{ color: "#94a3b8", fontSize: "1.0rem", marginBottom: 4 }}>🎓 {c.InstructorName || "Chưa phân công"}</div>
+                        <div style={{ color: "#64748b", fontSize: "1.0rem", marginBottom: 4 }}>🕐 {fmtTime(c.StartTime)} – {fmtTime(c.EndTime)}</div>
+                        <div style={{ color: "#64748b", fontSize: "1.0rem", marginBottom: 10 }}>📍 {c.StudioRoom || "—"} · {c.CurrentEnrolled}/{c.MaxCapacity} chỗ</div>
                         <div style={{ height: 4, background: "#334155", borderRadius: 4, marginBottom: 12, overflow: "hidden" }}>
                           <div style={{ height: "100%", width: `${pct}%`, background: full ? "#e74a3b" : "#1cc88a" }}/>
                         </div>
@@ -219,11 +238,11 @@ export default function MemberView() {
                 {myClasses.map(c => (
                   <div key={c.ClassID} style={{ background: "#1e293b", border: "1px solid #1cc88a33", borderRadius: 14, padding: 20 }}>
                     <strong style={{ color: "#f8fafc", display: "block", marginBottom: 8 }}>{c.Name}</strong>
-                    <div style={{ color: "#94a3b8", fontSize: "0.85rem", marginBottom: 4 }}>🎓 {c.InstructorName || "Chưa phân công"}</div>
-                    <div style={{ color: "#64748b", fontSize: "0.8rem", marginBottom: 4 }}>
+                    <div style={{ color: "#94a3b8", fontSize: "1.1rem", marginBottom: 4 }}>🎓 {c.InstructorName || "Chưa phân công"}</div>
+                    <div style={{ color: "#64748b", fontSize: "1.0rem", marginBottom: 4 }}>
                       🕐 {new Date(c.StartTime).toLocaleDateString("vi-VN")} · {fmtTime(c.StartTime)} – {fmtTime(c.EndTime)}
                     </div>
-                    <div style={{ color: "#64748b", fontSize: "0.8rem", marginBottom: 12 }}>📍 {c.StudioRoom || "—"} · Đăng ký: {c.EnrolledAt}</div>
+                    <div style={{ color: "#64748b", fontSize: "1.0rem", marginBottom: 12 }}>📍 {c.StudioRoom || "—"} · Đăng ký: {c.EnrolledAt}</div>
                     <button onClick={() => handleUnenroll(c.ClassID)} style={{ width: "100%", padding: "8px", background: "#e74a3b22", color: "#e74a3b", border: "1px solid #e74a3b44", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}>
                       Hủy đăng ký
                     </button>
@@ -243,6 +262,39 @@ export default function MemberView() {
             </div>
             <label>Nhu cầu tập luyện</label>
             <textarea value={goal} onChange={e => setGoal(e.target.value)} placeholder="VD: Giảm mỡ, tăng cơ..." rows={3}/>
+
+            <label>Trình độ tập luyện</label>
+            <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+              {[
+                { value: "new", label: "🆕 Người mới", color: "#1cc88a" },
+                { value: "experienced", label: "💪 Đã từng tập", color: "#36b9cc" },
+                { value: "other", label: "📝 Khác", color: "#f6c23e" },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setExperienceLevel(opt.value)}
+                  style={{
+                    flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: "1.1rem",
+                    background: experienceLevel === opt.value ? opt.color + "22" : "#0f172a",
+                    color: experienceLevel === opt.value ? opt.color : "#64748b",
+                    border: `2px solid ${experienceLevel === opt.value ? opt.color : "#334155"}`,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {experienceLevel === "other" && (
+              <>
+                <label>Mô tả tình trạng cơ thể</label>
+                <textarea value={bodyNote} onChange={e => setBodyNote(e.target.value)}
+                  placeholder="Mô tả tình trạng cơ thể, tiền sử chấn thương, bệnh lý..."
+                  rows={3} />
+              </>
+            )}
+
             <label>Ghi chú thêm</label>
             <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Thời gian ưa thích..." rows={2}/>
             <div className={styles.modalActions}>

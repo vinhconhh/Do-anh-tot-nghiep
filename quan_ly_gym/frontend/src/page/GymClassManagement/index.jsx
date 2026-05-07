@@ -16,21 +16,21 @@ function toInputLocal(dt) {
   if (!dt) return "";
   const d = new Date(dt);
   const pad = n => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export default function GymClassManagement() {
-  const [items, setItems]           = useState([]);
+  const [items, setItems] = useState([]);
   const [instructors, setInstructors] = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [modalOpen, setModalOpen]   = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
   const [membersModal, setMembersModal] = useState(null); // { class }
   const [classMembersData, setClassMembersData] = useState([]);
-  const [editing, setEditing]       = useState(null);
-  const [form, setForm]             = useState(EMPTY_FORM);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().slice(0, 10));
-  const [viewAll, setViewAll]       = useState(false);
-  const [saving, setSaving]         = useState(false);
+  const [viewAll, setViewAll] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -40,7 +40,7 @@ export default function GymClassManagement() {
         : await api.get(`/classes?date_filter=${dateFilter}`);
       setItems(Array.isArray(res.data) ? res.data : []);
     } catch { setItems([]); }
-    finally  { setLoading(false); }
+    finally { setLoading(false); }
   };
 
   const fetchInstructors = async () => {
@@ -92,7 +92,7 @@ export default function GymClassManagement() {
     };
     try {
       if (editing) await api.put(`/classes/${editing.ClassID}`, payload);
-      else         await api.post("/classes", payload);
+      else await api.post("/classes", payload);
       setModalOpen(false); fetchItems();
     } catch { alert("Lưu thất bại! Kiểm tra EndTime phải sau StartTime."); }
     finally { setSaving(false); }
@@ -108,18 +108,18 @@ export default function GymClassManagement() {
   const totalCapacity = items.reduce((s, c) => s + (c.MaxCapacity || 0), 0);
 
   return (
-    <div style={{ padding: "24px", minHeight: "100vh", background: "#0f172a", color: "#e2e8f0" }}>
+    <div style={{ padding: "24px", minHeight: "100vh", background: "var(--theme-bg)", color: "var(--theme-text-dark)" }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#f8fafc", margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
+          <h1 style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--theme-text-dark)", margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
             <Calendar size={26} color="#f6c23e" /> Quản Lý Lớp Học Nhóm
           </h1>
-          <p style={{ color: "#64748b", margin: "4px 0 0", fontSize: "0.9rem" }}>
+          <p style={{ color: "var(--theme-text)", margin: "4px 0 0", fontSize: "1.5rem" }}>
             {items.length} lớp — {totalEnrolled}/{totalCapacity} học viên đăng ký
           </p>
         </div>
-        <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#f6c23e,#d4a017)", color: "#0f172a", border: "none", borderRadius: 10, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>
+        <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#f6c23e,#d4a017)", color: "var(--theme-text-dark)", border: "none", borderRadius: 10, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>
           <Plus size={18} /> Tạo Lớp Mới
         </button>
       </div>
@@ -127,14 +127,14 @@ export default function GymClassManagement() {
       {/* Summary Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 22 }}>
         {[
-          { label: "Lớp hiển thị", val: items.length, color: "#f6c23e", icon: <Calendar size={22}/> },
-          { label: "Tổng học viên", val: `${totalEnrolled}/${totalCapacity}`, color: "#1cc88a", icon: <Users size={22}/> },
-          { label: "Lớp đã đầy", val: items.filter(c => c.CurrentEnrolled >= c.MaxCapacity).length, color: "#e74a3b", icon: <Clock size={22}/> },
+          { label: "Lớp hiển thị", val: items.length, color: "#f6c23e", icon: <Calendar size={22} /> },
+          { label: "Tổng học viên", val: `${totalEnrolled}/${totalCapacity}`, color: "#1cc88a", icon: <Users size={22} /> },
+          { label: "Lớp đã đầy", val: items.filter(c => c.CurrentEnrolled >= c.MaxCapacity).length, color: "#e74a3b", icon: <Clock size={22} /> },
         ].map(c => (
-          <div key={c.label} style={{ background: "#1e293b", borderRadius: 12, padding: "18px 20px", border: `1px solid ${c.color}33`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div key={c.label} style={{ background: "var(--theme-surface)", borderRadius: 12, padding: "18px 20px", border: `1px solid ${c.color}33`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ color: "#64748b", fontSize: "0.8rem", marginBottom: 4 }}>{c.label}</div>
-              <div style={{ color: c.color, fontSize: "1.6rem", fontWeight: 800 }}>{c.val}</div>
+              <div style={{ color: "var(--theme-text)", fontSize: "1.3rem", marginBottom: 4 }}>{c.label}</div>
+              <div style={{ color: c.color, fontSize: "1.8rem", fontWeight: 800 }}>{c.val}</div>
             </div>
             <div style={{ color: c.color, opacity: 0.5 }}>{c.icon}</div>
           </div>
@@ -144,67 +144,67 @@ export default function GymClassManagement() {
       {/* Filters */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20, alignItems: "center", flexWrap: "wrap" }}>
         <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} disabled={viewAll}
-          style={{ padding: "9px 14px", background: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", cursor: viewAll ? "not-allowed" : "pointer", opacity: viewAll ? 0.5 : 1 }} />
-        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", color: "#94a3b8", fontSize: "0.9rem" }}>
+          style={{ padding: "9px 14px", background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", cursor: viewAll ? "not-allowed" : "pointer", opacity: viewAll ? 0.5 : 1 }} />
+        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", color: "var(--theme-text)", fontSize: "1.5rem" }}>
           <input type="checkbox" checked={viewAll} onChange={e => setViewAll(e.target.checked)} style={{ accentColor: "#f6c23e", width: 16, height: 16 }} />
           Xem tất cả lớp học
         </label>
       </div>
 
       {/* Table */}
-      <div style={{ background: "#1e293b", borderRadius: 14, border: "1px solid #334155", overflow: "auto" }}>
+      <div style={{ background: "var(--theme-surface)", borderRadius: 14, border: "1px solid var(--theme-border)", overflow: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
           <thead>
-            <tr style={{ background: "#0f172a" }}>
+            <tr style={{ background: "var(--theme-bg)" }}>
               {["Tên lớp", "Huấn luyện viên", "Phòng", "Bắt đầu", "Kết thúc", "Học viên", "Trạng thái", "Hành động"].map(h => (
-                <th key={h} style={{ padding: "13px 16px", textAlign: "left", fontSize: "0.8rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
+                <th key={h} style={{ padding: "13px 16px", textAlign: "left", fontSize: "1.3rem", fontWeight: 700, color: "var(--theme-text)", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={8} style={{ textAlign: "center", padding: 40, color: "#64748b" }}>Đang tải...</td></tr>}
-            {!loading && items.length === 0 && <tr><td colSpan={8} style={{ textAlign: "center", padding: 40, color: "#64748b" }}>Không có lớp học nào</td></tr>}
+            {loading && <tr><td colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--theme-text)" }}>Đang tải...</td></tr>}
+            {!loading && items.length === 0 && <tr><td colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--theme-text)" }}>Không có lớp học nào</td></tr>}
             {items.map((item) => {
               const full = item.CurrentEnrolled >= item.MaxCapacity;
-              const pct  = item.MaxCapacity > 0 ? Math.round(item.CurrentEnrolled / item.MaxCapacity * 100) : 0;
+              const pct = item.MaxCapacity > 0 ? Math.round(item.CurrentEnrolled / item.MaxCapacity * 100) : 0;
               return (
-                <tr key={item.ClassID} style={{ borderTop: "1px solid #1e2d3d" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#243044"}
+                <tr key={item.ClassID} style={{ borderTop: "1px solid var(--theme-border)" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "var(--theme-bg)"}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <td style={{ padding: "13px 16px", fontWeight: 700, color: "#f1f5f9" }}>{item.Name}</td>
+                  <td style={{ padding: "13px 16px", fontWeight: 700, color: "var(--theme-text-dark)" }}>{item.Name}</td>
                   <td style={{ padding: "13px 16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(item.InstructorName || "?")}&background=4e73df&color=fff&size=28`}
                         alt="" style={{ width: 28, height: 28, borderRadius: "50%" }} />
                       <div>
-                        <div style={{ color: "#e2e8f0", fontWeight: 600, fontSize: "0.88rem" }}>{item.InstructorName || "Chưa phân công"}</div>
-                        {item.InstructorSpecialty && <div style={{ color: "#64748b", fontSize: "0.75rem" }}>{item.InstructorSpecialty}</div>}
+                        <div style={{ color: "var(--theme-text-dark)", fontWeight: 600, fontSize: "1.5rem" }}>{item.InstructorName || "Chưa phân công"}</div>
+                        {item.InstructorSpecialty && <div style={{ color: "var(--theme-text)", fontSize: "1.4rem" }}>{item.InstructorSpecialty}</div>}
                       </div>
                     </div>
                   </td>
                   <td style={{ padding: "13px 16px" }}>
-                    <span style={{ background: "#f6c23e22", color: "#f6c23e", padding: "3px 10px", borderRadius: 20, fontSize: "0.78rem", fontWeight: 600 }}>{item.StudioRoom || "—"}</span>
+                    <span style={{ background: "#f6c23e22", color: "#f6c23e", padding: "3px 10px", borderRadius: 20, fontSize: "1.3rem", fontWeight: 600 }}>{item.StudioRoom || "—"}</span>
                   </td>
-                  <td style={{ padding: "13px 16px", color: "#e2e8f0", fontSize: "0.88rem", whiteSpace: "nowrap" }}>{fmtDate(item.StartTime)}</td>
-                  <td style={{ padding: "13px 16px", color: "#e2e8f0", fontSize: "0.88rem", whiteSpace: "nowrap" }}>{fmtDate(item.EndTime)}</td>
+                  <td style={{ padding: "13px 16px", color: "var(--theme-text-dark)", fontSize: "1.5rem", whiteSpace: "nowrap" }}>{fmtDate(item.StartTime)}</td>
+                  <td style={{ padding: "13px 16px", color: "var(--theme-text-dark)", fontSize: "1.5rem", whiteSpace: "nowrap" }}>{fmtDate(item.EndTime)}</td>
                   <td style={{ padding: "13px 16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontWeight: 700, color: full ? "#e74a3b" : "#1cc88a" }}>{item.CurrentEnrolled}/{item.MaxCapacity}</span>
-                      <div style={{ width: 50, height: 5, background: "#334155", borderRadius: 4, overflow: "hidden" }}>
-                        <div style={{ width: `${pct}%`, height: "100%", background: full ? "#e74a3b" : "#1cc88a", transition: "width 0.3s" }}/>
+                      <div style={{ width: 50, height: 5, background: "var(--theme-bg)", borderRadius: 4, overflow: "hidden" }}>
+                        <div style={{ width: `${pct}%`, height: "100%", background: full ? "#e74a3b" : "#1cc88a", transition: "width 0.3s" }} />
                       </div>
                     </div>
                   </td>
                   <td style={{ padding: "13px 16px" }}>
-                    <span style={{ display: "inline-block", padding: "4px 12px", borderRadius: 20, fontSize: "0.78rem", fontWeight: 600, background: full ? "#e74a3b22" : "#1cc88a22", color: full ? "#e74a3b" : "#1cc88a", border: `1px solid ${full ? "#e74a3b" : "#1cc88a"}44` }}>
+                    <span style={{ display: "inline-block", padding: "4px 12px", borderRadius: 20, fontSize: "1.3rem", fontWeight: 600, background: full ? "#e74a3b22" : "#1cc88a22", color: full ? "#e74a3b" : "#1cc88a", border: `1px solid ${full ? "#e74a3b" : "#1cc88a"}44` }}>
                       {full ? "Đã đầy" : `Còn ${item.AvailableSlots} chỗ`}
                     </span>
                   </td>
                   <td style={{ padding: "13px 16px" }}>
                     <div style={{ display: "flex", gap: 6 }}>
-                      <button onClick={() => openMembers(item)} title="Xem học viên" style={{ background: "#4e73df22", color: "#a5b4fc", border: "1px solid #4e73df44", borderRadius: 7, padding: "6px 10px", cursor: "pointer" }}><Eye size={14}/></button>
-                      <button onClick={() => openEdit(item)} style={{ background: "#36b9cc22", color: "#36b9cc", border: "1px solid #36b9cc44", borderRadius: 7, padding: "6px 10px", cursor: "pointer" }}><Edit size={14}/></button>
-                      <button onClick={() => handleDelete(item.ClassID)} style={{ background: "#e74a3b22", color: "#e74a3b", border: "1px solid #e74a3b44", borderRadius: 7, padding: "6px 10px", cursor: "pointer" }}><Trash2 size={14}/></button>
+                      <button onClick={() => openMembers(item)} title="Xem học viên" style={{ background: "#4e73df22", color: "#a5b4fc", border: "1px solid #4e73df44", borderRadius: 7, padding: "6px 10px", cursor: "pointer" }}><Eye size={14} /></button>
+                      <button onClick={() => openEdit(item)} style={{ background: "#36b9cc22", color: "#36b9cc", border: "1px solid #36b9cc44", borderRadius: 7, padding: "6px 10px", cursor: "pointer" }}><Edit size={14} /></button>
+                      <button onClick={() => handleDelete(item.ClassID)} style={{ background: "#e74a3b22", color: "#e74a3b", border: "1px solid #e74a3b44", borderRadius: 7, padding: "6px 10px", cursor: "pointer" }}><Trash2 size={14} /></button>
                     </div>
                   </td>
                 </tr>
@@ -217,65 +217,92 @@ export default function GymClassManagement() {
       {/* Create/Edit Modal */}
       {modalOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-          <div style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: 28, width: "100%", maxWidth: 560, boxShadow: "0 25px 50px rgba(0,0,0,0.5)", maxHeight: "90vh", overflowY: "auto" }}>
-            <h2 style={{ color: "#f8fafc", fontWeight: 800, marginBottom: 22, fontSize: "1.2rem" }}>
+          <div style={{ background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 560, boxShadow: "0 25px 50px rgba(0,0,0,0.5)", maxHeight: "90vh", overflowY: "auto" }}>
+            <h2 style={{ color: "var(--theme-text-dark)", fontWeight: 800, marginBottom: 22, fontSize: "1.4rem" }}>
               {editing ? "✏️ Sửa lớp học" : "➕ Tạo lớp học mới"}
             </h2>
             <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
-                <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: 5 }}>Tên lớp học *</label>
+                <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>Tên lớp học *</label>
                 <input required value={form.Name} onChange={e => setForm(p => ({ ...p, Name: e.target.value }))}
                   placeholder="Yoga, Zumba, Pilates..."
-                  style={{ width: "100%", padding: "9px 12px", background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", outline: "none", boxSizing: "border-box" }} />
+                  style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", outline: "none", boxSizing: "border-box" }} />
               </div>
 
-              {/* Instructor Dropdown */}
+              {/* Instructor Dropdown — linked to Trainer Management data */}
               <div>
-                <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: 5 }}>
+                <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>
                   <UserCog size={13} style={{ display: "inline", marginRight: 4 }} />Huấn luyện viên (PT)
                 </label>
-                <select value={form.InstructorID} onChange={e => setForm(p => ({ ...p, InstructorID: e.target.value }))}
-                  style={{ width: "100%", padding: "9px 12px", background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", boxSizing: "border-box" }}>
+                <select value={form.InstructorID} onChange={e => {
+                  const id = e.target.value;
+                  setForm(p => ({ ...p, InstructorID: id, InstructorName: "" }));
+                }}
+                  style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", boxSizing: "border-box" }}>
                   <option value="">-- Chưa phân công --</option>
                   {instructors.map(pt => (
                     <option key={pt.UserID} value={pt.UserID}>
-                      {pt.FullName}{pt.Specialty ? ` — ${pt.Specialty}` : ""} ({pt.Score}đ)
+                      {pt.FullName}{pt.Specialty ? ` — ${pt.Specialty}` : ""}{pt.ExperienceYears ? ` · ${pt.ExperienceYears} năm KN` : ""} ({pt.Score}đ)
                     </option>
                   ))}
                 </select>
+                {/* Show selected PT info card */}
+                {form.InstructorID && (() => {
+                  const sel = instructors.find(i => String(i.UserID) === String(form.InstructorID));
+                  if (!sel) return null;
+                  return (
+                    <div style={{ marginTop: 8, padding: "10px 14px", background: "linear-gradient(135deg, #4e73df11, #1cc88a11)", border: "1px solid #4e73df33", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
+                      <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(sel.FullName)}&background=4e73df&color=fff&size=36`}
+                        alt="" style={{ width: 36, height: 36, borderRadius: "50%", flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, color: "var(--theme-text-dark)", fontSize: "1.4rem" }}>{sel.FullName}</div>
+                        <div style={{ color: "var(--theme-text)", fontSize: "1.25rem", display: "flex", flexWrap: "wrap", gap: "4px 10px" }}>
+                          {sel.Specialty && <span>🏋️ {sel.Specialty}</span>}
+                          {sel.ExperienceYears > 0 && <span>📅 {sel.ExperienceYears} Năm KN</span>}
+                          {sel.Certifications && <span>🎓 {sel.Certifications}</span>}
+                          <span>⭐ {sel.Score}đ</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {/* Fallback: manual instructor name input */}
                 {!form.InstructorID && (
                   <div style={{ marginTop: 6 }}>
                     <input value={form.InstructorName} onChange={e => setForm(p => ({ ...p, InstructorName: e.target.value }))}
-                      placeholder="Hoặc nhập tên HLV bên ngoài..."
-                      style={{ width: "100%", padding: "9px 12px", background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", outline: "none", boxSizing: "border-box", fontSize: "0.88rem" }} />
+                      placeholder="Hoặc nhập tên HLV bên ngoài hệ thống..."
+                      style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px dashed var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", outline: "none", boxSizing: "border-box", fontSize: "1.4rem" }} />
+                    <div style={{ fontSize: "1.2rem", color: "var(--theme-text)", marginTop: 4, opacity: 0.7 }}>
+                      💡 Chọn HLV từ dropdown ở trên để liên kết tự động với hệ thống quản lý HLV
+                    </div>
                   </div>
                 )}
               </div>
 
               <div style={{ display: "flex", gap: 12 }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: 5 }}>Phòng tập</label>
+                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>Phòng tập</label>
                   <input value={form.StudioRoom} placeholder="Studio 1, Studio 2..." onChange={e => setForm(p => ({ ...p, StudioRoom: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", outline: "none", boxSizing: "border-box" }} />
+                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", outline: "none", boxSizing: "border-box" }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: 5 }}>Sức chứa tối đa</label>
+                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>Sức chứa tối đa</label>
                   <input type="number" min="1" value={form.MaxCapacity} onChange={e => setForm(p => ({ ...p, MaxCapacity: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", outline: "none", boxSizing: "border-box" }} />
+                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", outline: "none", boxSizing: "border-box" }} />
                 </div>
               </div>
               <div style={{ display: "flex", gap: 12 }}>
                 {[{ label: "Giờ bắt đầu *", key: "StartTime" }, { label: "Giờ kết thúc *", key: "EndTime" }].map(f => (
                   <div key={f.key} style={{ flex: 1 }}>
-                    <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: 5 }}>{f.label}</label>
+                    <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>{f.label}</label>
                     <input required type="datetime-local" value={form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                      style={{ width: "100%", padding: "9px 12px", background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", outline: "none", boxSizing: "border-box", colorScheme: "dark" }} />
+                      style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", outline: "none", boxSizing: "border-box", colorScheme: "auto" }} />
                   </div>
                 ))}
               </div>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
-                <button type="button" onClick={() => setModalOpen(false)} style={{ padding: "9px 20px", background: "#334155", color: "#e2e8f0", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 600 }}>Hủy</button>
-                <button type="submit" disabled={saving} style={{ padding: "9px 22px", background: "linear-gradient(135deg,#f6c23e,#d4a017)", color: "#0f172a", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 700 }}>
+                <button type="button" onClick={() => setModalOpen(false)} style={{ padding: "9px 20px", background: "var(--theme-bg)", color: "var(--theme-text-dark)", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 600 }}>Hủy</button>
+                <button type="submit" disabled={saving} style={{ padding: "9px 22px", background: "linear-gradient(135deg,#f6c23e,#d4a017)", color: "var(--theme-text-dark)", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 700 }}>
                   {saving ? "Đang lưu..." : "💾 Lưu"}
                 </button>
               </div>
@@ -287,37 +314,37 @@ export default function GymClassManagement() {
       {/* Members Modal */}
       {membersModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-          <div style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: 28, width: "100%", maxWidth: 600, maxHeight: "80vh", overflowY: "auto", boxShadow: "0 25px 50px rgba(0,0,0,0.5)" }}>
+          <div style={{ background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 600, maxHeight: "80vh", overflowY: "auto", boxShadow: "0 25px 50px rgba(0,0,0,0.5)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h2 style={{ color: "#f8fafc", fontWeight: 800, fontSize: "1.1rem", margin: 0 }}>
+              <h2 style={{ color: "var(--theme-text-dark)", fontWeight: 800, fontSize: "1.3rem", margin: 0 }}>
                 👥 Học viên lớp: <span style={{ color: "#f6c23e" }}>{membersModal.Name}</span>
               </h2>
-              <button onClick={() => setMembersModal(null)} style={{ background: "#334155", color: "#e2e8f0", border: "none", borderRadius: 8, padding: "6px 14px", cursor: "pointer" }}>Đóng</button>
+              <button onClick={() => setMembersModal(null)} style={{ background: "var(--theme-bg)", color: "var(--theme-text-dark)", border: "none", borderRadius: 8, padding: "6px 14px", cursor: "pointer" }}>Đóng</button>
             </div>
             {classMembersData.length === 0 ? (
-              <div style={{ textAlign: "center", padding: 30, color: "#64748b" }}>Chưa có học viên nào đăng ký</div>
+              <div style={{ textAlign: "center", padding: 30, color: "var(--theme-text)" }}>Chưa có học viên nào đăng ký</div>
             ) : (
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
-                  <tr style={{ background: "#0f172a" }}>
+                  <tr style={{ background: "var(--theme-bg)" }}>
                     {["#", "Họ tên", "Email", "Đăng ký lúc"].map(h => (
-                      <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: "0.78rem", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase" }}>{h}</th>
+                      <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: "1.3rem", color: "var(--theme-text)", fontWeight: 700, textTransform: "uppercase" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {classMembersData.map((m, idx) => (
-                    <tr key={m.EnrollID} style={{ borderTop: "1px solid #1e2d3d" }}>
-                      <td style={{ padding: "10px 14px", color: "#64748b", fontSize: "0.85rem" }}>{idx + 1}</td>
+                    <tr key={m.EnrollID} style={{ borderTop: "1px solid var(--theme-border)" }}>
+                      <td style={{ padding: "10px 14px", color: "var(--theme-text)", fontSize: "1.4rem" }}>{idx + 1}</td>
                       <td style={{ padding: "10px 14px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(m.FullName)}&background=1cc88a&color=fff&size=26`}
                             alt="" style={{ width: 26, height: 26, borderRadius: "50%" }} />
-                          <strong style={{ color: "#f1f5f9", fontSize: "0.9rem" }}>{m.FullName}</strong>
+                          <strong style={{ color: "var(--theme-text-dark)", fontSize: "1.5rem" }}>{m.FullName}</strong>
                         </div>
                       </td>
-                      <td style={{ padding: "10px 14px", color: "#94a3b8", fontSize: "0.85rem" }}>{m.Email}</td>
-                      <td style={{ padding: "10px 14px", color: "#64748b", fontSize: "0.82rem" }}>{m.EnrolledAt}</td>
+                      <td style={{ padding: "10px 14px", color: "var(--theme-text)", fontSize: "1.4rem" }}>{m.Email}</td>
+                      <td style={{ padding: "10px 14px", color: "var(--theme-text)", fontSize: "1.4rem" }}>{m.EnrolledAt}</td>
                     </tr>
                   ))}
                 </tbody>

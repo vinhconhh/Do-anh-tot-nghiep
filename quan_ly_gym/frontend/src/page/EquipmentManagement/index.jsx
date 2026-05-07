@@ -66,18 +66,18 @@ export default function EquipmentManagement() {
   );
 
   return (
-    <div style={{ padding: "24px", minHeight: "100vh", background: "#0f172a", color: "#e2e8f0" }}>
+    <div style={{ padding: "24px", minHeight: "100vh", background: "var(--theme-bg)", color: "var(--theme-text-dark)" }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#f8fafc", margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
+          <h1 style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--theme-text-dark)", margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
             <Dumbbell size={26} color="#36b9cc" /> Quản Lý Thiết Bị & Máy Tập
           </h1>
-          <p style={{ color: "#64748b", margin: "4px 0 0", fontSize: "0.9rem" }}>
+          <p style={{ color: "var(--theme-text)", margin: "4px 0 0", fontSize: "1.5rem" }}>
             {items.length} thiết bị — {items.filter(i => i.Status === "Hoạt động").length} đang hoạt động
           </p>
         </div>
-        <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#36b9cc,#1a8a9c)", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontWeight: 700, cursor: "pointer", fontSize: "0.95rem" }}>
+        <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#36b9cc,#1a8a9c)", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontWeight: 700, cursor: "pointer", fontSize: "1.5rem" }}>
           <Plus size={18} /> Thêm Thiết Bị
         </button>
       </div>
@@ -85,49 +85,49 @@ export default function EquipmentManagement() {
       {/* Filters */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
-          <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+          <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--theme-text)" }} />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm kiếm thiết bị..."
-            style={{ width: "100%", paddingLeft: 36, padding: "9px 12px 9px 36px", background: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", fontSize: "0.9rem", outline: "none", boxSizing: "border-box" }} />
+            style={{ width: "100%", paddingLeft: 36, padding: "9px 12px 9px 36px", background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", fontSize: "1.5rem", outline: "none", boxSizing: "border-box" }} />
         </div>
         <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
-          style={{ padding: "9px 14px", background: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", cursor: "pointer" }}>
+          style={{ padding: "9px 14px", background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", cursor: "pointer" }}>
           <option value="">Tất cả danh mục</option>
           {CATEGORIES.map(c => <option key={c}>{c}</option>)}
         </select>
         <select value={filterSt} onChange={e => setFilterSt(e.target.value)}
-          style={{ padding: "9px 14px", background: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", cursor: "pointer" }}>
+          style={{ padding: "9px 14px", background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", cursor: "pointer" }}>
           <option value="">Tất cả trạng thái</option>
           {STATUSES.map(s => <option key={s}>{s}</option>)}
         </select>
       </div>
 
       {/* Table */}
-      <div style={{ background: "#1e293b", borderRadius: 14, border: "1px solid #334155", overflow: "hidden" }}>
+      <div style={{ background: "var(--theme-surface)", borderRadius: 14, border: "1px solid var(--theme-border)", overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ background: "#0f172a" }}>
+            <tr style={{ background: "var(--theme-bg)" }}>
               {["Tên thiết bị", "Danh mục", "Khu vực", "Số lượng", "Trạng thái", "Hành động"].map(h => (
-                <th key={h} style={{ padding: "13px 16px", textAlign: "left", fontSize: "0.8rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
+                <th key={h} style={{ padding: "13px 16px", textAlign: "left", fontSize: "1.3rem", fontWeight: 700, color: "var(--theme-text)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={6} style={{ textAlign: "center", padding: 40, color: "#64748b" }}>Đang tải...</td></tr>}
-            {!loading && displayed.length === 0 && <tr><td colSpan={6} style={{ textAlign: "center", padding: 40, color: "#64748b" }}>Chưa có thiết bị nào</td></tr>}
+            {loading && <tr><td colSpan={6} style={{ textAlign: "center", padding: 40, color: "var(--theme-text)" }}>Đang tải...</td></tr>}
+            {!loading && displayed.length === 0 && <tr><td colSpan={6} style={{ textAlign: "center", padding: 40, color: "var(--theme-text)" }}>Chưa có thiết bị nào</td></tr>}
             {displayed.map((item) => {
               const st = statusStyle[item.Status] || statusStyle["Hoạt động"];
               return (
-                <tr key={item.EquipmentID} style={{ borderTop: "1px solid #1e2d3d" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#243044"}
+                <tr key={item.EquipmentID} style={{ borderTop: "1px solid var(--theme-border)" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "var(--theme-bg)"}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <td style={{ padding: "13px 16px", fontWeight: 600, color: "#f1f5f9" }}>{item.Name}</td>
+                  <td style={{ padding: "13px 16px", fontWeight: 600, color: "var(--theme-text-dark)" }}>{item.Name}</td>
                   <td style={{ padding: "13px 16px" }}>
-                    <span style={{ background: "#36b9cc22", color: "#36b9cc", padding: "3px 10px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 600 }}>{item.Category || "—"}</span>
+                    <span style={{ background: "#36b9cc22", color: "#36b9cc", padding: "3px 10px", borderRadius: 20, fontSize: "1.3rem", fontWeight: 600 }}>{item.Category || "—"}</span>
                   </td>
-                  <td style={{ padding: "13px 16px", color: "#94a3b8" }}>{item.Zone || "—"}</td>
-                  <td style={{ padding: "13px 16px", fontWeight: 700, color: "#f1f5f9", fontSize: "1.1rem" }}>{item.Quantity}</td>
+                  <td style={{ padding: "13px 16px", color: "var(--theme-text)" }}>{item.Zone || "—"}</td>
+                  <td style={{ padding: "13px 16px", fontWeight: 700, color: "var(--theme-text-dark)", fontSize: "1.3rem" }}>{item.Quantity}</td>
                   <td style={{ padding: "13px 16px" }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: st.bg, color: st.color, padding: "4px 12px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 600, border: `1px solid ${st.color}44` }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: st.bg, color: st.color, padding: "4px 12px", borderRadius: 20, fontSize: "1.3rem", fontWeight: 600, border: `1px solid ${st.color}44` }}>
                       {st.icon} {item.Status}
                     </span>
                   </td>
@@ -147,8 +147,8 @@ export default function EquipmentManagement() {
       {/* Modal */}
       {modalOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-          <div style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 16, padding: 28, width: "100%", maxWidth: 500, boxShadow: "0 25px 50px rgba(0,0,0,0.5)" }}>
-            <h2 style={{ color: "#f8fafc", fontWeight: 800, marginBottom: 22, fontSize: "1.2rem" }}>
+          <div style={{ background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 500, boxShadow: "0 25px 50px rgba(0,0,0,0.5)" }}>
+            <h2 style={{ color: "var(--theme-text-dark)", fontWeight: 800, marginBottom: 22, fontSize: "1.4rem" }}>
               {editing ? "✏️ Sửa thiết bị" : "➕ Thêm thiết bị mới"}
             </h2>
             <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -158,31 +158,31 @@ export default function EquipmentManagement() {
                 { label: "Số lượng", key: "Quantity", type: "number" },
               ].map(f => (
                 <div key={f.key}>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: 5 }}>{f.label}</label>
+                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>{f.label}</label>
                   <input type={f.type} required={f.required} value={form[f.key]} min={f.type === "number" ? 0 : undefined}
                     onChange={e => setForm(p => ({ ...p, [f.key]: f.type === "number" ? parseInt(e.target.value) || 0 : e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", outline: "none", fontSize: "0.95rem", boxSizing: "border-box" }} />
+                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", outline: "none", fontSize: "1.5rem", boxSizing: "border-box" }} />
                 </div>
               ))}
               <div style={{ display: "flex", gap: 12 }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: 5 }}>Danh mục</label>
+                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>Danh mục</label>
                   <select value={form.Category} onChange={e => setForm(p => ({ ...p, Category: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0" }}>
+                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)" }}>
                     <option value="">-- Chọn --</option>
                     {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ color: "#94a3b8", fontSize: "0.85rem", display: "block", marginBottom: 5 }}>Trạng thái</label>
+                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>Trạng thái</label>
                   <select value={form.Status} onChange={e => setForm(p => ({ ...p, Status: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0" }}>
+                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)" }}>
                     {STATUSES.map(s => <option key={s}>{s}</option>)}
                   </select>
                 </div>
               </div>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
-                <button type="button" onClick={() => setModalOpen(false)} style={{ padding: "9px 20px", background: "#334155", color: "#e2e8f0", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 600 }}>Hủy</button>
+                <button type="button" onClick={() => setModalOpen(false)} style={{ padding: "9px 20px", background: "var(--theme-bg)", color: "var(--theme-text-dark)", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 600 }}>Hủy</button>
                 <button type="submit" disabled={saving} style={{ padding: "9px 22px", background: "linear-gradient(135deg,#36b9cc,#1a8a9c)", color: "#fff", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 700 }}>
                   {saving ? "Đang lưu..." : "💾 Lưu"}
                 </button>

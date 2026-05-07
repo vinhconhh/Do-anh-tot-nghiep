@@ -177,22 +177,22 @@ function LandingPage() {
           {packages.length > 0 ? packages.map((pkg) => {
             let features = [];
             try {
-              features = JSON.parse(pkg.QuyenLoi || "[]");
+              features = JSON.parse(pkg.Benefits || "[]");
             } catch (e) {
               features = [];
             }
             return (
-              <div key={pkg.MaGoi} className={`${styles.pricingCard} ${pkg.NoiBat ? styles.featured : ""}`}>
-                {pkg.NoiBat && <div className={styles.featuredBadge}>PHỔ BIẾN NHẤT</div>}
-                <div className={styles.planDuration}>{pkg.ThoiHan} Tháng</div>
-                <div className={styles.planName}>{pkg.TenGoi.toUpperCase()}</div>
+              <div key={pkg.PackageID} className={`${styles.pricingCard} ${pkg.IsFeatured ? styles.featured : ""}`}>
+                {pkg.IsFeatured && <div className={styles.featuredBadge}>PHỔ BIẾN NHẤT</div>}
+                <div className={styles.planDuration}>{pkg.DurationMonths} Tháng</div>
+                <div className={styles.planName}>{pkg.Name.toUpperCase()}</div>
                 <div className={styles.planPrice}>
-                  <span className={styles.amount}>{pkg.Gia.toLocaleString()}</span>
+                  <span className={styles.amount}>{pkg.Price.toLocaleString()}</span>
                   <span className={styles.currency}>VNĐ</span>
                 </div>
                 <div className={styles.planPeriod}>/ Tháng</div>
                 <div className={styles.planDivider} />
-                <p className={styles.planDesc}>{pkg.MoTa}</p>
+                <p className={styles.planDesc}>{pkg.Description}</p>
                 <ul className={styles.planFeatures}>
                   {features.map((feat, idx) => (
                     <li key={idx}>{feat}</li>

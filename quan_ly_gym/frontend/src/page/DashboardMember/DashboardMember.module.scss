@@ -380,7 +380,7 @@
 }
 
 .weekDayText {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: var(--theme-text);
   margin-top: 2px;
   line-height: 1.2;
@@ -394,7 +394,7 @@
 }
 
 .weekToday {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: var(--theme-primary);
   font-weight: 700;
   display: block;
@@ -451,57 +451,8 @@
   }
 }
 
-/* PT Card */
-.ptCard {
-  background: var(--theme-surface);
-  border-radius: 14px;
-  border-left: 4px solid theme('colors.emerald.500');
-  padding: 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  border: 1px solid var(--theme-border);
-  border-left-width: 4px;
-}
 
-.ptAvatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
 
-.ptInfo {
-  flex: 1;
-}
-
-.ptName {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--theme-text-dark);
-}
-
-.ptSpec {
-  font-size: 1.2rem;
-  color: var(--theme-text);
-}
-
-.ptNext {
-  text-align: right;
-}
-
-.ptNextLabel {
-  font-size: 1.1rem;
-  color: var(--theme-text);
-}
-
-.ptNextVal {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--theme-primary);
-}
 
 /* PR Table */
 .tableWrap {
@@ -541,9 +492,6 @@
   background: rgba(227, 28, 37, 0.1);
   color: var(--theme-primary);
 }
-
-/* Metrics Modal */
-.metricsForm {}
 
 .metricsFormGrid {
   display: grid;

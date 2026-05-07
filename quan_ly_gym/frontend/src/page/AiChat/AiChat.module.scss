@@ -26,11 +26,11 @@
   display: flex; align-items: center; justify-content: center;
   color: #ffffff;
 }
-.title { font-size: 1.6rem; font-weight: 800; color: var(--theme-text-dark); margin: 0; }
-.subtitle { margin: 0; color: var(--theme-text); font-size: 1.2rem; }
+.title { font-size: 1.8rem; font-weight: 800; color: var(--theme-text-dark); margin: 0; }
+.subtitle { margin: 0; color: var(--theme-text); font-size: 1.4rem; }
 .quotaBadge {
   display: flex; align-items: center; gap: 6px;
-  font-size: 1.2rem; font-weight: 700;
+  font-size: 1.4rem; font-weight: 700;
   color: var(--theme-primary); background: rgba(14,165,233,0.08);
   padding: 6px 14px; border-radius: 999px;
 }
@@ -54,8 +54,8 @@
   flex: 1;
   text-align: center;
   color: var(--theme-text);
-  h3 { font-size: 2rem; color: var(--theme-text-dark); margin: 12px 0 6px; }
-  p { font-size: 1.3rem; margin: 2px 0; }
+  h3 { font-size: 2.2rem; color: var(--theme-text-dark); margin: 12px 0 6px; }
+  p { font-size: 1.5rem; margin: 2px 0; }
 }
 .welcomeIcon {
   width: 80px; height: 80px;
@@ -70,7 +70,7 @@
   margin-top: 20px; max-width: 500px;
 }
 .suggestBtn {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   padding: 8px 16px;
   border-radius: 999px;
   border: 1px solid var(--theme-border);
@@ -104,7 +104,7 @@
 .bubble {
   padding: 12px 16px;
   border-radius: 16px;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
@@ -124,7 +124,7 @@
 }
 .bubbleContent { }
 .bubbleTime {
-  font-size: 1rem;
+  font-size: 1.4rem;
   margin-top: 4px;
   opacity: 0.6;
 }
@@ -162,7 +162,7 @@
   border: 1px solid var(--theme-border);
   border-radius: 14px;
   padding: 12px 16px;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   color: var(--theme-text-dark);
   outline: none;
   resize: none;

@@ -13,7 +13,7 @@ from ..schemas.package import (
 )
 from ..middleware.auth import get_current_user
 
-router = APIRouter()
+router = APIRouter(prefix="/api/packages", tags=["Packages"])
 
 def require_admin_or_manager(current_user: User = Depends(get_current_user)):
     role_code = current_user.role.RoleCode.upper()
@@ -27,7 +27,7 @@ def require_admin_or_manager(current_user: User = Depends(get_current_user)):
 @router.get("/membership", response_model=List[MembershipPackageResponse])
 def get_membership_packages(db: Session = Depends(get_db)):
     """Lấy danh sách các gói tập hiển thị."""
-    packages = db.query(MembershipPackage).filter(MembershipPackage.HienThi == True).all()
+    packages = db.query(MembershipPackage).filter(MembershipPackage.IsVisible == True).all()
     return packages
 
 @router.get("/membership/all", response_model=List[MembershipPackageResponse])
@@ -45,7 +45,7 @@ def create_membership_package(pkg: MembershipPackageCreate, db: Session = Depend
 
 @router.put("/membership/{pkg_id}", response_model=MembershipPackageResponse)
 def update_membership_package(pkg_id: int, pkg: MembershipPackageUpdate, db: Session = Depends(get_db), current_user: User = Depends(require_admin_or_manager)):
-    db_pkg = db.query(MembershipPackage).filter(MembershipPackage.MaGoi == pkg_id).first()
+    db_pkg = db.query(MembershipPackage).filter(MembershipPackage.PackageID == pkg_id).first()
     if not db_pkg:
         raise HTTPException(status_code=404, detail="Không tìm thấy gói tập")
     for key, value in pkg.model_dump(exclude_unset=True).items():
@@ -56,7 +56,7 @@ def update_membership_package(pkg_id: int, pkg: MembershipPackageUpdate, db: Ses
 
 @router.delete("/membership/{pkg_id}")
 def delete_membership_package(pkg_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_admin_or_manager)):
-    db_pkg = db.query(MembershipPackage).filter(MembershipPackage.MaGoi == pkg_id).first()
+    db_pkg = db.query(MembershipPackage).filter(MembershipPackage.PackageID == pkg_id).first()
     if not db_pkg:
         raise HTTPException(status_code=404, detail="Không tìm thấy gói tập")
     db.delete(db_pkg)
@@ -68,7 +68,7 @@ def delete_membership_package(pkg_id: int, db: Session = Depends(get_db), curren
 # ==========================================
 @router.get("/ai", response_model=List[AIPackageResponse])
 def get_ai_packages(db: Session = Depends(get_db)):
-    packages = db.query(AIPackage).filter(AIPackage.HienThi == True).all()
+    packages = db.query(AIPackage).filter(AIPackage.IsVisible == True).all()
     return packages
 
 @router.get("/ai/all", response_model=List[AIPackageResponse])
@@ -85,7 +85,7 @@ def create_ai_package(pkg: AIPackageCreate, db: Session = Depends(get_db), curre
 
 @router.put("/ai/{pkg_id}", response_model=AIPackageResponse)
 def update_ai_package(pkg_id: int, pkg: AIPackageUpdate, db: Session = Depends(get_db), current_user: User = Depends(require_admin_or_manager)):
-    db_pkg = db.query(AIPackage).filter(AIPackage.MaGoiAi == pkg_id).first()
+    db_pkg = db.query(AIPackage).filter(AIPackage.PackageID == pkg_id).first()
     if not db_pkg:
         raise HTTPException(status_code=404, detail="Không tìm thấy gói AI")
     for key, value in pkg.model_dump(exclude_unset=True).items():
@@ -96,7 +96,7 @@ def update_ai_package(pkg_id: int, pkg: AIPackageUpdate, db: Session = Depends(g
 
 @router.delete("/ai/{pkg_id}")
 def delete_ai_package(pkg_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_admin_or_manager)):
-    db_pkg = db.query(AIPackage).filter(AIPackage.MaGoiAi == pkg_id).first()
+    db_pkg = db.query(AIPackage).filter(AIPackage.PackageID == pkg_id).first()
     if not db_pkg:
         raise HTTPException(status_code=404, detail="Không tìm thấy gói AI")
     db.delete(db_pkg)
