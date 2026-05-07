@@ -19,6 +19,8 @@ class CreatePTRequestBody(BaseModel):
     ptId: int
     goal: Optional[str] = ""
     note: Optional[str] = ""
+    experienceLevel: Optional[str] = "new"     # "new" | "experienced" | "other"
+    bodyNote: Optional[str] = ""               # mô tả tình trạng cơ thể (khi chọn "other")
 
 
 class RespondBody(BaseModel):
@@ -132,6 +134,9 @@ def _format_request(r: PTRequest) -> dict:
         "memberId": r.MemberID,
         "memberName": m.FullName if m else "Unknown",
         "memberGoal": r.MemberGoal or (m_profile.Goal if m_profile else ""),
+        "memberEmail": m.Email if m else "",
+        "experienceLevel": r.ExperienceLevel or "new",
+        "bodyNote": r.BodyNote or "",
         "ptId": r.PTID,
         "ptName": p.FullName if p else "Unknown",
         "ptSpecialty": p_profile.Specialty if p_profile else "",
@@ -265,6 +270,8 @@ def create_request(
         PTID=body.ptId,
         MemberGoal=body.goal,
         Note=body.note,
+        ExperienceLevel=body.experienceLevel,
+        BodyNote=body.bodyNote,
         Status="Pending",
         ExpiresAt=now + timedelta(days=3),
         CreatedAt=now,

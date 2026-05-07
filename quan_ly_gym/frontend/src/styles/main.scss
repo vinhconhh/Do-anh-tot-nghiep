@@ -1,25 +1,530 @@
 @use "reset.scss";
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap');
 
-* { box-sizing: border-box; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-html { font-size: 62.5%; }
-
-body {
-  font-size: 1.6rem;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  background: #f8f9fc;
-  color: #5a5c69;
+:root {
+  --theme-bg: theme('colors.slate.900');
+  --theme-surface: theme('colors.slate.800');
+  --theme-card: theme('colors.slate.800');
+  --theme-text: theme('colors.slate.400');
+  --theme-text-dark: theme('colors.slate.50');
+  --theme-border: theme('colors.slate.700');
+  --theme-primary: theme('colors.sky.500');
+  --theme-primary-hover: theme('colors.sky.600');
 }
 
-input, button, select, textarea {
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 62.5%;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-900 text-slate-400 font-body;
+    font-size: 1.6rem;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply text-slate-50;
+  }
+}
+
+input,
+button,
+select,
+textarea {
   font-family: inherit;
   font-size: inherit;
 }
 
-a { text-decoration: none; }
+a {
+  text-decoration: none;
+}
 
-.container {
-  display: flex;
-  min-height: 100vh;
+/* ═══════════════════════════════════════════════════════════
+   LIGHT THEME — Admin / Manager / PT
+   White-blue tones: bg #f0f4f8, card #fff, accent #4e73df
+   ═══════════════════════════════════════════════════════════ */
+
+.bg-light-main {
+  background: linear-gradient(135deg, #f0f4f8 0%, #e8eef5 50%, #dde7f2 100%) !important;
+}
+
+.theme-light {
+  /* ─── CSS Variable overrides ─── */
+  --theme-bg: #f0f4f8;
+  --theme-surface: #ffffff;
+  --theme-card: #ffffff;
+  --theme-text: #1f2937;
+  --theme-text-dark: #111827;
+  --theme-border: #e2e8f0;
+  --theme-primary: #4e73df;
+  --theme-primary-hover: #3b5cbf;
+
+  /* ─── Global text color ─── */
+  color: #1f2937;
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #111827 !important;
+  }
+
+  p, span, div, li, label, a {
+    color: inherit;
+  }
+
+  /* ─── FONT SIZE ENFORCEMENT ─── */
+  /* Base body text inside theme-light */
+  font-size: 1.5rem;
+
+  /* Page titles */
+  h1, [class*="pageTitle"], [class*="pageHeading"] h2 {
+    font-size: 2.2rem !important;
+    font-weight: 800 !important;
+  }
+
+  h2 {
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+  }
+
+  h3 {
+    font-size: 1.8rem !important;
+    font-weight: 700 !important;
+  }
+
+  h4, h5, h6 {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+  }
+
+  /* Subtitle / description */
+  [class*="subtitle"],
+  [class*="Subtitle"],
+  [class*="description"] {
+    font-size: 1.4rem !important;
+  }
+
+  /* Card titles */
+  [class*="cardTitle"],
+  [class*="CardTitle"] {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+  }
+
+  /* Stat values — big numbers */
+  [class*="statVal"],
+  [class*="statNum"],
+  [class*="statValue"] {
+    font-size: 2.2rem !important;
+    font-weight: 800 !important;
+  }
+
+  /* Stat labels — uppercase small */
+  [class*="statLabel"] {
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Tables */
+  table, [class*="table"] {
+    font-size: 1.4rem !important;
+  }
+
+  th {
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  td {
+    font-size: 1.4rem !important;
+  }
+
+  /* Inputs, selects, textareas */
+  input, select, textarea {
+    font-size: 1.5rem !important;
+  }
+
+  /* Buttons */
+  button, [class*="btn"], [class*="Btn"] {
+    font-size: 1.4rem !important;
+    font-weight: 600 !important;
+  }
+
+  /* Badges / pills */
+  [class*="badge"], [class*="Badge"],
+  [class*="pill"], [class*="Pill"],
+  [class*="tag"], [class*="Tag"] {
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+  }
+
+  /* Labels in forms */
+  label {
+    font-size: 1.4rem !important;
+    font-weight: 600 !important;
+  }
+
+  /* Search inputs */
+  [class*="searchInput"] {
+    font-size: 1.5rem !important;
+  }
+
+  /* Info values in details panels */
+  [class*="infoVal"] {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+  }
+
+  [class*="infoLabel"] {
+    font-size: 1.3rem !important;
+  }
+
+  /* Client/profile names */
+  [class*="clientName"],
+  [class*="profileName"],
+  [class*="memberName"] {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+  }
+
+  /* Modal headings */
+  [class*="modal"] h2,
+  [class*="Modal"] h2,
+  [class*="modal"] h3,
+  [class*="Modal"] h3 {
+    font-size: 1.8rem !important;
+    font-weight: 800 !important;
+  }
+
+  /* Section titles */
+  [class*="sectionTitle"] {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+  }
+
+  /* Activity/log text */
+  [class*="activityTitle"] {
+    font-size: 1.4rem !important;
+    font-weight: 600 !important;
+  }
+
+  /* Empty state text */
+  [class*="empty"],
+  [class*="emptyState"] {
+    font-size: 1.5rem !important;
+  }
+
+  /* Pagination */
+  [class*="pagination"] {
+    font-size: 1.3rem !important;
+  }
+
+  /* ─── Page-level backgrounds ─── */
+  [class*="page"],
+  [class*="Page"],
+  [class*="container"] {
+    background: transparent !important;
+    color: #1f2937 !important;
+  }
+
+  /* ─── Cards & panels ─── */
+  [class*="card"],
+  [class*="Card"],
+  [class*="panel"],
+  [class*="profileCard"],
+  [class*="clientListCard"],
+  [class*="statsRow"] > div,
+  [class*="statCard"] {
+    background: #ffffff !important;
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #1f2937 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  /* ─── Card headers ─── */
+  [class*="cardHeader"],
+  [class*="CardHeader"],
+  [class*="header"] h2,
+  [class*="header"] h3 {
+    color: #111827 !important;
+  }
+
+  /* ─── Tables ─── */
+  [class*="tableWrap"],
+  [class*="table"] {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  table, .table {
+    background: #ffffff !important;
+  }
+
+  thead, thead tr {
+    background: #f7fafc !important;
+  }
+
+  th {
+    color: #374151 !important;
+    border-color: #e2e8f0 !important;
+    background: #f7fafc !important;
+    font-weight: 700;
+  }
+
+  td {
+    color: #111827 !important;
+    border-color: #edf2f7 !important;
+  }
+
+  tbody tr:hover {
+    background: #f0f4ff !important;
+  }
+
+  /* ─── Text colors ─── */
+  [class*="title"],
+  [class*="Title"] {
+    color: #111827 !important;
+  }
+
+  [class*="subtitle"],
+  [class*="Subtitle"],
+  [class*="muted"],
+  [class*="description"] {
+    color: #6b7280 !important;
+  }
+
+  /* Stat numbers */
+  [class*="statNum"],
+  [class*="statVal"] {
+    color: #111827 !important;
+    font-weight: 700;
+  }
+
+  [class*="statLabel"] {
+    color: #6b7280 !important;
+  }
+
+  /* ─── Inline style overrides (for pages using style={}) ─── */
+  [style*="background: #0f172a"],
+  [style*="background:#0f172a"],
+  [style*="background: rgb(15, 23, 42)"] {
+    background: #f7fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  [style*="background: #1e293b"],
+  [style*="background:#1e293b"],
+  [style*="background: rgb(30, 41, 59)"] {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  [style*="color: #f8fafc"],
+  [style*="color:#f8fafc"],
+  [style*="color: #f1f5f9"],
+  [style*="color:#f1f5f9"],
+  [style*="color: #e2e8f0"],
+  [style*="color:#e2e8f0"],
+  [style*="color: #cbd5e1"],
+  [style*="color:#cbd5e1"],
+  [style*="color: white"],
+  [style*="color:#fff"] {
+    color: #111827 !important;
+  }
+
+  [style*="color: #94a3b8"],
+  [style*="color:#94a3b8"],
+  [style*="color: #64748b"],
+  [style*="color:#64748b"],
+  [style*="color: #858796"],
+  [style*="color:#858796"] {
+    color: #6b7280 !important;
+  }
+
+  [style*="border: 1px solid #334155"],
+  [style*="border:1px solid #334155"] {
+    border-color: #e2e8f0 !important;
+  }
+
+  [style*="border-top: 1px solid #1e2d3d"] {
+    border-color: #edf2f7 !important;
+  }
+
+  /* ─── Inputs & selects ─── */
+  input, select, textarea {
+    background: #f7fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #111827 !important;
+
+    &::placeholder {
+      color: #9ca3af !important;
+    }
+
+    &:focus {
+      border-color: #4e73df !important;
+      box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.15) !important;
+    }
+  }
+
+  /* ─── Search boxes ─── */
+  [class*="searchBox"],
+  [class*="searchWrap"],
+  [class*="searchInput"] {
+    background: #f7fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #2d3748 !important;
+  }
+
+  /* ─── Buttons ─── */
+  [class*="filterBtn"] {
+    background: #edf2f7 !important;
+    color: #4a5568 !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  [class*="filterActive"] {
+    background: #4e73df !important;
+    color: #ffffff !important;
+    border-color: #4e73df !important;
+  }
+
+  /* ─── Modals ─── */
+  [class*="modal"],
+  [class*="Modal"] {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #4a5568 !important;
+  }
+
+  [class*="overlay"] {
+    background: rgba(0,0,0,0.35) !important;
+  }
+
+  /* ─── Pills / Badges — keep their accent colors ─── */
+  [class*="pill"] {
+    font-weight: 700;
+  }
+
+  /* ─── Empty state ─── */
+  [class*="empty"],
+  [class*="emptyState"] {
+    color: #6b7280 !important;
+  }
+
+  /* ─── Tabs ─── */
+  [class*="tab "],
+  [class*="tabs"] {
+    background: transparent !important;
+  }
+
+  [class*="tabBtn"] {
+    color: #1f2937 !important;
+    &:hover {
+      background: #edf2f7 !important;
+    }
+  }
+
+  [class*="tabActive"] {
+    color: #4e73df !important;
+    border-color: #4e73df !important;
+    background: #4e73df0f !important;
+  }
+
+  /* ─── Loading state ─── */
+  [class*="loadingState"] {
+    color: #6b7280 !important;
+  }
+
+  /* ─── Scrollbar ─── */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f0f4f8;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+  }
+
+  /* ─── Info rows (MyClients, etc.) ─── */
+  [class*="infoRow"] {
+    border-color: #edf2f7 !important;
+  }
+  [class*="infoLabel"] {
+    color: #6b7280 !important;
+  }
+  [class*="infoVal"] {
+    color: #111827 !important;
+  }
+
+  /* ─── Client items ─── */
+  [class*="clientItem"]:hover,
+  [class*="clientItemActive"] {
+    background: #edf2f7 !important;
+  }
+
+  [class*="clientName"] {
+    color: #111827 !important;
+  }
+
+  [class*="clientGoal"] {
+    color: #6b7280 !important;
+  }
+
+  /* ─── Profile sections ─── */
+  [class*="profileName"] {
+    color: #111827 !important;
+  }
+
+  [class*="profileEmail"] {
+    color: #6b7280 !important;
+  }
+
+  [class*="sectionTitle"] {
+    color: #111827 !important;
+  }
+
+  /* ─── Stats grid ─── */
+  [class*="stat"] {
+    background: #f7fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  /* ─── Exercise rows ─── */
+  [class*="exerciseRow"] {
+    background: #f7fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  /* ─── PT cards ─── */
+  [class*="ptCard"] {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* ─── Keep primary button gradients ─── */
+  [class*="btnPrimary"],
+  [class*="checkinBtn"] {
+    /* keep original gradient */
+  }
 }

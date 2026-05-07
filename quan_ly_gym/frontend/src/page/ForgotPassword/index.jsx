@@ -8,8 +8,8 @@ export default function ForgotPassword() {
       <p style={{ margin: "0 0 16px", opacity: 0.85 }}>
         Chức năng này đang được phát triển.
       </p>
-      <button onClick={() => nav("/login")} style={{ padding: 10 }}>
-        Quay lại đăng nhập
+      <button onClick={() => nav("/")} style={{ padding: 10 }}>
+        Về trang chủ
       </button>
     </div>
   );

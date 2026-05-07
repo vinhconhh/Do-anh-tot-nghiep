@@ -12,6 +12,8 @@ class PTRequest(Base):
     PTID = Column(Integer, ForeignKey("Users.UserID"), nullable=False)
     MemberGoal = Column(String(500))
     Note = Column(String(1000))
+    ExperienceLevel = Column(String(50), default="new")    # new | experienced | other
+    BodyNote = Column(String(1000), nullable=True)         # mô tả tình trạng cơ thể
     Status = Column(String(50), default="Pending")
     ExpiresAt = Column(DateTime, nullable=False)
     RespondedAt = Column(DateTime, nullable=True)

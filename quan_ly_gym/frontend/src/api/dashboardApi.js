@@ -40,5 +40,14 @@ export function useDashboardApi() {
     [aj]
   );
 
-  return { getStats, getRevenue, getRecentMembers, getMemberStats };
+  const updateMemberMetrics = useCallback(
+    async (metrics) => aj(`/api/dashboard/member-stats/metrics`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(metrics)
+    }),
+    [aj]
+  );
+
+  return { getStats, getRevenue, getRecentMembers, getMemberStats, updateMemberMetrics };
 }
