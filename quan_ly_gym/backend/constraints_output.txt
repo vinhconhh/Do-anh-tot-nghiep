@@ -1,0 +1,6 @@
+Constraint: CK__GymEquipm__Quant__540C7B00
+Definition: ([Quantity]>=(0))
+
+Constraint: CK__GymEquipm__Statu__55F4C372
+Definition: ([Status]=N'Hỏng' OR [Status]=N'Đang bảo trì' OR [Status]=N'Hoạt động')
+

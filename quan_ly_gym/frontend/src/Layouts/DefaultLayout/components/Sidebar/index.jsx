@@ -22,6 +22,7 @@ import {
   Wrench,
   Building2,
   BookOpen,
+  UserPlus,
 } from "lucide-react";
 import { AuthContext } from "../../../../context/AuthContext";
 
@@ -261,6 +262,16 @@ export default function Sidebar() {
                 <CalendarCheck className="w-[16px] h-[16px] shrink-0" />
                 <span>Lịch Lớp học</span>
               </NavLink>
+              <NavLink
+                to="/enrollment-approval"
+                className={({ isActive }) =>
+                  `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
+                  }`
+                }
+              >
+                <UserPlus className="w-[16px] h-[16px] shrink-0" />
+                <span>Duyệt ĐK lớp học</span>
+              </NavLink>
             </div>
           </div>
         )}
@@ -342,6 +353,7 @@ export default function Sidebar() {
               <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Lịch dạy của tôi</span>
             </NavLink>
 
+
             <NavLink
               to="/pt-requests"
               className={({ isActive }) =>
@@ -384,6 +396,17 @@ export default function Sidebar() {
             >
               <BarChart2 className="w-[18px] h-[18px] shrink-0" />
               <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Tiến độ học viên</span>
+            </NavLink>
+
+            <NavLink
+              to="/enrollment-approval"
+              className={({ isActive }) =>
+                `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
+                }`
+              }
+            >
+              <UserPlus className="w-[18px] h-[18px] shrink-0" />
+              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Duyệt ĐK lớp học</span>
             </NavLink>
           </>
         )}

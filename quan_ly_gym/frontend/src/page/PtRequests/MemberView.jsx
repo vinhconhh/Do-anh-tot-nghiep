@@ -62,7 +62,7 @@ export default function MemberView() {
     setClassLoading(true);
     try {
       const [a, b] = await Promise.all([
-        api.get(`/classes?date_filter=${classDate}`),
+        api.get("/classes?show_all=true"),
         api.get("/classes/member/my-enrollments"),
       ]);
       setClasses(Array.isArray(a.data) ? a.data : []);
@@ -99,8 +99,13 @@ export default function MemberView() {
     finally { setSending(false); }
   };
 
-  const handleEnroll = async (classId) => {
-    try { await api.post(`/classes/${classId}/enroll`); fetchClasses(); }
+  const handleEnroll = async (classId, className) => {
+    if (!window.confirm(`Bạn muốn đăng ký lớp "${className}"?\nYêu cầu sẽ được gửi để HLV/Manager duyệt.`)) return;
+    try {
+      await api.post(`/classes/${classId}/enroll`);
+      alert("Đã gửi yêu cầu đăng ký! Vui lòng chờ HLV/Manager duyệt.");
+      fetchClasses();
+    }
     catch (e) { alert("Lỗi: " + (e.response?.data?.detail || e.message)); }
   };
 
@@ -189,40 +194,63 @@ export default function MemberView() {
       {/* Browse Classes */}
       {tab === "classes" && (
         <>
-          <div style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
-            <label style={{ color: "#94a3b8", fontSize: "1.1rem" }}>Chọn ngày:</label>
-            <input type="date" value={classDate} onChange={e => setClassDate(e.target.value)}
-              style={{ padding: "8px 12px", background: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#e2e8f0", colorScheme: "dark" }}/>
-          </div>
           {classLoading
             ? <div className={styles.loadingState}><Loader2 className={styles.spinner}/><span>Đang tải...</span></div>
             : classes.length === 0
-              ? <div className={styles.empty} style={{ textAlign: "center", padding: 40 }}>Không có lớp học vào ngày này.</div>
-              : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))", gap: 16 }}>
-                  {classes.map(c => {
-                    const full = c.CurrentEnrolled >= c.MaxCapacity;
-                    const pct = c.MaxCapacity > 0 ? Math.round(c.CurrentEnrolled / c.MaxCapacity * 100) : 0;
-                    return (
-                      <div key={c.ClassID} style={{ background: "#1e293b", border: `1px solid ${c.IsEnrolled ? "#1cc88a55" : "#334155"}`, borderRadius: 14, padding: 20 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                          <strong style={{ color: "#f8fafc" }}>{c.Name}</strong>
-                          {c.IsEnrolled && <span style={{ background: "#1cc88a22", color: "#1cc88a", padding: "2px 8px", borderRadius: 20, fontSize: "0.9rem", fontWeight: 700 }}>✓ Đã đăng ký</span>}
-                        </div>
-                        <div style={{ color: "#94a3b8", fontSize: "1.0rem", marginBottom: 4 }}>🎓 {c.InstructorName || "Chưa phân công"}</div>
-                        <div style={{ color: "#64748b", fontSize: "1.0rem", marginBottom: 4 }}>🕐 {fmtTime(c.StartTime)} – {fmtTime(c.EndTime)}</div>
-                        <div style={{ color: "#64748b", fontSize: "1.0rem", marginBottom: 10 }}>📍 {c.StudioRoom || "—"} · {c.CurrentEnrolled}/{c.MaxCapacity} chỗ</div>
-                        <div style={{ height: 4, background: "#334155", borderRadius: 4, marginBottom: 12, overflow: "hidden" }}>
-                          <div style={{ height: "100%", width: `${pct}%`, background: full ? "#e74a3b" : "#1cc88a" }}/>
-                        </div>
-                        {c.IsEnrolled
-                          ? <button onClick={() => handleUnenroll(c.ClassID)} style={{ width: "100%", padding: "8px", background: "#e74a3b22", color: "#e74a3b", border: "1px solid #e74a3b44", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}>Hủy đăng ký</button>
-                          : <button onClick={() => handleEnroll(c.ClassID)} disabled={full} style={{ width: "100%", padding: "8px", background: full ? "#33415522" : "linear-gradient(135deg,#1cc88a,#17a673)", color: full ? "#475569" : "#fff", border: "none", borderRadius: 8, cursor: full ? "not-allowed" : "pointer", fontWeight: 700 }}>
-                              {full ? "Đã đầy chỗ" : "Đăng ký tham gia"}
-                            </button>
-                        }
-                      </div>
-                    );
-                  })}
+              ? <div className={styles.empty} style={{ textAlign: "center", padding: 40 }}>Chưa có lớp học nào.</div>
+              : <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Tên lớp</th>
+                        <th>Huấn luyện viên</th>
+                        <th>Ngày bắt đầu</th>
+                        <th>Ngày kết thúc</th>
+                        <th>Giờ tập</th>
+                        <th>Lịch tuần</th>
+                        <th>Sĩ số</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {classes.map(c => {
+                        const dayMap = { 0: "T2", 1: "T3", 2: "T4", 3: "T5", 4: "T6", 5: "T7", 6: "CN" };
+                        const daysLabel = c.RecurringDays ? c.RecurringDays.split(",").map(d => dayMap[d] || d).join(", ") : "—";
+                        const startDate = c.RecurringStartDate || (c.StartTime ? c.StartTime.slice(0, 10) : "—");
+                        const endDate = c.RecurringEndDate || (c.EndTime ? c.EndTime.slice(0, 10) : "—");
+                        const timeStr = c.StartTime
+                          ? `${fmtTime(c.StartTime)} – ${fmtTime(c.EndTime)}`
+                          : "—";
+                        const full = c.CurrentEnrolled >= c.MaxCapacity;
+                        return (
+                          <tr key={c.ClassID}>
+                            <td>
+                              <strong>{c.Name}</strong>
+                              {c.Intensity === "high" && <span style={{ marginLeft: 6, color: "#e74a3b", fontSize: "0.9rem" }}>🔴 Cao</span>}
+                              {c.Intensity === "medium" && <span style={{ marginLeft: 6, color: "#f6c23e", fontSize: "0.9rem" }}>🟡 TB</span>}
+                              {c.Intensity === "low" && <span style={{ marginLeft: 6, color: "#1cc88a", fontSize: "0.9rem" }}>🟢 Thấp</span>}
+                            </td>
+                            <td>{c.InstructorName || "Chưa phân công"}</td>
+                            <td>{startDate}</td>
+                            <td>{endDate}</td>
+                            <td>{timeStr}</td>
+                            <td><span style={{ color: "#36b9cc", fontWeight: 600 }}>{daysLabel}</span></td>
+                            <td>{c.CurrentEnrolled}/{c.MaxCapacity}</td>
+                            <td>
+                              {c.EnrollmentStatus === "Active"
+                                ? <button disabled style={{ padding: "6px 14px", background: "#1cc88a22", color: "#1cc88a", border: "1px solid #1cc88a44", borderRadius: 8, fontWeight: 700, fontSize: "1.1rem", cursor: "default" }}>✓ Đã đăng ký</button>
+                                : c.EnrollmentStatus === "Pending"
+                                  ? <button disabled style={{ padding: "6px 14px", background: "#f6c23e22", color: "#f6c23e", border: "1px solid #f6c23e44", borderRadius: 8, fontWeight: 700, fontSize: "1.1rem", cursor: "default" }}>⏳ Chờ duyệt</button>
+                                  : <button onClick={() => handleEnroll(c.ClassID, c.Name)} disabled={full} style={{ padding: "6px 14px", background: full ? "#33415522" : "linear-gradient(135deg,#1cc88a,#17a673)", color: full ? "#475569" : "#fff", border: "none", borderRadius: 8, cursor: full ? "not-allowed" : "pointer", fontWeight: 700, fontSize: "1.1rem" }}>
+                                      {full ? "Đầy" : "Đăng ký"}
+                                    </button>
+                              }
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
           }
         </>

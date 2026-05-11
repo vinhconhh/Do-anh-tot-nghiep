@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { authedRequestJson } from "./client";
 
@@ -36,5 +36,8 @@ export function useSchedulesApi() {
     [aj]
   );
 
-  return { listByMember, listByTrainer, mySchedule };
+  return useMemo(
+    () => ({ listByMember, listByTrainer, mySchedule }),
+    [listByMember, listByTrainer, mySchedule]
+  );
 }

@@ -15,6 +15,11 @@ class MemberOut(BaseModel):
     Height: Optional[float] = None
     Weight: Optional[float] = None
     AIQuota: Optional[int] = 0
+    PhoneNumber: Optional[str] = None
+    Age: Optional[int] = None
+    Gender: Optional[str] = None
+    Birthday: Optional[datetime] = None
+    ExpiryDate: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -27,6 +32,11 @@ class MemberCreate(BaseModel):
     goal: Optional[str] = None
     height: Optional[float] = None
     weight: Optional[float] = None
+    phoneNumber: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    birthday: Optional[datetime] = None
+    expiryDate: Optional[datetime] = None
 
 
 class MemberUpdate(BaseModel):
@@ -36,3 +46,8 @@ class MemberUpdate(BaseModel):
     height: Optional[float] = None
     weight: Optional[float] = None
     isActive: Optional[int] = None
+    phoneNumber: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    birthday: Optional[datetime] = None
+    expiryDate: Optional[datetime] = None

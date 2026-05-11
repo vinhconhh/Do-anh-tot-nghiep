@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { authedRequestJson } from "./client";
 
@@ -53,5 +53,8 @@ export function useTrainersApi() {
     [aj]
   );
 
-  return { list, getById, create, update, remove };
+  return useMemo(
+    () => ({ list, getById, create, update, remove }),
+    [list, getById, create, update, remove]
+  );
 }

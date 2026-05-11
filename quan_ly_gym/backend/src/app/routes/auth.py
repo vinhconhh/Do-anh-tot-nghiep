@@ -23,13 +23,20 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     role_code = user.role.RoleCode if user.role else ""
     token = create_access_token({"sub": str(user.UserID), "role": role_code})
 
+    response_user = {
+        "UserID": user.UserID,
+        "hoTen": user.FullName,
+        "email": user.Email,
+        "vaiTro": role_code,
+    }
+
+    if role_code == "MEMBER" and user.member_profile:
+        response_user["packageId"] = user.member_profile.PackageID
+        if user.member_profile.gym_package:
+            response_user["gymPackageName"] = user.member_profile.gym_package.Name
+
     return {
-        "user": {
-            "UserID": user.UserID,
-            "hoTen": user.FullName,
-            "email": user.Email,
-            "vaiTro": role_code,
-        },
+        "user": response_user,
         "token": token,
     }
 
@@ -74,12 +81,19 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
+    response_user = {
+        "UserID": new_user.UserID,
+        "hoTen": new_user.FullName,
+        "email": new_user.Email,
+        "vaiTro": role.RoleCode,
+    }
+
+    if role.RoleCode == "MEMBER":
+        # New members have no package initially
+        response_user["packageId"] = None
+        response_user["gymPackageName"] = None
+
     return {
-        "user": {
-            "UserID": new_user.UserID,
-            "hoTen": new_user.FullName,
-            "email": new_user.Email,
-            "vaiTro": role.RoleCode,
-        },
+        "user": response_user,
         "token": create_access_token({"sub": str(new_user.UserID), "role": role.RoleCode}),
     }

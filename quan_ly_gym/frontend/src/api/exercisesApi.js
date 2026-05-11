@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { requestJson } from "./client";
 
@@ -23,5 +23,8 @@ export function useExercisesApi() {
   const list = useCallback(() => aj(`/api/exercises`), [aj]);
   const listGroups = useCallback(() => aj(`/api/exercises/groups`), [aj]);
 
-  return { list, listGroups };
+  return useMemo(
+    () => ({ list, listGroups }),
+    [list, listGroups]
+  );
 }

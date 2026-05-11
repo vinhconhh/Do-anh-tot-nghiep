@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Unicode
 from sqlalchemy.orm import relationship
 from ..database import Base
 
@@ -36,12 +36,17 @@ class User(Base):
     __tablename__ = "Users"
 
     UserID = Column(Integer, primary_key=True, autoincrement=True)
-    FullName = Column(String(255))
+    FullName = Column(Unicode(255))
     Email = Column(String(255), unique=True)
     PasswordHash = Column(String(255))
     RoleID = Column(Integer, ForeignKey("Roles.RoleID"))
     IsActive = Column(Integer, default=1)  # BIT
     IsDeleted = Column(Integer, default=0)  # BIT
+    PhoneNumber = Column(String(20), nullable=True)
+    Age = Column(Integer, nullable=True)
+    Gender = Column(String(20), nullable=True)
+    Birthday = Column(DateTime, nullable=True)
+    ExpiryDate = Column(DateTime, nullable=True)
     ReferralCode = Column(String(20), unique=True, nullable=True)
     ReferredBy = Column(Integer, ForeignKey("Users.UserID"), nullable=True)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
@@ -51,6 +56,7 @@ class User(Base):
     pt_profile = relationship("PTProfile", uselist=False, back_populates="user")
     refresh_tokens = relationship("RefreshToken", back_populates="user")
     sessions = relationship("UserSession", back_populates="user")
+    subscriptions = relationship("UserSubscription", back_populates="user")
 
 
 class RefreshToken(Base):

@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from ..database import get_db
-from ..models import User, MembershipPackage, AIPackage, Promotion
+from ..models import User, MembershipPackage, AIPackage, Promotion, UserSubscription
 from ..schemas.package import (
     MembershipPackageCreate, MembershipPackageUpdate, MembershipPackageResponse,
     AIPackageCreate, AIPackageUpdate, AIPackageResponse,
     PromotionCreate, PromotionUpdate, PromotionResponse,
-    VerifyCodeRequest
+    VerifyCodeRequest, PurchasePackageRequest
 )
 from ..middleware.auth import get_current_user
 
@@ -62,6 +62,42 @@ def delete_membership_package(pkg_id: int, db: Session = Depends(get_db), curren
     db.delete(db_pkg)
     db.commit()
     return {"message": "Đã xóa gói tập thành công."}
+
+@router.post("/membership/purchase")
+def purchase_membership_package(req: PurchasePackageRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Mua gói tập (Dành cho Member)"""
+    if not current_user.role or current_user.role.RoleCode != "MEMBER":
+        raise HTTPException(status_code=403, detail="Chỉ hội viên mới có thể mua gói tập")
+    
+    pkg = db.query(MembershipPackage).filter(MembershipPackage.PackageID == req.package_id, MembershipPackage.IsVisible == True).first()
+    if not pkg:
+        raise HTTPException(status_code=404, detail="Gói tập không tồn tại hoặc không khả dụng")
+
+    # Update MemberProfile
+    if not current_user.member_profile:
+        raise HTTPException(status_code=400, detail="Hồ sơ hội viên không hợp lệ")
+    
+    current_user.member_profile.PackageID = pkg.PackageID
+
+    # Update User ExpiryDate
+    months = pkg.DurationMonths
+    current_expiry = current_user.ExpiryDate if current_user.ExpiryDate and current_user.ExpiryDate > datetime.utcnow() else datetime.utcnow()
+    new_expiry = current_expiry + timedelta(days=30 * months)
+    current_user.ExpiryDate = new_expiry
+
+    # Create UserSubscription record
+    sub = UserSubscription(
+        UserID=current_user.UserID,
+        PackageType="GYM",
+        PackageID=pkg.PackageID,
+        StartDate=datetime.utcnow(),
+        EndDate=new_expiry,
+        Status="Active"
+    )
+    db.add(sub)
+    db.commit()
+
+    return {"message": "Mua gói tập thành công", "packageId": pkg.PackageID, "gymPackageName": pkg.Name}
 
 # ==========================================
 # AI PACKAGES

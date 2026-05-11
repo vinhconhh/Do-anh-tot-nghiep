@@ -24,6 +24,13 @@ def _member_to_dict(user: User) -> dict:
         "height": profile.Height if profile else None,
         "weight": profile.Weight if profile else None,
         "aiQuota": profile.AIQuota if profile else 0,
+        "sdt": user.PhoneNumber,
+        "tuoi": user.Age,
+        "gioiTinh": user.Gender,
+        "ngaySinh": user.Birthday.isoformat() if user.Birthday else None,
+        "hetHan": user.ExpiryDate.isoformat() if user.ExpiryDate else None,
+        "gymPackageName": profile.gym_package.Name if profile and profile.gym_package else None,
+        "aiPackageName": profile.ai_package.Name if profile and profile.ai_package else None,
     }
 
 
@@ -37,7 +44,11 @@ def list_members(
         return []
     members = (
         db.query(User)
-        .options(joinedload(User.member_profile), joinedload(User.role))
+        .options(
+            joinedload(User.member_profile).joinedload(MemberProfile.gym_package),
+            joinedload(User.member_profile).joinedload(MemberProfile.ai_package),
+            joinedload(User.role)
+        )
         .filter(User.RoleID == role.RoleID, User.IsDeleted == 0)
         .order_by(User.CreatedAt.desc())
         .all()
@@ -56,12 +67,17 @@ def search_members(
         return []
     query = (
         db.query(User)
-        .options(joinedload(User.member_profile), joinedload(User.role))
+        .options(
+            joinedload(User.member_profile).joinedload(MemberProfile.gym_package),
+            joinedload(User.member_profile).joinedload(MemberProfile.ai_package),
+            joinedload(User.role)
+        )
         .filter(User.RoleID == role.RoleID, User.IsDeleted == 0)
     )
     if q:
+        pattern = f"%{q}%"
         query = query.filter(
-            (User.FullName.ilike(f"%{q}%")) | (User.Email.ilike(f"%{q}%"))
+            (User.FullName.ilike(pattern)) | (User.Email.ilike(pattern))
         )
     return [_member_to_dict(m) for m in query.all()]
 
@@ -74,7 +90,11 @@ def get_member(
 ):
     user = (
         db.query(User)
-        .options(joinedload(User.member_profile), joinedload(User.role))
+        .options(
+            joinedload(User.member_profile).joinedload(MemberProfile.gym_package),
+            joinedload(User.member_profile).joinedload(MemberProfile.ai_package),
+            joinedload(User.role)
+        )
         .filter(User.UserID == member_id, User.IsDeleted == 0)
         .first()
     )
@@ -103,6 +123,11 @@ def create_member(
         RoleID=role.RoleID,
         IsActive=1,
         IsDeleted=0,
+        PhoneNumber=req.phoneNumber,
+        Age=req.age,
+        Gender=req.gender,
+        Birthday=req.birthday,
+        ExpiryDate=req.expiryDate,
     )
     db.add(user)
     db.flush()
@@ -137,6 +162,16 @@ def update_member(
         user.Email = req.email
     if req.isActive is not None:
         user.IsActive = req.isActive
+    if req.phoneNumber is not None:
+        user.PhoneNumber = req.phoneNumber
+    if req.age is not None:
+        user.Age = req.age
+    if req.gender is not None:
+        user.Gender = req.gender
+    if req.birthday is not None:
+        user.Birthday = req.birthday
+    if req.expiryDate is not None:
+        user.ExpiryDate = req.expiryDate
 
     profile = db.query(MemberProfile).filter(MemberProfile.UserID == member_id).first()
     if profile:

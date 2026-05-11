@@ -114,6 +114,18 @@
   background: var(--theme-bg);
 }
 
+.headerRow {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 0.8fr 0.8fr 0.6fr 0.8fr 0.6fr 40px;
+  background: var(--theme-bg);
+  padding: 12px 16px;
+  align-items: center;
+
+  th {
+    padding: 0;
+  }
+}
+
 .table td {
   padding: 12px 16px;
   font-size: 1.3rem;
@@ -128,6 +140,10 @@
 .clickRow {
   cursor: pointer;
   transition: background 0.15s;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 0.8fr 0.8fr 0.6fr 0.8fr 0.6fr 40px;
+  align-items: center;
+  padding: 12px 16px;
 }
 
 /* RPE badge */

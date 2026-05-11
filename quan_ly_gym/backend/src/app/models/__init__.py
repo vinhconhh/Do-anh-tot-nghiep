@@ -12,3 +12,4 @@ from .notification import Notification, AuditLog
 from .pt_request import PTRequest, PTScoreLog
 from .streak import MemberStreak, CheckInLog
 from .package import MembershipPackage, AIPackage, Promotion
+from .subscription import UserSubscription

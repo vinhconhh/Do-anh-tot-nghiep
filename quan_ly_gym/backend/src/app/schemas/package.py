@@ -86,3 +86,6 @@ class PromotionResponse(PromotionBase):
 class VerifyCodeRequest(BaseModel):
     code: str
     package_price: Optional[float] = None
+
+class PurchasePackageRequest(BaseModel):
+    package_id: int
