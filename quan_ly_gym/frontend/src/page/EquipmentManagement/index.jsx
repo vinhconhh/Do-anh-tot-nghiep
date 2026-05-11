@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import api from "../../api/axiosClient";
 import { Plus, Edit, Trash2, Search, Filter, Dumbbell, AlertTriangle, CheckCircle2, Wrench } from "lucide-react";
+import styles from "./EquipmentManagement.module.scss";
 
 const CATEGORIES = ["Cardio", "Tạ máy", "Tạ tự do", "Thể lực", "Yoga", "Khác"];
 const STATUSES   = ["Hoạt động", "Đang bảo trì", "Hỏng"];
 
 const statusStyle = {
-  "Hoạt động":    { bg: "#1cc88a22", color: "#1cc88a", icon: <CheckCircle2 size={12}/> },
-  "Đang bảo trì": { bg: "#f6c23e22", color: "#f6c23e", icon: <Wrench size={12}/> },
-  "Hỏng":         { bg: "#e74a3b22", color: "#e74a3b", icon: <AlertTriangle size={12}/> },
+  "Hoạt động":    { class: styles.pillActive, icon: <CheckCircle2 size={14}/> },
+  "Đang bảo trì": { class: styles.pillMaintenance, icon: <Wrench size={14}/> },
+  "Hỏng":         { class: styles.pillBroken, icon: <AlertTriangle size={14}/> },
 };
 
 const EMPTY_FORM = { Name: "", Category: "", Zone: "", Quantity: 1, Status: "Hoạt động" };
@@ -66,75 +67,67 @@ export default function EquipmentManagement() {
   );
 
   return (
-    <div style={{ padding: "24px", minHeight: "100vh", background: "var(--theme-bg)", color: "var(--theme-text-dark)" }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+    <div className={styles.page}>
+      <div className={styles.header}>
         <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--theme-text-dark)", margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
-            <Dumbbell size={26} color="#36b9cc" /> Quản Lý Thiết Bị & Máy Tập
+          <h1 className={styles.title}>
+            <Dumbbell size={26} color="var(--theme-primary)" /> Quản Lý Thiết Bị & Máy Tập
           </h1>
-          <p style={{ color: "var(--theme-text)", margin: "4px 0 0", fontSize: "1.5rem" }}>
+          <p className={styles.subtitle}>
             {items.length} thiết bị — {items.filter(i => i.Status === "Hoạt động").length} đang hoạt động
           </p>
         </div>
-        <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#36b9cc,#1a8a9c)", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontWeight: 700, cursor: "pointer", fontSize: "1.5rem" }}>
+        <button onClick={openCreate} className={styles.btnPrimary}>
           <Plus size={18} /> Thêm Thiết Bị
         </button>
       </div>
 
-      {/* Filters */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-        <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
-          <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--theme-text)" }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm kiếm thiết bị..."
-            style={{ width: "100%", paddingLeft: 36, padding: "9px 12px 9px 36px", background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", fontSize: "1.5rem", outline: "none", boxSizing: "border-box" }} />
+      <div className={styles.tools}>
+        <div className={styles.searchBox}>
+          <Search size={18} className={styles.searchIcon} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm kiếm thiết bị..." />
         </div>
-        <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
-          style={{ padding: "9px 14px", background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", cursor: "pointer" }}>
+        <select value={filterCat} onChange={e => setFilterCat(e.target.value)} className={styles.filterSelect}>
           <option value="">Tất cả danh mục</option>
           {CATEGORIES.map(c => <option key={c}>{c}</option>)}
         </select>
-        <select value={filterSt} onChange={e => setFilterSt(e.target.value)}
-          style={{ padding: "9px 14px", background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", cursor: "pointer" }}>
+        <select value={filterSt} onChange={e => setFilterSt(e.target.value)} className={styles.filterSelect}>
           <option value="">Tất cả trạng thái</option>
           {STATUSES.map(s => <option key={s}>{s}</option>)}
         </select>
       </div>
 
-      {/* Table */}
-      <div style={{ background: "var(--theme-surface)", borderRadius: 14, border: "1px solid var(--theme-border)", overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
           <thead>
-            <tr style={{ background: "var(--theme-bg)" }}>
+            <tr>
               {["Tên thiết bị", "Danh mục", "Khu vực", "Số lượng", "Trạng thái", "Hành động"].map(h => (
-                <th key={h} style={{ padding: "13px 16px", textAlign: "left", fontSize: "1.3rem", fontWeight: 700, color: "var(--theme-text)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
+                <th key={h}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={6} style={{ textAlign: "center", padding: 40, color: "var(--theme-text)" }}>Đang tải...</td></tr>}
-            {!loading && displayed.length === 0 && <tr><td colSpan={6} style={{ textAlign: "center", padding: 40, color: "var(--theme-text)" }}>Chưa có thiết bị nào</td></tr>}
+            {loading && <tr><td colSpan={6} style={{ textAlign: "center", padding: 40 }}>Đang tải...</td></tr>}
+            {!loading && displayed.length === 0 && <tr><td colSpan={6} style={{ textAlign: "center", padding: 40 }}>Chưa có thiết bị nào</td></tr>}
             {displayed.map((item) => {
               const st = statusStyle[item.Status] || statusStyle["Hoạt động"];
               return (
-                <tr key={item.EquipmentID} style={{ borderTop: "1px solid var(--theme-border)" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "var(--theme-bg)"}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <td style={{ padding: "13px 16px", fontWeight: 600, color: "var(--theme-text-dark)" }}>{item.Name}</td>
-                  <td style={{ padding: "13px 16px" }}>
-                    <span style={{ background: "#36b9cc22", color: "#36b9cc", padding: "3px 10px", borderRadius: 20, fontSize: "1.3rem", fontWeight: 600 }}>{item.Category || "—"}</span>
+                <tr key={item.EquipmentID}>
+                  <td style={{ fontWeight: 600, color: "var(--theme-text-dark)" }}>{item.Name}</td>
+                  <td>
+                    <span className={`${styles.pill} ${styles.pillCategory}`}>{item.Category || "—"}</span>
                   </td>
-                  <td style={{ padding: "13px 16px", color: "var(--theme-text)" }}>{item.Zone || "—"}</td>
-                  <td style={{ padding: "13px 16px", fontWeight: 700, color: "var(--theme-text-dark)", fontSize: "1.3rem" }}>{item.Quantity}</td>
-                  <td style={{ padding: "13px 16px" }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: st.bg, color: st.color, padding: "4px 12px", borderRadius: 20, fontSize: "1.3rem", fontWeight: 600, border: `1px solid ${st.color}44` }}>
+                  <td style={{ color: "var(--theme-text)" }}>{item.Zone || "—"}</td>
+                  <td style={{ fontWeight: 700, color: "var(--theme-text-dark)" }}>{item.Quantity}</td>
+                  <td>
+                    <span className={`${styles.pill} ${st.class}`}>
                       {st.icon} {item.Status}
                     </span>
                   </td>
-                  <td style={{ padding: "13px 16px" }}>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => openEdit(item)} style={{ background: "#36b9cc22", color: "#36b9cc", border: "1px solid #36b9cc44", borderRadius: 7, padding: "6px 10px", cursor: "pointer" }}><Edit size={15}/></button>
-                      <button onClick={() => handleDelete(item.EquipmentID)} style={{ background: "#e74a3b22", color: "#e74a3b", border: "1px solid #e74a3b44", borderRadius: 7, padding: "6px 10px", cursor: "pointer" }}><Trash2 size={15}/></button>
+                  <td>
+                    <div className={styles.actions}>
+                      <button onClick={() => openEdit(item)} className={`${styles.btnIcon} ${styles.btnEdit}`} title="Sửa"><Edit size={16}/></button>
+                      <button onClick={() => handleDelete(item.EquipmentID)} className={`${styles.btnIcon} ${styles.btnDanger}`} title="Xóa"><Trash2 size={16}/></button>
                     </div>
                   </td>
                 </tr>
@@ -144,46 +137,45 @@ export default function EquipmentManagement() {
         </table>
       </div>
 
-      {/* Modal */}
       {modalOpen && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-          <div style={{ background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 500, boxShadow: "0 25px 50px rgba(0,0,0,0.5)" }}>
-            <h2 style={{ color: "var(--theme-text-dark)", fontWeight: 800, marginBottom: 22, fontSize: "1.4rem" }}>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalTitle}>
               {editing ? "✏️ Sửa thiết bị" : "➕ Thêm thiết bị mới"}
             </h2>
-            <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {[
-                { label: "Tên thiết bị *", key: "Name", type: "text", required: true },
-                { label: "Khu vực", key: "Zone", type: "text" },
-                { label: "Số lượng", key: "Quantity", type: "number" },
-              ].map(f => (
-                <div key={f.key}>
-                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>{f.label}</label>
-                  <input type={f.type} required={f.required} value={form[f.key]} min={f.type === "number" ? 0 : undefined}
-                    onChange={e => setForm(p => ({ ...p, [f.key]: f.type === "number" ? parseInt(e.target.value) || 0 : e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", outline: "none", fontSize: "1.5rem", boxSizing: "border-box" }} />
+            <form onSubmit={handleSave} className={styles.form}>
+              <div className={styles.formGroup}>
+                <label>Tên thiết bị *</label>
+                <input type="text" required value={form.Name} onChange={e => setForm(p => ({ ...p, Name: e.target.value }))} />
+              </div>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>Khu vực</label>
+                  <input type="text" value={form.Zone} onChange={e => setForm(p => ({ ...p, Zone: e.target.value }))} />
                 </div>
-              ))}
-              <div style={{ display: "flex", gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>Danh mục</label>
-                  <select value={form.Category} onChange={e => setForm(p => ({ ...p, Category: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)" }}>
+                <div className={styles.formGroup}>
+                  <label>Số lượng</label>
+                  <input type="number" min="0" value={form.Quantity} onChange={e => setForm(p => ({ ...p, Quantity: parseInt(e.target.value) || 0 }))} />
+                </div>
+              </div>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>Danh mục</label>
+                  <select value={form.Category} onChange={e => setForm(p => ({ ...p, Category: e.target.value }))}>
                     <option value="">-- Chọn --</option>
                     {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>Trạng thái</label>
-                  <select value={form.Status} onChange={e => setForm(p => ({ ...p, Status: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)" }}>
+                <div className={styles.formGroup}>
+                  <label>Trạng thái</label>
+                  <select value={form.Status} onChange={e => setForm(p => ({ ...p, Status: e.target.value }))}>
                     {STATUSES.map(s => <option key={s}>{s}</option>)}
                   </select>
                 </div>
               </div>
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
-                <button type="button" onClick={() => setModalOpen(false)} style={{ padding: "9px 20px", background: "var(--theme-bg)", color: "var(--theme-text-dark)", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 600 }}>Hủy</button>
-                <button type="submit" disabled={saving} style={{ padding: "9px 22px", background: "linear-gradient(135deg,#36b9cc,#1a8a9c)", color: "#fff", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 700 }}>
+              <div className={styles.formActions}>
+                <button type="button" onClick={() => setModalOpen(false)} className={styles.btnGhost}>Hủy</button>
+                <button type="submit" disabled={saving} className={styles.btnPrimary}>
                   {saving ? "Đang lưu..." : "💾 Lưu"}
                 </button>
               </div>

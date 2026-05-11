@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../../api/axiosClient";
 import { Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, BookOpen, Video } from "lucide-react";
+import styles from "./GymExerciseManagement.module.scss";
 
 const TYPES = ["Cardio", "Free Weights", "Machine", "Bodyweight", "Stretching", "Khác"];
 const MUSCLES = ["Ngực", "Lưng", "Vai", "Tay", "Bụng", "Đùi", "Bắp chân", "Mông", "Toàn thân"];
@@ -66,43 +67,41 @@ export default function GymExerciseManagement() {
   const typeColor = { Cardio: "#f6c23e", "Free Weights": "#1cc88a", Machine: "#36b9cc", Bodyweight: "#4e73df", Stretching: "#e74a3b" };
 
   return (
-    <div style={{ padding: "24px", minHeight: "100vh", background: "var(--theme-bg)", color: "var(--theme-text-dark)" }}>
+    <div className={styles.page}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className={styles.header}>
         <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--theme-text-dark)", margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
+          <h1 className={styles.title}>
             <BookOpen size={26} color="#1cc88a" /> Danh Mục Bài Tập
           </h1>
-          <p style={{ color: "var(--theme-text)", margin: "4px 0 0", fontSize: "1.5rem" }}>
+          <p className={styles.subtitle}>
             {data.total} bài tập trong hệ thống
           </p>
         </div>
-        <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#1cc88a,#17a673)", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>
+        <button onClick={openCreate} className={styles.btnSuccess}>
           <Plus size={18} /> Thêm Bài Tập
         </button>
       </div>
 
       {/* Filters */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-        <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
-          <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--theme-text)" }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên bài tập..."
-            style={{ width: "100%", padding: "9px 12px 9px 36px", background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", fontSize: "1.5rem", outline: "none", boxSizing: "border-box" }} />
+      <div className={styles.tools}>
+        <div className={styles.searchBox}>
+          <Search size={18} className={styles.searchIcon} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên bài tập..." />
         </div>
-        <select value={muscle} onChange={e => setMuscle(e.target.value)}
-          style={{ padding: "9px 14px", background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", cursor: "pointer" }}>
+        <select value={muscle} onChange={e => setMuscle(e.target.value)} className={styles.filterSelect}>
           <option value="">Tất cả nhóm cơ</option>
           {MUSCLES.map(m => <option key={m}>{m}</option>)}
         </select>
       </div>
 
       {/* Table */}
-      <div style={{ background: "var(--theme-surface)", borderRadius: 14, border: "1px solid var(--theme-border)", overflow: "hidden", marginBottom: 16 }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
           <thead>
-            <tr style={{ background: "var(--theme-bg)" }}>
+            <tr>
               {["Tên bài tập", "Tiếng Việt", "Loại", "Nhóm cơ", "MET", "Máy dùng", "Video", "Hành động"].map(h => (
-                <th key={h} style={{ padding: "13px 16px", textAlign: "left", fontSize: "1.3rem", fontWeight: 700, color: "var(--theme-text)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
+                <th key={h}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -112,30 +111,28 @@ export default function GymExerciseManagement() {
             {(data.items || []).map((item) => {
               const tc = typeColor[item.Type] || "var(--theme-text)";
               return (
-                <tr key={item.ExerciseID} style={{ borderTop: "1px solid var(--theme-border)" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "var(--theme-bg)"}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <td style={{ padding: "12px 16px", fontWeight: 600, color: "var(--theme-text-dark)" }}>{item.Name}</td>
-                  <td style={{ padding: "12px 16px", color: "var(--theme-text)" }}>{item.AssignmentName || "—"}</td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <span style={{ background: tc + "22", color: tc, padding: "3px 10px", borderRadius: 20, fontSize: "1.3rem", fontWeight: 600, border: `1px solid ${tc}44` }}>{item.Type || "—"}</span>
+                <tr key={item.ExerciseID}>
+                  <td style={{ fontWeight: 600, color: "var(--theme-text-dark)" }}>{item.Name}</td>
+                  <td style={{ color: "var(--theme-text)" }}>{item.AssignmentName || "—"}</td>
+                  <td>
+                    <span className={styles.pill} style={{ background: tc + "22", color: tc, border: `1px solid ${tc}44` }}>{item.Type || "—"}</span>
                   </td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <span style={{ background: "#4e73df22", color: "#a5b4fc", padding: "3px 10px", borderRadius: 20, fontSize: "1.3rem", fontWeight: 600 }}>{item.TargetMuscle || "—"}</span>
+                  <td>
+                    <span className={`${styles.pill} ${styles.pillMuscle}`}>{item.TargetMuscle || "—"}</span>
                   </td>
-                  <td style={{ padding: "12px 16px", color: "#f6c23e", fontWeight: 700 }}>{item.MetValue ?? "—"}</td>
-                  <td style={{ padding: "12px 16px", color: "var(--theme-text)", fontSize: "1.5rem" }}>{item.EquipmentName || "—"}</td>
-                  <td style={{ padding: "12px 16px" }}>
+                  <td style={{ color: "#f6c23e", fontWeight: 700 }}>{item.MetValue ?? "—"}</td>
+                  <td style={{ color: "var(--theme-text)", fontSize: "1.6rem" }}>{item.EquipmentName || "—"}</td>
+                  <td>
                     {item.VideoURL ? (
-                      <a href={item.VideoURL} target="_blank" rel="noreferrer" style={{ color: "#36b9cc", display: "flex", alignItems: "center", gap: 4 }}>
+                      <a href={item.VideoURL} target="_blank" rel="noreferrer" className={styles.videoLink}>
                         <Video size={16}/> Xem
                       </a>
                     ) : <span style={{ color: "var(--theme-text)" }}>—</span>}
                   </td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => openEdit(item)} style={{ background: "#36b9cc22", color: "#36b9cc", border: "1px solid #36b9cc44", borderRadius: 7, padding: "6px 10px", cursor: "pointer" }}><Edit size={15}/></button>
-                      <button onClick={() => handleDelete(item.ExerciseID)} style={{ background: "#e74a3b22", color: "#e74a3b", border: "1px solid #e74a3b44", borderRadius: 7, padding: "6px 10px", cursor: "pointer" }}><Trash2 size={15}/></button>
+                  <td>
+                    <div className={styles.actions}>
+                      <button onClick={() => openEdit(item)} className={`${styles.btnIcon} ${styles.btnEdit}`} title="Sửa"><Edit size={16}/></button>
+                      <button onClick={() => handleDelete(item.ExerciseID)} className={`${styles.btnIcon} ${styles.btnDanger}`} title="Xóa"><Trash2 size={16}/></button>
                     </div>
                   </td>
                 </tr>
@@ -146,83 +143,75 @@ export default function GymExerciseManagement() {
       </div>
 
       {/* Pagination */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ color: "var(--theme-text)", fontSize: "1.5rem" }}>Trang {data.page || page} / {data.pages || 1} ({data.total} bài tập)</span>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page <= 1}
-            style={{ padding: "7px 14px", background: page <= 1 ? "var(--theme-bg)" : "var(--theme-primary)", color: page <= 1 ? "var(--theme-text)" : "#fff", border: "1px solid var(--theme-border)", borderRadius: 8, cursor: page <= 1 ? "default" : "pointer" }}>
-            <ChevronLeft size={16}/>
+      <div className={styles.pagination}>
+        <span className={styles.pageInfo}>Trang {data.page || page} / {data.pages || 1} ({data.total} bài tập)</span>
+        <div className={styles.pageControls}>
+          <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page <= 1} className={styles.btnPage}>
+            <ChevronLeft size={18}/>
           </button>
-          <button onClick={() => setPage(p => Math.min(data.pages || 1, p+1))} disabled={page >= (data.pages || 1)}
-            style={{ padding: "7px 14px", background: page >= (data.pages || 1) ? "var(--theme-bg)" : "var(--theme-primary)", color: page >= (data.pages || 1) ? "var(--theme-text)" : "#fff", border: "1px solid var(--theme-border)", borderRadius: 8, cursor: page >= (data.pages || 1) ? "default" : "pointer" }}>
-            <ChevronRight size={16}/>
+          <button onClick={() => setPage(p => Math.min(data.pages || 1, p+1))} disabled={page >= (data.pages || 1)} className={styles.btnPage}>
+            <ChevronRight size={18}/>
           </button>
         </div>
       </div>
 
       {/* Modal */}
       {modalOpen && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-          <div style={{ background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 540, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 25px 50px rgba(0,0,0,0.5)" }}>
-            <h2 style={{ color: "var(--theme-text-dark)", fontWeight: 800, marginBottom: 22, fontSize: "1.4rem" }}>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalTitle}>
               {editing ? "✏️ Sửa bài tập" : "➕ Thêm bài tập mới"}
             </h2>
-            <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ display: "flex", gap: 12 }}>
+            <form onSubmit={handleSave} className={styles.form}>
+              <div className={styles.formGrid}>
                 {[
                   { label: "Tên bài tập (EN) *", key: "Name", required: true },
                   { label: "Tên tiếng Việt", key: "AssignmentName" },
                 ].map(f => (
-                  <div key={f.key} style={{ flex: 1 }}>
-                    <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>{f.label}</label>
-                    <input required={f.required} value={form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                      style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", outline: "none", boxSizing: "border-box" }} />
+                  <div key={f.key} className={styles.formGroup}>
+                    <label>{f.label}</label>
+                    <input required={f.required} value={form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} />
                   </div>
                 ))}
               </div>
-              <div style={{ display: "flex", gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>Loại bài tập</label>
-                  <select value={form.Type} onChange={e => setForm(p => ({ ...p, Type: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)" }}>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>Loại bài tập</label>
+                  <select value={form.Type} onChange={e => setForm(p => ({ ...p, Type: e.target.value }))}>
                     <option value="">-- Chọn --</option>
                     {TYPES.map(t => <option key={t}>{t}</option>)}
                   </select>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>Nhóm cơ chính</label>
-                  <select value={form.TargetMuscle} onChange={e => setForm(p => ({ ...p, TargetMuscle: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)" }}>
+                <div className={styles.formGroup}>
+                  <label>Nhóm cơ chính</label>
+                  <select value={form.TargetMuscle} onChange={e => setForm(p => ({ ...p, TargetMuscle: e.target.value }))}>
                     <option value="">-- Chọn --</option>
                     {MUSCLES.map(m => <option key={m}>{m}</option>)}
                   </select>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>Chỉ số MET</label>
-                  <input type="number" step="0.1" min="0" value={form.MetValue} onChange={e => setForm(p => ({ ...p, MetValue: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", outline: "none", boxSizing: "border-box" }} />
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>Chỉ số MET</label>
+                  <input type="number" step="0.1" min="0" value={form.MetValue} onChange={e => setForm(p => ({ ...p, MetValue: e.target.value }))} />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>Máy tập liên kết</label>
-                  <select value={form.EquipmentID} onChange={e => setForm(p => ({ ...p, EquipmentID: e.target.value }))}
-                    style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)" }}>
+                <div className={styles.formGroup}>
+                  <label>Máy tập liên kết</label>
+                  <select value={form.EquipmentID} onChange={e => setForm(p => ({ ...p, EquipmentID: e.target.value }))}>
                     <option value="">Không cần máy</option>
                     {equipments.map(eq => <option key={eq.EquipmentID} value={eq.EquipmentID}>{eq.Name}</option>)}
                   </select>
                 </div>
               </div>
               {/* Video URL */}
-              <div>
-                <label style={{ color: "var(--theme-text)", fontSize: "1.4rem", display: "block", marginBottom: 5 }}>🎥 Link Video hướng dẫn</label>
+              <div className={styles.formGroup}>
+                <label>🎥 Link Video hướng dẫn</label>
                 <input value={form.VideoURL} onChange={e => setForm(p => ({ ...p, VideoURL: e.target.value }))}
-                  placeholder="https://youtube.com/watch?v=... hoặc link video"
-                  style={{ width: "100%", padding: "9px 12px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", outline: "none", boxSizing: "border-box" }} />
+                  placeholder="https://youtube.com/watch?v=... hoặc link video" />
               </div>
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
-                <button type="button" onClick={() => setModalOpen(false)} style={{ padding: "9px 20px", background: "var(--theme-bg)", color: "var(--theme-text-dark)", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 600 }}>Hủy</button>
-                <button type="submit" disabled={saving} style={{ padding: "9px 22px", background: "linear-gradient(135deg,#1cc88a,#17a673)", color: "#fff", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 700 }}>
+              <div className={styles.formActions}>
+                <button type="button" onClick={() => setModalOpen(false)} className={styles.btnGhost}>Hủy</button>
+                <button type="submit" disabled={saving} className={styles.btnSuccess}>
                   {saving ? "Đang lưu..." : "💾 Lưu"}
                 </button>
               </div>

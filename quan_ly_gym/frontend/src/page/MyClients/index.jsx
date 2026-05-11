@@ -83,8 +83,8 @@ export default function MyClients() {
               <div className={styles.clientList}>
                 {filtered.map((c) => (
                   <div
-                    key={c.requestId}
-                    className={`${styles.clientItem} ${selectedClient?.requestId === c.requestId ? styles.clientItemActive : ""}`}
+                    key={c.memberId}
+                    className={`${styles.clientItem} ${selectedClient?.memberId === c.memberId ? styles.clientItemActive : ""}`}
                     onClick={() => setSelectedClient(c)}
                   >
                     <div className={styles.clientAvatar}>

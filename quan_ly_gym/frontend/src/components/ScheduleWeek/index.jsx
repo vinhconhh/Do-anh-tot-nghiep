@@ -39,6 +39,7 @@ export default function ScheduleWeek({
   timezoneLabel = "GMT+7",
   weekStart,
   onChangeWeekStart,
+  onEventClick,
   startHour = 6,
   endHour = 22,
   events = [],
@@ -141,14 +142,25 @@ export default function ScheduleWeek({
                   <div
                     key={ev.id}
                     className={`${styles.event} ${colorClass}`}
-                    style={{ top: `${top}%`, height: `${height}%` }}
+                    style={{ top: `${top}%`, height: `${height}%`, cursor: onEventClick ? "pointer" : "default" }}
                     title={ev.title}
+                    onClick={() => onEventClick?.(ev)}
                   >
                     <div className={styles.evTitle}>{ev.title}</div>
                     <div className={styles.evMeta}>
+                      {ev.meta ? `${ev.meta} · ` : ""}
                       {timeText}
-                      {ev.meta ? ` · ${ev.meta}` : ""}
                     </div>
+                    {ev.attendanceStatus === "Present" && (
+                      <div style={{ marginTop: 4, fontSize: "0.85rem", fontWeight: "bold", color: "#fff", background: "rgba(28, 200, 138, 0.9)", padding: "2px 6px", borderRadius: 4, display: "inline-block" }}>
+                        ✓ Có mặt
+                      </div>
+                    )}
+                    {ev.attendanceStatus === "Absent" && (
+                      <div style={{ marginTop: 4, fontSize: "0.85rem", fontWeight: "bold", color: "#fff", background: "rgba(231, 74, 59, 0.9)", padding: "2px 6px", borderRadius: 4, display: "inline-block" }}>
+                        ✗ Vắng mặt
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -166,6 +178,7 @@ ScheduleWeek.propTypes = {
   timezoneLabel: PropTypes.string,
   weekStart: PropTypes.instanceOf(Date).isRequired,
   onChangeWeekStart: PropTypes.func,
+  onEventClick: PropTypes.func,
   startHour: PropTypes.number,
   endHour: PropTypes.number,
   events: PropTypes.arrayOf(
@@ -175,7 +188,7 @@ ScheduleWeek.propTypes = {
       end: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
       meta: PropTypes.string,
-      color: PropTypes.oneOf(["blue", "green", "orange", "red"]),
+      color: PropTypes.oneOf(["blue", "green", "orange", "red", "purple"]),
     })
   ),
 };

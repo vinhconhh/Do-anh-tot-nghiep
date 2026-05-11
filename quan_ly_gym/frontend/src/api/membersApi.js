@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { authedRequestJson } from "./client";
 
@@ -58,5 +58,8 @@ export function useMembersApi() {
     [aj]
   );
 
-  return { list, search, getById, create, update, remove };
+  return useMemo(
+    () => ({ list, search, getById, create, update, remove }),
+    [list, search, getById, create, update, remove]
+  );
 }

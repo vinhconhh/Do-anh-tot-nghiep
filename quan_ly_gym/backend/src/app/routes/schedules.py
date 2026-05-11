@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import Optional
 from datetime import datetime, date, timedelta, time as dt_time
 
@@ -12,7 +13,7 @@ from ..middleware.auth import get_current_user
 router = APIRouter(prefix="/api/schedules", tags=["Schedules"])
 
 
-def _schedule_events(schedules, classes_teaching, classes_enrolled):
+def _schedule_events(db, schedules, classes_teaching, classes_enrolled, target_id):
     """Merge workout schedules + class events into ScheduleWeek format."""
     events = []
     for s in schedules:
@@ -27,21 +28,49 @@ def _schedule_events(schedules, classes_teaching, classes_enrolled):
                 "color": "orange",
             })
     for c in classes_teaching:
+        target_class_ids = [c.ClassID]
+        if c.ParentClassID:
+            target_class_ids.append(c.ParentClassID)
+            
+        active_count = db.query(ClassEnrollment.MemberID).filter(
+            ClassEnrollment.ClassID.in_(target_class_ids),
+            ClassEnrollment.Status == "Active"
+        ).distinct().count()
+        
         events.append({
             "id": f"teach_{c.ClassID}",
             "start": c.StartTime.isoformat(),
             "end": c.EndTime.isoformat(),
             "title": f"{c.Name} — {c.StudioRoom or 'TBD'}",
-            "meta": f"Ca dạy · {c.CurrentEnrolled or 0}/{c.MaxCapacity} HV",
+            "meta": f"Ca dạy · {active_count}/{c.MaxCapacity or 20} HV",
             "color": "green",
         })
     for c in classes_enrolled:
+        target_ids = [c.ClassID]
+        if c.ParentClassID:
+            target_ids.append(c.ParentClassID)
+            
+        enrolls = db.query(ClassEnrollment).filter(
+            ClassEnrollment.ClassID.in_(target_ids),
+            ClassEnrollment.MemberID == target_id,
+            ClassEnrollment.Status == "Active"
+        ).all()
+        
+        att_status = None
+        for e in enrolls:
+            if e.ClassID == c.ClassID and e.AttendanceStatus:
+                att_status = e.AttendanceStatus
+                break
+            if e.AttendanceStatus:
+                att_status = e.AttendanceStatus
+            
         events.append({
             "id": f"enroll_{c.ClassID}",
             "start": c.StartTime.isoformat(),
             "end": c.EndTime.isoformat(),
             "title": c.Name,
             "meta": f"Lớp học · {c.StudioRoom or ''}",
+            "attendanceStatus": att_status,
             "color": "blue",
         })
     return events
@@ -59,22 +88,33 @@ def list_schedules(
     # Workout schedules
     schedules = db.query(Schedule).filter(Schedule.UserID == target_id).order_by(Schedule.WorkoutDate.desc()).all()
 
-    # Classes teaching (PT)
+    # Classes teaching (PT) - exclude the recurring parent template
     q_teach = db.query(GymClass).filter(
-        GymClass.InstructorID == target_id, GymClass.IsDeleted == 0
+        GymClass.InstructorID == target_id, 
+        GymClass.IsDeleted == 0,
+        or_(GymClass.IsRecurring == 0, GymClass.IsRecurring == None)
     )
     # Classes enrolled (Member)
     enrolled_ids = [r[0] for r in db.query(ClassEnrollment.ClassID).filter(
         ClassEnrollment.MemberID == target_id, ClassEnrollment.Status == "Active"
     ).all()]
-    q_enroll = db.query(GymClass).filter(
-        GymClass.ClassID.in_(enrolled_ids), GymClass.IsDeleted == 0
-    ) if enrolled_ids else None
+    
+    if enrolled_ids:
+        q_enroll = db.query(GymClass).filter(
+            or_(
+                GymClass.ClassID.in_(enrolled_ids),
+                GymClass.ParentClassID.in_(enrolled_ids)
+            ),
+            GymClass.IsDeleted == 0,
+            or_(GymClass.IsRecurring == 0, GymClass.IsRecurring == None)
+        )
+    else:
+        q_enroll = None
 
     classes_teaching = q_teach.order_by(GymClass.StartTime).all()
     classes_enrolled = q_enroll.order_by(GymClass.StartTime).all() if q_enroll else []
 
-    return _schedule_events(schedules, classes_teaching, classes_enrolled)
+    return _schedule_events(db, schedules, classes_teaching, classes_enrolled, target_id)
 
 
 @router.get("/my")
@@ -86,14 +126,25 @@ def my_schedules(
     schedules = db.query(Schedule).filter(Schedule.UserID == uid).order_by(Schedule.WorkoutDate.desc()).all()
 
     classes_teaching = db.query(GymClass).filter(
-        GymClass.InstructorID == uid, GymClass.IsDeleted == 0
+        GymClass.InstructorID == uid, 
+        GymClass.IsDeleted == 0,
+        or_(GymClass.IsRecurring == 0, GymClass.IsRecurring == None)
     ).order_by(GymClass.StartTime).all()
 
     enrolled_ids = [r[0] for r in db.query(ClassEnrollment.ClassID).filter(
         ClassEnrollment.MemberID == uid, ClassEnrollment.Status == "Active"
     ).all()]
-    classes_enrolled = db.query(GymClass).filter(
-        GymClass.ClassID.in_(enrolled_ids), GymClass.IsDeleted == 0
-    ).order_by(GymClass.StartTime).all() if enrolled_ids else []
+    
+    if enrolled_ids:
+        classes_enrolled = db.query(GymClass).filter(
+            or_(
+                GymClass.ClassID.in_(enrolled_ids),
+                GymClass.ParentClassID.in_(enrolled_ids)
+            ),
+            GymClass.IsDeleted == 0,
+            or_(GymClass.IsRecurring == 0, GymClass.IsRecurring == None)
+        ).order_by(GymClass.StartTime).all()
+    else:
+        classes_enrolled = []
 
-    return _schedule_events(schedules, classes_teaching, classes_enrolled)
+    return _schedule_events(db, schedules, classes_teaching, classes_enrolled, uid)

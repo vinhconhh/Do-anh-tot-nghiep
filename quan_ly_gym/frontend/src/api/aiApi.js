@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { authedRequestJson } from "./client";
 
@@ -45,5 +45,8 @@ export function useAiApi() {
     [aj]
   );
 
-  return { getQuota, getPackages, getHistory, buyPackage };
+  return useMemo(
+    () => ({ getQuota, getPackages, getHistory, buyPackage }),
+    [getQuota, getPackages, getHistory, buyPackage]
+  );
 }

@@ -8,9 +8,10 @@ from ..models.finance import Transaction
 from ..models.ai import AIRequest, AIResponse
 from ..models.booking import Booking
 from ..models.workout import Schedule
-from ..models.log import BodyMetric
+from ..models.log import BodyMetric, LogWorkout
+from ..models.streak import MemberStreak, CheckInLog
 from ..middleware.auth import get_current_user
-from datetime import datetime
+from datetime import datetime, date
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
@@ -162,12 +163,34 @@ def get_member_stats(
             "weight": m.Weight,
         })
 
+    # Count completed sessions (LogWorkouts)
+    sessions_completed = db.query(func.count(LogWorkout.LogID)).filter(
+        LogWorkout.UserID == current_user.UserID
+    ).scalar() or 0
+
+    # Streak info
+    streak_obj = db.query(MemberStreak).filter(MemberStreak.UserID == current_user.UserID).first()
+    
+    # Check if checked in today
+    today = date.today()
+    checked_in_today = db.query(CheckInLog).filter(
+        CheckInLog.UserID == current_user.UserID,
+        CheckInLog.CheckInDate == today
+    ).first() is not None
+
+    if not current_user.ReferralCode:
+        import uuid
+        current_user.ReferralCode = str(uuid.uuid4())[:8].upper()
+        db.commit()
+
     return {
         "aiQuota": profile.AIQuota if profile else 0,
         "aiUsed": ai_used,
-        "sessionsCompleted": 0,
+        "sessionsCompleted": sessions_completed,
         "totalSchedules": total_schedules,
-        "streak": 0,
+        "streak": streak_obj.CurrentStreak if streak_obj else 0,
+        "totalPoints": streak_obj.TotalPoints if streak_obj else 0,
+        "checkedInToday": checked_in_today,
         "weight": latest_metric.Weight if latest_metric else (profile.Weight if profile else None),
         "height": profile.Height if profile else None,
         "bodyFat": latest_metric.BodyFat if latest_metric else None,
@@ -493,3 +516,102 @@ def member_report_detail(
         "activities": activities[:20],
     }
 
+@router.get("/trainer-report/{trainer_id}")
+def trainer_report_detail(
+    trainer_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Detailed report for a specific trainer: session chart, activities."""
+    from ..models.facility import AssignedExercise
+    from ..models.pt_request import PTRequest
+    from ..models.booking import Booking
+    from ..models.streak import CheckInLog
+    from datetime import datetime, timedelta
+
+    user = db.query(User).filter(User.UserID == trainer_id, User.IsDeleted == 0).first()
+    if not user:
+        return {"sessionChart": [], "activities": []}
+
+    # Session chart: sessions taught per week (last 8 weeks)
+    now = datetime.utcnow()
+    session_chart = []
+    for i in range(7, -1, -1):
+        week_start = now - timedelta(weeks=i, days=now.weekday())
+        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_end = week_start + timedelta(days=7)
+
+        # Count bookings for this PT that are completed
+        count = db.query(func.count(Booking.BookingID)).filter(
+            Booking.PTID == trainer_id,
+            Booking.StartTime >= week_start,
+            Booking.StartTime < week_end,
+            Booking.Status == "Completed",
+        ).scalar() or 0
+
+        session_chart.append({
+            "week": f"T{8-i}",
+            "done": count,
+        })
+
+    # Activities - assignments, requests, check-ins
+    activities = []
+
+    # Assigned exercises
+    assignments = (
+        db.query(AssignedExercise)
+        .filter(AssignedExercise.PTID == trainer_id)
+        .order_by(AssignedExercise.CreatedAt.desc())
+        .limit(10)
+        .all()
+    )
+    for a in assignments:
+        m = db.query(User).filter(User.UserID == a.MemberID).first()
+        activities.append({
+            "date": a.CreatedAt.strftime("%d/%m/%Y") if a.CreatedAt else "",
+            "action": f"Phân bài tập cho {m.FullName if m else 'Hội viên'}",
+            "member": m.FullName if m else "—",
+            "result": a.Status or "—",
+        })
+
+    # PT Requests
+    requests = (
+        db.query(PTRequest)
+        .filter(PTRequest.PTID == trainer_id)
+        .order_by(PTRequest.CreatedAt.desc())
+        .limit(10)
+        .all()
+    )
+    for r in requests:
+        m = db.query(User).filter(User.UserID == r.MemberID).first()
+        activities.append({
+            "date": r.CreatedAt.strftime("%d/%m/%Y") if r.CreatedAt else "",
+            "action": f"Yêu cầu từ {m.FullName if m else 'Hội viên'}",
+            "member": m.FullName if m else "—",
+            "result": r.Status or "—",
+        })
+
+    # Bookings
+    bookings = (
+        db.query(Booking)
+        .filter(Booking.PTID == trainer_id)
+        .order_by(Booking.StartTime.desc())
+        .limit(10)
+        .all()
+    )
+    for b in bookings:
+        m = db.query(User).filter(User.UserID == b.MemberID).first()
+        activities.append({
+            "date": b.StartTime.strftime("%d/%m/%Y") if b.StartTime else "",
+            "action": f"Buổi tập với {m.FullName if m else 'Hội viên'}",
+            "member": m.FullName if m else "—",
+            "result": b.Status or "—",
+        })
+
+    # Sort by date descending
+    activities.sort(key=lambda x: x["date"], reverse=True)
+
+    return {
+        "sessionChart": session_chart,
+        "activities": activities[:20],
+    }

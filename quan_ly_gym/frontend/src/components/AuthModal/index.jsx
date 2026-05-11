@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { Dumbbell, Eye, EyeOff, X } from "lucide-react";
+import { Dumbbell, Eye, EyeOff, Mail, Lock, User, Hash, Github, Twitter, Chrome } from "lucide-react";
 import { login as loginApi, register as registerApi } from "../../api/authApi";
 import styles from "./AuthModal.module.scss";
 
@@ -75,15 +75,16 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <button className={styles.closeBtn} onClick={onClose}>
-          <X size={24} />
-        </button>
-
         <div className={styles.header}>
-          <div className={styles.logoIcon}>
-            <Dumbbell size={28} color="#fff" />
+          <div className={styles.logoBrand}>
+            <div className={styles.logoIconNew}>
+              <span className={styles.tpgT}>T</span>
+              <span className={styles.tpgP}>P</span>
+              <span className={styles.tpgG}>G</span>
+            </div>
+            <div className={styles.logoDivider}></div>
+            <h2 className={styles.title}>THE <span className={styles.textPrimary}>PRO</span> GYM</h2>
           </div>
-          <h2 className={styles.title}>The Pro Gym</h2>
           <p className={styles.subtitle}>
             {view === "login" ? "Chào mừng trở lại!" : "Tạo tài khoản mới"}
           </p>
@@ -98,27 +99,30 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
         {view === "login" ? (
           <form onSubmit={handleLogin} className={styles.form}>
             <div className={styles.inputGroup}>
-              <label>Email</label>
-              <input
-                type="text"
-                placeholder="Nhập tên email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+              <div className={styles.inputWrapper}>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                <Mail className={styles.inputIcon} size={20} />
+              </div>
             </div>
             <div className={styles.inputGroup}>
-              <label>Mật khẩu</label>
-              <div className={styles.pwdWrapper}>
+              <div className={styles.inputWrapper}>
                 <input
                   type={showPwd ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="Mật khẩu"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className={styles.hasToggle}
                 />
-                <button type="button" onClick={() => setShowPwd(!showPwd)}>
-                  {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                <Lock className={styles.inputIcon} size={20} />
+                <button type="button" className={styles.pwdToggle} onClick={() => setShowPwd(!showPwd)}>
+                  {showPwd ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
@@ -128,11 +132,11 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                 <input type="checkbox" defaultChecked />
                 <span>Ghi nhớ tôi</span>
               </label>
-              <a href="#forgot" className={styles.forgotLink}>Quên mật khẩu?</a>
+              <Link to="/forgot-password" className={styles.forgotLink} onClick={onClose}>Quên mật khẩu?</Link>
             </div>
 
             <button type="submit" className={styles.submitBtn} disabled={loading}>
-              {loading ? "Đang xử lý..." : "Đăng Nhập"}
+              {loading ? "Đang xử lý..." : "ĐĂNG NHẬP"}
             </button>
 
             <div className={styles.switchView}>
@@ -145,62 +149,71 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
         ) : (
           <form onSubmit={handleRegister} className={styles.form}>
             <div className={styles.inputGroup}>
-              <label>Họ và tên</label>
-              <input
-                type="text"
-                placeholder="Nguyễn Văn A"
-                value={regForm.hoTen}
-                onChange={onRegChange("hoTen")}
-                required
-              />
+              <div className={styles.inputWrapper}>
+                <input
+                  type="text"
+                  placeholder="Họ và tên"
+                  value={regForm.hoTen}
+                  onChange={onRegChange("hoTen")}
+                  required
+                />
+                <User className={styles.inputIcon} size={20} />
+              </div>
             </div>
             <div className={styles.inputGroup}>
-              <label>Email</label>
-              <input
-                type="email"
-                placeholder="example@theprogym.vn"
-                value={regForm.email}
-                onChange={onRegChange("email")}
-              />
+              <div className={styles.inputWrapper}>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={regForm.email}
+                  onChange={onRegChange("email")}
+                />
+                <Mail className={styles.inputIcon} size={20} />
+              </div>
             </div>
             <div className={styles.inputGroup}>
-              <label>Tên đăng nhập</label>
-              <input
-                type="text"
-                placeholder="Tên đăng nhập"
-                value={regForm.tenDangNhap}
-                onChange={onRegChange("tenDangNhap")}
-                required
-              />
+              <div className={styles.inputWrapper}>
+                <input
+                  type="text"
+                  placeholder="Tên đăng nhập"
+                  value={regForm.tenDangNhap}
+                  onChange={onRegChange("tenDangNhap")}
+                  required
+                />
+                <User className={styles.inputIcon} size={20} />
+              </div>
             </div>
             <div className={styles.inputGroup}>
-              <label>Mật khẩu</label>
-              <div className={styles.pwdWrapper}>
+              <div className={styles.inputWrapper}>
                 <input
                   type={showPwd ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="Mật khẩu"
                   value={regForm.matKhau}
                   onChange={onRegChange("matKhau")}
                   required
+                  className={styles.hasToggle}
                 />
-                <button type="button" onClick={() => setShowPwd(!showPwd)}>
-                  {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                <Lock className={styles.inputIcon} size={20} />
+                <button type="button" className={styles.pwdToggle} onClick={() => setShowPwd(!showPwd)}>
+                  {showPwd ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
             <div className={styles.inputGroup}>
-              <label>Mã giới thiệu (Nếu có)</label>
-              <input
-                type="text"
-                placeholder="VD: 8A4F1B3E"
-                value={regForm.referralCode}
-                onChange={onRegChange("referralCode")}
-                className="uppercase"
-              />
+              <div className={styles.inputWrapper}>
+                <input
+                  type="text"
+                  placeholder="Mã giới thiệu (Nếu có)"
+                  value={regForm.referralCode}
+                  onChange={onRegChange("referralCode")}
+                  className={styles.uppercaseInput}
+                />
+                <Hash className={styles.inputIcon} size={20} />
+              </div>
             </div>
 
             <button type="submit" className={styles.submitBtn} disabled={loading}>
-              {loading ? "Đang xử lý..." : "Đăng Ký"}
+              {loading ? "Đang xử lý..." : "ĐĂNG KÝ"}
             </button>
 
             <div className={styles.switchView}>

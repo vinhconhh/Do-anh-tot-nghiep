@@ -83,7 +83,6 @@ function LandingPage() {
         <ul className={styles.navLinks}>
           <li><a href="#pricing">Giá Hội Viên</a></li>
           <li><a href="#features">Tiện Ích</a></li>
-          <li><a href="#app">Ứng Dụng</a></li>
         </ul>
 
         <div className={styles.navActions}>
@@ -119,9 +118,6 @@ function LandingPage() {
               ngay hôm nay với mức giá tối ưu nhất.
             </p>
             <div className={styles.heroButtons}>
-              <button onClick={() => setAuthModalView('register')} className={styles.btnPrimary}>
-                🎁 Tập miễn phí 7 ngày
-              </button>
               <a href="#pricing" className={styles.btnSecondary}>
                 Xem bảng giá
               </a>
@@ -257,69 +253,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* APP SECTION */}
-      <section id="app" className={styles.appSection}>
-        <div className={styles.appLayout}>
-          <div>
-            <div className={styles.sectionLabel}>Ứng Dụng</div>
-            <h2 className={styles.sectionTitle}>The Pro Gym App</h2>
-            <ul className={styles.appFeatureList}>
-              {[
-                { icon: "📲", text: "AI hỗ trợ tập luyện 24/7" },
-                { icon: "💳", text: "Quản lý & gia hạn gói tập chỉ trong 30 giây" },
-                { icon: "📅", text: "Đặt lịch lớp học nhóm dễ dàng" },
-                { icon: "📊", text: "Theo dõi tiến độ & chỉ số sức khỏe" },
-              ].map((item) => (
-                <li key={item.text}>
-                  <span className={styles.appFeatureIcon}>{item.icon}</span>
-                  {item.text}
-                </li>
-              ))}
-            </ul>
-            <a
-              href="https://app.thenewgym.vn/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.btnPrimary}
-            >
-              Tải Ứng Dụng Ngay
-            </a>
-          </div>
-
-          <div className={styles.appMockup}>
-            <div className={styles.mockupPhone}>
-              <div className={styles.mockupScreen}>TNG</div>
-              <div className={styles.mockupLabel}>Dashboard</div>
-            </div>
-            <div className={styles.mockupPhone}>
-              <div className={styles.mockupScreen}>💪</div>
-              <div className={styles.mockupLabel}>Workout</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className={styles.cta}>
-        <div className={styles.ctaInner}>
-          <div className={styles.ctaDays}>7</div>
-          <div className={styles.ctaLabel}>Ngày Tập Hoàn Toàn Miễn Phí</div>
-          <h2>SẴN SÀNG BẮT ĐẦU CHƯA?</h2>
-          <p>
-            Trải nghiệm The Pro Gym 7 ngày miễn phí — không cần thẻ ngân hàng,
-            không điều kiện ràng buộc. Bước vào hành trình sức khỏe ngay hôm nay.
-          </p>
-          <div className={styles.ctaButtons}>
-            <button onClick={() => setAuthModalView('register')} className={styles.btnPrimary}>
-              🎁 Nhận 7 Ngày Miễn Phí
-            </button>
-            <button onClick={() => setAuthModalView('login')} className={styles.btnSecondary}>
-              Đã có tài khoản
-            </button>
-          </div>
-        </div>
-      </section>
-
       {/* FOOTER */}
       <footer className={styles.footer}>
         <div className={styles.footerTop}>
@@ -351,14 +284,13 @@ function LandingPage() {
             <ul>
               <li><a href="#pricing">Giá Hội Viên</a></li>
               <li><a href="#features">Tiện Ích</a></li>
-              <li><a href="#app">Ứng Dụng</a></li>
             </ul>
           </div>
 
           <div className={styles.footerCol}>
             <h4>Liên Hệ</h4>
             <ul>
-              <li><a >📞 1900 63 69 20</a></li>
+              <li><a >📞 1900 69 69 69</a></li>
               <li><a>✉️ cskh@theprogym.vn</a></li>
               <li><a>💬 Zalo</a></li>
             </ul>

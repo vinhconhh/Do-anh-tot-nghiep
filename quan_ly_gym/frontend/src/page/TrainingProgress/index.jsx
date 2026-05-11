@@ -210,14 +210,14 @@ export default function TrainingProgress() {
           <div className={styles.tableCard}>
             <table className={styles.table}>
               <thead>
-                <tr>
+                <tr className={styles.headerRow}>
                   <th>Học viên</th>
                   <th>Ngày check-in</th>
-                  <th>Bài tập</th>
-                  <th>Tổng Sets</th>
-                  <th>RPE</th>
-                  <th>Chuỗi ngày</th>
-                  <th>Điểm</th>
+                  <th style={{ display: "flex", justifyContent: "center" }}>Bài tập</th>
+                  <th style={{ display: "flex", justifyContent: "center" }}>Tổng Sets</th>
+                  <th style={{ display: "flex", justifyContent: "center" }}>RPE</th>
+                  <th style={{ display: "flex", justifyContent: "center" }}>Chuỗi ngày</th>
+                  <th style={{ display: "flex", justifyContent: "center" }}>Điểm</th>
                   <th></th>
                 </tr>
               </thead>
@@ -231,12 +231,6 @@ export default function TrainingProgress() {
                         {/* Main row */}
                         <div
                           className={styles.clickRow}
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "1.5fr 1fr 0.8fr 0.8fr 0.6fr 0.8fr 0.6fr 40px",
-                            alignItems: "center",
-                            padding: "12px 16px",
-                          }}
                           onClick={() => setExpandedId(isExpanded ? null : entry.logId)}
                         >
                           <div style={{ fontWeight: 700 }}>{entry.memberName}</div>
@@ -245,7 +239,7 @@ export default function TrainingProgress() {
                               ? new Date(entry.checkInDate).toLocaleDateString("vi-VN")
                               : "—"}
                           </div>
-                          <div style={{ textAlign: "center" }}>
+                          <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                             <span
                               style={{
                                 background: "#1cc88a22",
@@ -260,10 +254,10 @@ export default function TrainingProgress() {
                               {entry.exercisesCompleted}
                             </span>
                           </div>
-                          <div style={{ textAlign: "center", fontWeight: 600 }}>
+                          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", fontWeight: 600 }}>
                             {entry.totalSets}
                           </div>
-                          <div style={{ textAlign: "center" }}>
+                          <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                             {entry.rpe != null ? (
                               <span
                                 className={styles.rpeBadge}
@@ -279,11 +273,10 @@ export default function TrainingProgress() {
                               <span style={{ color: "#858796" }}>—</span>
                             )}
                           </div>
-                          <div style={{ textAlign: "center" }}>
+                          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 4 }}>
                             <Flame
                               size={14}
                               color="#f6c23e"
-                              style={{ marginRight: 4, verticalAlign: "middle" }}
                             />
                             <span style={{ fontWeight: 700, color: "#f6c23e" }}>
                               {entry.streakDay}
@@ -291,14 +284,16 @@ export default function TrainingProgress() {
                           </div>
                           <div
                             style={{
-                              textAlign: "center",
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
                               fontWeight: 700,
                               color: "#4e73df",
                             }}
                           >
                             +{entry.points}
                           </div>
-                          <div style={{ textAlign: "center" }}>
+                          <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                             {isExpanded ? (
                               <ChevronUp size={16} color="var(--theme-text)" />
                             ) : (

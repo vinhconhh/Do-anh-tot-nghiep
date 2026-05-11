@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Date, Enum, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Date, Enum, UniqueConstraint, Unicode
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..database import Base
@@ -23,9 +23,9 @@ class GymEquipment(Base):
     Category    = Column(String(100))
     Zone        = Column(String(100))
     Quantity    = Column(Integer, default=1)
-    Status      = Column(String(50), default="Hoạt động")
-    CreatedAt   = Column(DateTime, default=datetime.utcnow)
-    UpdatedAt   = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Status      = Column(Unicode(50), default="Hoạt động")
+    CreatedAt   = Column(DateTime, default=datetime.now)
+    UpdatedAt   = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     exercises   = relationship("GymExercise", back_populates="gym_equipment")
 
@@ -38,16 +38,16 @@ class GymExercise(Base):
     __tablename__ = "GymExercises"
 
     ExerciseID    = Column(Integer, primary_key=True, autoincrement=True)
-    Name          = Column(String(255), nullable=False)
-    AssignmentName = Column(String(255))
-    Type          = Column(String(100))
-    TargetMuscle  = Column(String(200))
+    Name          = Column(Unicode(255), nullable=False)
+    AssignmentName = Column(Unicode(255))
+    Type          = Column(Unicode(100))
+    TargetMuscle  = Column(Unicode(200))
     MetValue      = Column(Float, default=0.0)
     EquipmentID   = Column(Integer, ForeignKey("GymEquipments.EquipmentID"), nullable=True)
     VideoURL      = Column(String(500), nullable=True)   # Link video hướng dẫn
     IsDeleted     = Column(Integer, default=0)
-    CreatedAt     = Column(DateTime, default=datetime.utcnow)
-    UpdatedAt     = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    CreatedAt     = Column(DateTime, default=datetime.now)
+    UpdatedAt     = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     gym_equipment = relationship("GymEquipment", back_populates="exercises")
 
@@ -82,10 +82,11 @@ class GymClass(Base):
     RecurringStartDate = Column(Date, nullable=True)
     RecurringEndDate   = Column(Date, nullable=True)
     ParentClassID     = Column(Integer, ForeignKey("GymClasses.ClassID"), nullable=True)
+    AttendanceSubmitted = Column(Integer, default=0)
     # Soft delete + timestamps
     IsDeleted       = Column(Integer, default=0)
-    CreatedAt       = Column(DateTime, default=datetime.utcnow)
-    UpdatedAt       = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    CreatedAt       = Column(DateTime, default=datetime.now)
+    UpdatedAt       = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     instructor    = relationship("User", foreign_keys=[InstructorID])
     enrollments   = relationship("ClassEnrollment", back_populates="gym_class", cascade="all, delete-orphan")
@@ -105,8 +106,9 @@ class ClassEnrollment(Base):
     EnrollID   = Column(Integer, primary_key=True, autoincrement=True)
     ClassID    = Column(Integer, ForeignKey("GymClasses.ClassID"), nullable=False)
     MemberID   = Column(Integer, ForeignKey("Users.UserID"), nullable=False)
-    EnrolledAt = Column(DateTime, default=datetime.utcnow)
-    Status     = Column(String(50), default="Active")   # Active | Cancelled
+    EnrolledAt = Column(DateTime, default=datetime.now)
+    Status     = Column(String(50), default="Active")   # Active | Cancelled | Pending
+    AttendanceStatus = Column(String(20), nullable=True) # "Present" | "Absent" | None
 
     gym_class  = relationship("GymClass", back_populates="enrollments")
     member     = relationship("User", foreign_keys=[MemberID])
@@ -130,7 +132,7 @@ class AssignedExercise(Base):
     Note          = Column(String(500), nullable=True) # ghi chú từ HLV
     AssignedDate  = Column(Date, nullable=False)
     Status        = Column(String(50), default="Active")  # Active | Completed
-    CreatedAt     = Column(DateTime, default=datetime.utcnow)
+    CreatedAt     = Column(DateTime, default=datetime.now)
 
     pt       = relationship("User", foreign_keys=[PTID])
     member   = relationship("User", foreign_keys=[MemberID])

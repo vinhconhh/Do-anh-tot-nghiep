@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { authedRequestJson } from "./client";
 
@@ -49,5 +49,26 @@ export function useDashboardApi() {
     [aj]
   );
 
-  return { getStats, getRevenue, getRecentMembers, getMemberStats, updateMemberMetrics };
+  const getMemberReportDetail = useCallback(
+    async (id) => aj(`/api/dashboard/member-report/${id}`),
+    [aj]
+  );
+
+  const getTrainerReportDetail = useCallback(
+    async (id) => aj(`/api/dashboard/trainer-report/${id}`),
+    [aj]
+  );
+
+  return useMemo(
+    () => ({
+      getStats,
+      getRevenue,
+      getRecentMembers,
+      getMemberStats,
+      updateMemberMetrics,
+      getMemberReportDetail,
+      getTrainerReportDetail,
+    }),
+    [getStats, getRevenue, getRecentMembers, getMemberStats, updateMemberMetrics, getMemberReportDetail, getTrainerReportDetail]
+  );
 }

@@ -22,6 +22,11 @@ def _trainer_to_dict(user: User) -> dict:
         "experienceYears": profile.ExperienceYears if profile else 0,
         "certifications": profile.Certifications if profile else None,
         "specialty": profile.Specialty if profile else None,
+        "sdt": user.PhoneNumber,
+        "tuoi": user.Age,
+        "gioiTinh": user.Gender,
+        "ngaySinh": user.Birthday.isoformat() if user.Birthday else None,
+        "hetHan": user.ExpiryDate.isoformat() if user.ExpiryDate else None,
     }
 
 
@@ -80,6 +85,11 @@ def create_trainer(
         RoleID=role.RoleID,
         IsActive=1,
         IsDeleted=0,
+        PhoneNumber=req.phoneNumber,
+        Age=req.age,
+        Gender=req.gender,
+        Birthday=req.birthday,
+        ExpiryDate=req.expiryDate,
     )
     db.add(user)
     db.flush()
@@ -113,6 +123,16 @@ def update_trainer(
         user.Email = req.email
     if req.isActive is not None:
         user.IsActive = req.isActive
+    if req.phoneNumber is not None:
+        user.PhoneNumber = req.phoneNumber
+    if req.age is not None:
+        user.Age = req.age
+    if req.gender is not None:
+        user.Gender = req.gender
+    if req.birthday is not None:
+        user.Birthday = req.birthday
+    if req.expiryDate is not None:
+        user.ExpiryDate = req.expiryDate
 
     profile = db.query(PTProfile).filter(PTProfile.UserID == trainer_id).first()
     if profile:

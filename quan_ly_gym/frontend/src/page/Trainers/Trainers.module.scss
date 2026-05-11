@@ -23,7 +23,7 @@
 }
 
 .title {
-  font-size: 2.0rem;
+  font-size: 2.4rem;
   font-weight: 800;
   color: var(--theme-text-dark);
   margin: 0;
@@ -32,7 +32,7 @@
 .subtitle {
   margin: 0;
   color: var(--theme-text);
-  font-size: 1.5rem;
+  font-size: 1.6rem;
 }
 
 .btnPrimary {
@@ -42,9 +42,9 @@
   background: var(--theme-primary);
   color: var(--theme-surface);
   border: 0;
-  padding: 9px 16px;
+  padding: 12px 20px;
   border-radius: 10px;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 600;
   cursor: pointer;
   &:hover { background: var(--theme-primary-hover); }
@@ -54,9 +54,9 @@
   background: transparent;
   border: 1px solid var(--theme-border);
   color: var(--theme-text-dark);
-  padding: 8px 14px;
+  padding: 10px 18px;
   border-radius: 10px;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   cursor: pointer;
   &:hover { border-color: var(--theme-primary); color: var(--theme-primary); }
 }
@@ -72,12 +72,12 @@
 .statCard {
   background: var(--theme-surface);
   border-radius: 10px;
-  padding: 14px 16px;
+  padding: 18px 24px;
   border-left: 4px solid var(--theme-primary);
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
-.statLabel { font-size: 1.3rem; font-weight: 700; color: var(--theme-text); text-transform: uppercase; margin-bottom: 4px; }
-.statVal { font-size: 2.4rem; font-weight: 800; color: var(--theme-text-dark); }
+.statLabel { font-size: 1.4rem; font-weight: 700; color: var(--theme-text); text-transform: uppercase; margin-bottom: 4px; }
+.statVal { font-size: 2.8rem; font-weight: 800; color: var(--theme-text-dark); }
 
 .tools {
   display: flex;
@@ -101,7 +101,7 @@
     flex: 1;
     border: 0;
     outline: none;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     color: var(--theme-text-dark);
     background: transparent;
     &::placeholder { color: var(--theme-text); }
@@ -121,8 +121,8 @@
 
 .filterGroup { display: flex; gap: 4px; flex-wrap: wrap; }
 .filterBtn {
-  font-size: 1.4rem;
-  padding: 5px 12px;
+  font-size: 1.5rem;
+  padding: 7px 16px;
   border-radius: 20px;
   border: 1px solid var(--theme-border);
   background: var(--theme-bg);
@@ -141,17 +141,17 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 1.5rem;
-  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #f1f3ff; vertical-align: top; }
-  thead th { background: var(--theme-bg); color: var(--theme-primary); font-weight: 600; font-size: 1.4rem; }
+  font-size: 1.6rem;
+  th, td { padding: 14px 18px; text-align: left; border-bottom: 1px solid #f1f3ff; vertical-align: top; }
+  thead th { background: var(--theme-bg); color: var(--theme-primary); font-weight: 600; font-size: 1.5rem; }
   tbody tr:hover td { background: var(--theme-bg); }
   tbody tr:last-child td { border-bottom: none; }
 }
 
 .personCell { display: flex; align-items: center; gap: 10px; }
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: rgba(14,165,233,0.15);
   color: var(--theme-primary);
@@ -159,21 +159,21 @@
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   flex-shrink: 0;
   overflow: hidden;
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
 }
 .name { font-weight: 700; color: var(--theme-text-dark); line-height: 1.3; }
-.muted { font-size: 1.4rem; color: var(--theme-text); }
+.muted { font-size: 1.5rem; color: var(--theme-text); }
 
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
 }
 .pillActive { background: theme('colors.emerald.500')22; color: theme('colors.emerald.500'); }
@@ -185,9 +185,9 @@
   background: rgba(14,165,233,0.08);
   border: 1px solid #dfe7ff;
   color: var(--theme-primary);
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 999px;
 }
 
@@ -215,7 +215,7 @@
   gap: 10px;
   margin-bottom: 12px;
 }
-.detailTitle { margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--theme-text-dark); }
+.detailTitle { margin: 0; font-size: 2.0rem; font-weight: 800; color: var(--theme-text-dark); }
 .detailMeta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
@@ -223,8 +223,8 @@
   border: 1px solid var(--theme-border);
   background: var(--theme-bg);
   color: var(--theme-text);
-  font-size: 1.4rem;
-  padding: 6px 10px;
+  font-size: 1.5rem;
+  padding: 8px 14px;
   border-radius: 10px;
   cursor: pointer;
   &:hover { border-color: var(--theme-primary); color: var(--theme-primary); }
@@ -240,12 +240,12 @@
 .card {
   border: 1px solid var(--theme-border);
   border-radius: 12px;
-  padding: 12px;
+  padding: 18px;
   background: var(--theme-surface);
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
-.cardTitle { margin: 0 0 8px; font-weight: 800; color: var(--theme-primary); font-size: 1.5rem; }
-.kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 10px; font-size: 1.5rem; }
+.cardTitle { margin: 0 0 10px; font-weight: 800; color: var(--theme-primary); font-size: 1.6rem; }
+.kv { display: grid; grid-template-columns: 140px 1fr; gap: 8px 12px; font-size: 1.6rem; }
 .k { color: var(--theme-text); font-weight: 700; }
 .v { color: var(--theme-text-dark); font-weight: 600; }
 
@@ -256,11 +256,11 @@
 .listItem {
   border: 1px solid #f1f3ff;
   border-radius: 10px;
-  padding: 10px;
+  padding: 12px 14px;
   background: var(--theme-bg);
 }
-.liTitle { font-weight: 800; color: var(--theme-text-dark); margin-bottom: 2px; }
-.liSub { font-size: 1.4rem; color: var(--theme-text); }
+.liTitle { font-weight: 800; color: var(--theme-text-dark); margin-bottom: 4px; font-size: 1.6rem; }
+.liSub { font-size: 1.5rem; color: var(--theme-text); }
 
 .form { }
 .formGrid {
@@ -274,13 +274,13 @@
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  label { font-size: 1.5rem; font-weight: 700; color: var(--theme-text-dark); }
+  gap: 8px;
+  label { font-size: 1.6rem; font-weight: 700; color: var(--theme-text-dark); }
   input, select, textarea {
     border: 1px solid var(--theme-border);
     border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 1.5rem;
+    padding: 10px 14px;
+    font-size: 1.6rem;
     color: var(--theme-text-dark);
     outline: none;
     &:focus { border-color: var(--theme-primary); box-shadow: 0 0 0 3px rgba(78,115,223,0.12); }

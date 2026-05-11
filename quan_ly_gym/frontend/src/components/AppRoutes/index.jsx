@@ -3,7 +3,7 @@ import { useContext, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
 
 import LandingPage from "../../page/LandingPage";
-import ForgotPassword from "../../page/ForgotPassword";
+
 import DefaultLayout from "../../Layouts/DefaultLayout";
 import Dashboard from "../../page/Dashboard";
 import Members from "../../page/Members";
@@ -12,6 +12,7 @@ import DashboardMember from "../../page/DashboardMember";
 import AiPurchase from "../../page/AiPurchase";
 import MemberReport from "../../page/MemberReport";
 import Trainers from "../../page/Trainers";
+import TrainerDetail from "../../page/TrainerDetail";
 import PackageManagement from "../../page/PackageManagement";
 import AiPackageManagement from "../../page/AiPackageManagement";
 import PromotionManagement from "../../page/PromotionManagement";
@@ -29,6 +30,8 @@ import GymExerciseManagement from "../../page/GymExerciseManagement";
 import GymClassManagement from "../../page/GymClassManagement";
 import PTAssignments from "../../page/PTAssignments";
 import TrainingProgress from "../../page/TrainingProgress";
+import EnrollmentApproval from "../../page/EnrollmentApproval";
+import BuyGymPackage from "../../page/BuyGymPackage";
 
 function AppRoutes() {
   const { token, user } = useContext(AuthContext) ?? {};
@@ -41,8 +44,14 @@ function AppRoutes() {
   const RequireAuth = ({ children }) =>
     token ? children : <Navigate to="/" replace />;
 
-  const RequireRole = ({ roles, children }) => {
+  const RequireRole = ({ roles, children, allowNoPackage = false }) => {
     if (!token) return <Navigate to="/" replace />;
+    
+    // Check for packageId if role is MEMBER
+    if (role === "MEMBER" && !user?.packageId && !allowNoPackage) {
+      return <Navigate to="/buy-gym-package" replace />;
+    }
+
     if (!roles?.length) return children;
     return roles.includes(role) ? children : <Navigate to="/dashboard" replace />;
   };
@@ -59,8 +68,9 @@ function AppRoutes() {
             path="/"
             element={<LandingPage />}
           />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-password" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/buy-gym-package" element={<RequireAuth><RequireRole roles={["MEMBER"]} allowNoPackage={true}><BuyGymPackage /></RequireRole></RequireAuth>} />
 
           <Route
             element={
@@ -93,8 +103,8 @@ function AppRoutes() {
                 </RequireRole>
               }
             />
-            <Route path="/my-dashboard" element={<DashboardMember />} />
-            <Route path="/ai-purchase" element={<AiPurchase />} />
+            <Route path="/my-dashboard" element={<RequireRole roles={["MEMBER"]}><DashboardMember /></RequireRole>} />
+            <Route path="/ai-purchase" element={<RequireRole roles={["MEMBER"]}><AiPurchase /></RequireRole>} />
             <Route
               path="/member-report"
               element={
@@ -109,6 +119,14 @@ function AppRoutes() {
               element={
                 <RequireRole roles={["ADMIN", "MANAGER"]}>
                   <Trainers />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/trainers/:id"
+              element={
+                <RequireRole roles={["ADMIN", "MANAGER"]}>
+                  <TrainerDetail />
                 </RequireRole>
               }
             />
@@ -147,6 +165,10 @@ function AppRoutes() {
             <Route
               path="/gym-class-management"
               element={<RequireRole roles={["ADMIN", "MANAGER"]}><GymClassManagement /></RequireRole>}
+            />
+            <Route
+              path="/enrollment-approval"
+              element={<RequireRole roles={["ADMIN", "MANAGER", "PT"]}><EnrollmentApproval /></RequireRole>}
             />
             <Route
               path="/exercises"
@@ -214,6 +236,7 @@ function AppRoutes() {
                 </RequireRole>
               }
             />
+
           </Route>
         </Routes>
       </div>

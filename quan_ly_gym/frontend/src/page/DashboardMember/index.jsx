@@ -35,6 +35,7 @@ export default function DashboardMember() {
     weight: 0,
     referralCode: "",
     weightChart: [],
+    checkedInToday: false,
   });
   const [exercises, setExercises] = useState([]);
   const [exLoading, setExLoading] = useState(false);
@@ -55,6 +56,9 @@ export default function DashboardMember() {
           height: s.height || m.height,
           fat: s.bodyFat || m.fat,
         }));
+        if (s.checkedInToday) {
+          setCheckedIn(true);
+        }
       })
       .catch((err) => console.error("Member stats error:", err));
   };
@@ -158,15 +162,15 @@ export default function DashboardMember() {
           <div className={styles.welcomeActions}>
             {memberStats.referralCode && (
               <div className="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                <span className="text-slate-400 text-sm">Mã giới thiệu:</span>
+                <span className="text-slate-400 text-sm">Mã hội viên:</span>
                 <strong className="text-sky-400 tracking-wider">{memberStats.referralCode}</strong>
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(memberStats.referralCode);
-                    alert("Đã copy mã giới thiệu!");
+                    alert("Đã copy mã hội viên!");
                   }}
                   className="text-slate-500 hover:text-sky-400 transition-colors ml-1"
-                  title="Copy mã giới thiệu"
+                  title="Copy mã hội viên"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 </button>
@@ -508,7 +512,7 @@ export default function DashboardMember() {
                 <input
                   type="number"
                   step={f.step}
-                  value={metrics[f.key]}
+                  value={metrics[f.key] ?? 0}
                   onChange={(e) => setMetrics((m) => ({ ...m, [f.key]: parseFloat(e.target.value) || 0 }))}
                 />
               </div>

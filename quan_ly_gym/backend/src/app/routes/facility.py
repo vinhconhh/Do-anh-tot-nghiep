@@ -105,10 +105,11 @@ class AddSessionPayload(BaseModel):
 # ──────────────────────────────────────────
 # Helpers
 # ──────────────────────────────────────────
-def _class_dict(c: GymClass, current_user_id: int = None, enrolled_ids: set = None) -> dict:
+def _class_dict(c: GymClass, current_user_id: int = None, enrollment_map: dict = None) -> dict:
     instructor = c.instructor
     name = (instructor.FullName if instructor else None) or c.InstructorName or "Chưa phân công"
     pt_profile = instructor.pt_profile if instructor and hasattr(instructor, 'pt_profile') else None
+    enroll_status = enrollment_map.get(c.ClassID) if enrollment_map else None
     return {
         "ClassID":         c.ClassID,
         "Name":            c.Name,
@@ -124,8 +125,11 @@ def _class_dict(c: GymClass, current_user_id: int = None, enrolled_ids: set = No
         "Intensity":       c.Intensity or "medium",
         "IsRecurring":     c.IsRecurring or 0,
         "RecurringDays":   c.RecurringDays,
+        "RecurringStartDate": c.RecurringStartDate.isoformat() if c.RecurringStartDate else None,
+        "RecurringEndDate":   c.RecurringEndDate.isoformat() if c.RecurringEndDate else None,
         "ParentClassID":   c.ParentClassID,
-        "IsEnrolled":      (current_user_id in enrolled_ids) if enrolled_ids is not None else None,
+        "IsEnrolled":      enroll_status is not None,
+        "EnrollmentStatus": enroll_status,  # "Active", "Pending", or None
     }
 
 
@@ -257,7 +261,7 @@ def update_equipment(equipment_id: int, payload: EquipmentUpdate, db: Session = 
     obj = db.query(GymEquipment).filter(GymEquipment.EquipmentID == equipment_id).first()
     if not obj: raise HTTPException(status_code=404, detail="Không tìm thấy thiết bị.")
     for k, v in payload.model_dump(exclude_unset=True).items(): setattr(obj, k, v)
-    obj.UpdatedAt = datetime.utcnow(); db.commit(); db.refresh(obj)
+    obj.UpdatedAt = datetime.now(); db.commit(); db.refresh(obj)
     return obj
 
 
@@ -284,13 +288,12 @@ def list_exercises(
     # Fix N+1 query with joinedload or explicitly querying equipment
     from sqlalchemy.orm import joinedload
     q = db.query(GymExercise).options(joinedload(GymExercise.gym_equipment)).filter(GymExercise.IsDeleted == 0)
-    
     if search:
-        like = f"%{search}%"
-        q = q.filter(or_(GymExercise.Name.ilike(like), GymExercise.AssignmentName.ilike(like)))
+        pattern = f"%{search}%"
+        q = q.filter(or_(GymExercise.Name.ilike(pattern), GymExercise.AssignmentName.ilike(pattern)))
     if target_muscle:
-        q = q.filter(GymExercise.TargetMuscle.ilike(f"%{target_muscle}%"))
-        
+        pattern2 = f"%{target_muscle}%"
+        q = q.filter(GymExercise.TargetMuscle.ilike(pattern2))
     total = q.count()
     items = q.order_by(GymExercise.Name).offset((page - 1) * size).limit(size).all()
     
@@ -334,7 +337,7 @@ def update_exercise(exercise_id: int, payload: ExerciseUpdate, db: Session = Dep
     obj = db.query(GymExercise).filter(GymExercise.ExerciseID == exercise_id, GymExercise.IsDeleted == 0).first()
     if not obj: raise HTTPException(status_code=404, detail="Không tìm thấy bài tập.")
     for k, v in payload.model_dump(exclude_unset=True).items(): setattr(obj, k, v)
-    obj.UpdatedAt = datetime.utcnow(); db.commit(); db.refresh(obj)
+    obj.UpdatedAt = datetime.now(); db.commit(); db.refresh(obj)
     d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
     d["EquipmentName"] = obj.gym_equipment.Name if obj.gym_equipment else None
     return d
@@ -351,56 +354,64 @@ def delete_exercise(exercise_id: int, db: Session = Depends(get_db), _: User = D
 # GYM CLASSES  /api/classes
 # ══════════════════════════════════════════════════════════════
 
-def _get_enrolled_ids(db: Session, user_id: int) -> set:
-    rows = db.query(ClassEnrollment.ClassID).filter(
+def _get_enrollment_map(db: Session, user_id: int) -> dict:
+    """Return {ClassID: status} for all non-cancelled enrollments."""
+    rows = db.query(ClassEnrollment.ClassID, ClassEnrollment.Status).filter(
         ClassEnrollment.MemberID == user_id,
-        ClassEnrollment.Status == "Active",
+        ClassEnrollment.Status.in_(["Active", "Pending"]),
     ).all()
-    return {r[0] for r in rows}
+    return {r[0]: r[1] for r in rows}
 
 
 @router.get("/classes")
 def list_classes(
     date_filter: Optional[date] = Query(None),
+    show_all: Optional[bool] = Query(False),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    target_date = date_filter or datetime.utcnow().date()
-    day_start = datetime.combine(target_date, datetime.min.time())
-    day_end   = day_start + timedelta(days=1)
-    classes = (
-        db.query(GymClass)
-        .filter(GymClass.IsDeleted == 0, GymClass.StartTime >= day_start, GymClass.StartTime < day_end)
-        .order_by(GymClass.StartTime)
-        .all()
+    # Show only parent/standalone classes (courses), not individual child sessions
+    q = db.query(GymClass).filter(
+        GymClass.IsDeleted == 0,
+        GymClass.ParentClassID == None,  # noqa: E711 — only parents/standalone
     )
-    enrolled_ids = _get_enrolled_ids(db, current_user.UserID)
-    return [_class_dict(c, current_user.UserID, enrolled_ids) for c in classes]
+    if not show_all and date_filter:
+        target_date = date_filter
+        day_start = datetime.combine(target_date, datetime.min.time())
+        day_end   = day_start + timedelta(days=1)
+        q = q.filter(GymClass.StartTime >= day_start, GymClass.StartTime < day_end)
+    classes = q.order_by(GymClass.StartTime).all()
+    enrollment_map = _get_enrollment_map(db, current_user.UserID)
+    return [_class_dict(c, current_user.UserID, enrollment_map) for c in classes]
 
 
 @router.get("/classes/all")
 def list_all_classes(db: Session = Depends(get_db), _: User = Depends(require_admin)):
-    classes = db.query(GymClass).filter(GymClass.IsDeleted == 0).order_by(GymClass.StartTime.desc()).all()
+    # Only show parent/standalone classes (courses)
+    classes = (
+        db.query(GymClass)
+        .filter(GymClass.IsDeleted == 0, GymClass.ParentClassID == None)  # noqa: E711
+        .order_by(GymClass.StartTime.desc())
+        .all()
+    )
     return [_class_dict(c) for c in classes]
 
 
 @router.get("/classes/my-teaching")
-def my_teaching_classes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """PT: danh sách lớp tôi đang phụ trách."""
+def list_my_teaching_classes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """PT: danh sách các lớp mình phụ trách (chỉ parent/standalone)."""
     classes = (
         db.query(GymClass)
-        .filter(GymClass.InstructorID == current_user.UserID, GymClass.IsDeleted == 0)
-        .order_by(GymClass.StartTime)
+        .filter(
+            GymClass.IsDeleted == 0,
+            GymClass.ParentClassID == None,  # noqa: E711
+            GymClass.InstructorID == current_user.UserID,
+        )
+        .order_by(GymClass.StartTime.desc())
         .all()
     )
-    result = []
-    for c in classes:
-        d = _class_dict(c)
-        d["enrolledCount"] = db.query(func.count(ClassEnrollment.EnrollID)).filter(
-            ClassEnrollment.ClassID == c.ClassID, ClassEnrollment.Status == "Active"
-        ).scalar() or 0
-        result.append(d)
-    return result
+    return [_class_dict(c) for c in classes]
+
 
 
 # ─── Helper: danh sách PT cho dropdown (MUST be before {class_id}) ────
@@ -476,12 +487,21 @@ def schedule_events(
     ).order_by(GymClass.StartTime).all()
 
     for c in pt_classes:
+        target_class_ids = [c.ClassID]
+        if c.ParentClassID:
+            target_class_ids.append(c.ParentClassID)
+            
+        active_count = db.query(ClassEnrollment.MemberID).filter(
+            ClassEnrollment.ClassID.in_(target_class_ids),
+            ClassEnrollment.Status == "Active"
+        ).distinct().count()
+        
         events.append({
             "id": f"teach_{c.ClassID}",
             "start": c.StartTime.isoformat(),
             "end": c.EndTime.isoformat(),
             "title": f"{c.Name} — {c.StudioRoom or 'TBD'}",
-            "meta": f"Ca dạy · {c.CurrentEnrolled or 0}/{c.MaxCapacity} HV",
+            "meta": f"Ca dạy · {active_count}/{c.MaxCapacity or 20} HV",
             "color": "green",
         })
 
@@ -549,8 +569,8 @@ def check_conflicts_preview(
 def get_class(class_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     obj = db.query(GymClass).filter(GymClass.ClassID == class_id, GymClass.IsDeleted == 0).first()
     if not obj: raise HTTPException(status_code=404, detail="Không tìm thấy lớp học.")
-    enrolled_ids = _get_enrolled_ids(db, current_user.UserID)
-    return _class_dict(obj, current_user.UserID, enrolled_ids)
+    enrollment_map = _get_enrollment_map(db, current_user.UserID)
+    return _class_dict(obj, current_user.UserID, enrollment_map)
 
 
 @router.get("/classes/{class_id}/members")
@@ -612,9 +632,30 @@ def add_session_to_class(
         ParentClassID=class_id,
     )
     db.add(child)
+    db.flush()
+    
+    # Copy enrollments from parent
+    parent_enrollments = db.query(ClassEnrollment).filter(
+        ClassEnrollment.ClassID == class_id,
+        ClassEnrollment.Status.in_(["Active", "Pending"])
+    ).all()
+    
+    active_count = 0
+    for e in parent_enrollments:
+        db.add(ClassEnrollment(
+            ClassID=child.ClassID,
+            MemberID=e.MemberID,
+            Status=e.Status,
+            EnrolledAt=e.EnrolledAt
+        ))
+        if e.Status == "Active":
+            active_count += 1
+            
+    child.CurrentEnrolled = active_count
+    
     db.commit()
     db.refresh(child)
-    return {"created": 1, "session": _class_dict(child), "conflicts": [], "message": "Đã thêm buổi học."}
+    return {"created": 1, "session": _class_dict(child), "conflicts": [], "message": "Đã thêm buổi học và chép danh sách."}
 
 
 @router.post("/classes", status_code=status.HTTP_201_CREATED)
@@ -727,7 +768,7 @@ def update_class(class_id: int, payload: GymClassUpdate, db: Session = Depends(g
         pt = db.query(User).filter(User.UserID == data["InstructorID"]).first()
         if pt: data["InstructorName"] = pt.FullName
     for k, v in data.items(): setattr(obj, k, v)
-    obj.UpdatedAt = datetime.utcnow()
+    obj.UpdatedAt = datetime.now()
     if obj.EndTime and obj.StartTime and obj.EndTime <= obj.StartTime:
         raise HTTPException(status_code=400, detail="EndTime phải sau StartTime.")
     # Conflict check after applying changes
@@ -773,37 +814,257 @@ def delete_class(
 
 @router.post("/classes/{class_id}/enroll")
 def enroll_class(class_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """Member: đăng ký tham gia lớp học."""
+    """Member: gửi yêu cầu đăng ký lớp học (Pending → chờ HLV/Manager duyệt). Đăng ký cho cả chuỗi (cha + con)."""
     obj = db.query(GymClass).filter(GymClass.ClassID == class_id, GymClass.IsDeleted == 0).first()
     if not obj: raise HTTPException(status_code=404, detail="Không tìm thấy lớp học.")
     if obj.CurrentEnrolled >= (obj.MaxCapacity or 1):
         raise HTTPException(status_code=409, detail="Lớp học đã đầy chỗ.")
-    # Check trùng lặp
+        
+    parent_id = obj.ParentClassID if obj.ParentClassID else obj.ClassID
+    related_classes = db.query(GymClass).filter(
+        or_(GymClass.ClassID == parent_id, GymClass.ParentClassID == parent_id),
+        GymClass.IsDeleted == 0
+    ).all()
+    
+    # Check if existing enrollment for the specifically requested class
     existing = db.query(ClassEnrollment).filter(
         ClassEnrollment.ClassID == class_id,
         ClassEnrollment.MemberID == current_user.UserID,
-        ClassEnrollment.Status == "Active",
     ).first()
-    if existing: raise HTTPException(status_code=409, detail="Bạn đã đăng ký lớp này rồi.")
-    # Create enrollment
-    enroll = ClassEnrollment(ClassID=class_id, MemberID=current_user.UserID, Status="Active")
-    db.add(enroll)
-    obj.CurrentEnrolled = (obj.CurrentEnrolled or 0) + 1
+    
+    if existing:
+        if existing.Status == "Pending":
+            raise HTTPException(status_code=409, detail="Yêu cầu đăng ký đang chờ duyệt.")
+        if existing.Status == "Active":
+            raise HTTPException(status_code=409, detail="Bạn đã đăng ký lớp này rồi.")
+            
+    # Enroll in all related classes
+    for c in related_classes:
+        enr = db.query(ClassEnrollment).filter(
+            ClassEnrollment.ClassID == c.ClassID,
+            ClassEnrollment.MemberID == current_user.UserID
+        ).first()
+        if enr:
+            enr.Status = "Pending"
+            enr.EnrolledAt = datetime.now()
+        else:
+            db.add(ClassEnrollment(ClassID=c.ClassID, MemberID=current_user.UserID, Status="Pending"))
+            
     db.commit()
-    enrolled_ids = _get_enrolled_ids(db, current_user.UserID)
-    return _class_dict(obj, current_user.UserID, enrolled_ids)
+    enrollment_map = _get_enrollment_map(db, current_user.UserID)
+    return _class_dict(obj, current_user.UserID, enrollment_map)
 
 
 @router.delete("/classes/{class_id}/enroll", status_code=status.HTTP_204_NO_CONTENT)
 def unenroll_class(class_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """Member: hủy đăng ký lớp học."""
-    enroll = db.query(ClassEnrollment).filter(
-        ClassEnrollment.ClassID == class_id,
-        ClassEnrollment.MemberID == current_user.UserID,
-        ClassEnrollment.Status == "Active",
-    ).first()
-    if not enroll: raise HTTPException(status_code=404, detail="Bạn chưa đăng ký lớp này.")
-    enroll.Status = "Cancelled"
+    """Member: hủy đăng ký hoặc hủy yêu cầu chờ duyệt. Hủy cho cả chuỗi (cha + con)."""
     obj = db.query(GymClass).filter(GymClass.ClassID == class_id).first()
-    if obj: obj.CurrentEnrolled = max(0, (obj.CurrentEnrolled or 1) - 1)
+    if not obj: raise HTTPException(status_code=404, detail="Không tìm thấy lớp học.")
+    
+    parent_id = obj.ParentClassID if obj.ParentClassID else obj.ClassID
+    related_classes = db.query(GymClass).filter(
+        or_(GymClass.ClassID == parent_id, GymClass.ParentClassID == parent_id)
+    ).all()
+    class_ids = [c.ClassID for c in related_classes]
+    
+    enrollments = db.query(ClassEnrollment).filter(
+        ClassEnrollment.ClassID.in_(class_ids),
+        ClassEnrollment.MemberID == current_user.UserID,
+        ClassEnrollment.Status.in_(["Active", "Pending"]),
+    ).all()
+    
+    if not enrollments: 
+        raise HTTPException(status_code=404, detail="Bạn chưa đăng ký lớp này.")
+        
+    for enroll in enrollments:
+        was_active = enroll.Status == "Active"
+        enroll.Status = "Cancelled"
+        if was_active:
+            c_obj = db.query(GymClass).filter(GymClass.ClassID == enroll.ClassID).first()
+            if c_obj: c_obj.CurrentEnrolled = max(0, (c_obj.CurrentEnrolled or 1) - 1)
+            
     db.commit()
+
+
+# ─── Enrollment approval (HLV / Manager) ────
+@router.get("/classes/{class_id}/pending-enrollments")
+def list_pending_enrollments(class_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """HLV/Manager: danh sách yêu cầu đăng ký chờ duyệt."""
+    # Check permission: admin/manager or instructor of this class
+    obj = db.query(GymClass).filter(GymClass.ClassID == class_id, GymClass.IsDeleted == 0).first()
+    if not obj: raise HTTPException(status_code=404, detail="Không tìm thấy lớp học.")
+    if current_user.role.RoleCode.upper() not in ("ADMIN", "MANAGER") and obj.InstructorID != current_user.UserID:
+        raise HTTPException(status_code=403, detail="Bạn không có quyền xem.")
+    enrollments = db.query(ClassEnrollment).filter(
+        ClassEnrollment.ClassID == class_id,
+        ClassEnrollment.Status == "Pending",
+    ).all()
+    result = []
+    for e in enrollments:
+        m = e.member
+        result.append({
+            "EnrollID": e.EnrollID,
+            "MemberID": e.MemberID,
+            "FullName": m.FullName if m else "—",
+            "Email": m.Email if m else "—",
+            "EnrolledAt": e.EnrolledAt.strftime("%d/%m/%Y %H:%M") if e.EnrolledAt else "—",
+            "Status": e.Status,
+        })
+    return result
+
+
+@router.post("/classes/enrollments/{enroll_id}/approve")
+def approve_enrollment(enroll_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """HLV/Manager: duyệt yêu cầu đăng ký. Duyệt cho cả chuỗi (cha + con)."""
+    enroll = db.query(ClassEnrollment).filter(ClassEnrollment.EnrollID == enroll_id).first()
+    if not enroll: raise HTTPException(status_code=404, detail="Không tìm thấy yêu cầu.")
+    if enroll.Status != "Pending":
+        raise HTTPException(status_code=400, detail="Yêu cầu không ở trạng thái chờ duyệt.")
+    obj = db.query(GymClass).filter(GymClass.ClassID == enroll.ClassID).first()
+    if not obj: raise HTTPException(status_code=404, detail="Không tìm thấy lớp học.")
+    # Check permission
+    if current_user.role.RoleCode.upper() not in ("ADMIN", "MANAGER") and obj.InstructorID != current_user.UserID:
+        raise HTTPException(status_code=403, detail="Bạn không có quyền duyệt.")
+    if obj.CurrentEnrolled >= (obj.MaxCapacity or 1):
+        raise HTTPException(status_code=409, detail="Lớp học đã đầy chỗ.")
+        
+    parent_id = obj.ParentClassID if obj.ParentClassID else obj.ClassID
+    related_classes = db.query(GymClass).filter(
+        or_(GymClass.ClassID == parent_id, GymClass.ParentClassID == parent_id)
+    ).all()
+    class_ids = [c.ClassID for c in related_classes]
+    
+    enrollments = db.query(ClassEnrollment).filter(
+        ClassEnrollment.ClassID.in_(class_ids),
+        ClassEnrollment.MemberID == enroll.MemberID,
+        ClassEnrollment.Status == "Pending"
+    ).all()
+    
+    for e in enrollments:
+        e.Status = "Active"
+        c_obj = db.query(GymClass).filter(GymClass.ClassID == e.ClassID).first()
+        if c_obj: c_obj.CurrentEnrolled = (c_obj.CurrentEnrolled or 0) + 1
+        
+    db.commit()
+    return {"message": "Đã duyệt thành công.", "EnrollID": enroll_id}
+
+
+@router.post("/classes/enrollments/{enroll_id}/reject")
+def reject_enrollment(enroll_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """HLV/Manager: từ chối yêu cầu đăng ký. Từ chối cho cả chuỗi (cha + con)."""
+    enroll = db.query(ClassEnrollment).filter(ClassEnrollment.EnrollID == enroll_id).first()
+    if not enroll: raise HTTPException(status_code=404, detail="Không tìm thấy yêu cầu.")
+    if enroll.Status != "Pending":
+        raise HTTPException(status_code=400, detail="Yêu cầu không ở trạng thái chờ duyệt.")
+    obj = db.query(GymClass).filter(GymClass.ClassID == enroll.ClassID).first()
+    if obj and current_user.role.RoleCode.upper() not in ("ADMIN", "MANAGER") and obj.InstructorID != current_user.UserID:
+        raise HTTPException(status_code=403, detail="Bạn không có quyền từ chối.")
+        
+    parent_id = obj.ParentClassID if obj.ParentClassID else obj.ClassID
+    related_classes = db.query(GymClass).filter(
+        or_(GymClass.ClassID == parent_id, GymClass.ParentClassID == parent_id)
+    ).all()
+    class_ids = [c.ClassID for c in related_classes]
+    
+    enrollments = db.query(ClassEnrollment).filter(
+        ClassEnrollment.ClassID.in_(class_ids),
+        ClassEnrollment.MemberID == enroll.MemberID,
+        ClassEnrollment.Status == "Pending"
+    ).all()
+    
+    for e in enrollments:
+        e.Status = "Rejected"
+        
+    db.commit()
+    return {"message": "Đã từ chối yêu cầu.", "EnrollID": enroll_id}
+
+# ─── Attendance (Điểm danh) ────
+@router.get("/classes/{class_id}/attendance")
+def get_class_attendance(class_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """HLV/Manager: Lấy danh sách điểm danh của 1 buổi học."""
+    obj = db.query(GymClass).filter(GymClass.ClassID == class_id, GymClass.IsDeleted == 0).first()
+    if not obj: raise HTTPException(status_code=404, detail="Không tìm thấy lớp học.")
+    if current_user.role.RoleCode.upper() not in ("ADMIN", "MANAGER") and obj.InstructorID != current_user.UserID:
+        raise HTTPException(status_code=403, detail="Bạn không có quyền xem.")
+        
+    target_class_ids = [class_id]
+    if obj.ParentClassID:
+        target_class_ids.append(obj.ParentClassID)
+        
+    enrollments = db.query(ClassEnrollment).filter(
+        ClassEnrollment.ClassID.in_(target_class_ids),
+        ClassEnrollment.Status == "Active"
+    ).all()
+    
+    # Deduplicate by MemberID (prefer child enrollment if exists)
+    member_map = {}
+    for e in enrollments:
+        if e.MemberID not in member_map or e.ClassID == class_id:
+            member_map[e.MemberID] = e
+    
+    result = []
+    for e in member_map.values():
+        m = e.member
+        result.append({
+            "EnrollID": e.EnrollID,
+            "MemberID": e.MemberID,
+            "FullName": m.FullName if m else "—",
+            "Email": m.Email if m else "—",
+            "AttendanceStatus": e.AttendanceStatus
+        })
+    return {
+        "AttendanceSubmitted": obj.AttendanceSubmitted,
+        "Members": result
+    }
+
+class AttendancePayload(BaseModel):
+    # Dictionary of MemberID -> "Present" | "Absent" | None
+    attendance_data: dict[int, Optional[str]]
+
+@router.post("/classes/{class_id}/attendance")
+def submit_class_attendance(class_id: int, payload: AttendancePayload, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """HLV/Manager: Chốt danh sách điểm danh của 1 buổi học."""
+    obj = db.query(GymClass).filter(GymClass.ClassID == class_id, GymClass.IsDeleted == 0).first()
+    if not obj: raise HTTPException(status_code=404, detail="Không tìm thấy lớp học.")
+    if current_user.role.RoleCode.upper() not in ("ADMIN", "MANAGER") and obj.InstructorID != current_user.UserID:
+        raise HTTPException(status_code=403, detail="Bạn không có quyền thực hiện.")
+        
+    if obj.AttendanceSubmitted:
+        raise HTTPException(status_code=400, detail="Lớp học này đã chốt điểm danh, không thể thay đổi.")
+        
+    # Fetch child enrollments
+    child_enrollments = db.query(ClassEnrollment).filter(
+        ClassEnrollment.ClassID == class_id,
+        ClassEnrollment.Status == "Active"
+    ).all()
+    
+    child_map = {e.MemberID: e for e in child_enrollments}
+    
+    # Fetch parent enrollments (to cover users who only have parent enrollment)
+    parent_map = {}
+    if obj.ParentClassID:
+        parent_enrolls = db.query(ClassEnrollment).filter(
+            ClassEnrollment.ClassID == obj.ParentClassID,
+            ClassEnrollment.Status == "Active"
+        ).all()
+        parent_map = {e.MemberID: e for e in parent_enrolls}
+        
+    for member_id_str, status in payload.attendance_data.items():
+        member_id = int(member_id_str)
+        if member_id in child_map:
+            child_map[member_id].AttendanceStatus = status
+        elif member_id in parent_map:
+            # Create the missing child enrollment
+            pe = parent_map[member_id]
+            new_e = ClassEnrollment(
+                ClassID=class_id,
+                MemberID=member_id,
+                Status="Active",
+                EnrolledAt=pe.EnrolledAt,
+                AttendanceStatus=status
+            )
+            db.add(new_e)
+            
+    obj.AttendanceSubmitted = 1
+    db.commit()
+    return {"message": "Đã chốt điểm danh thành công."}

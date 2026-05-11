@@ -36,6 +36,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - WATCHFILES_FORCE_POLLING=true
     depends_on:
       db:
         condition: service_healthy

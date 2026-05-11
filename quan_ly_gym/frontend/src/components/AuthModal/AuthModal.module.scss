@@ -1,80 +1,107 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.85);
+  /* Tăng độ tối để màu đỏ nổi bật hơn */
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   padding: 20px;
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.4s ease-out;
 }
 
 .modal {
-  background: #111111;
-  border: 1px solid #2a2a2a;
-  border-radius: 16px;
+  /* Thay đổi: Màu nền tối hơn và đổ bóng đỏ đặc trưng của gym */
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid rgba(227, 28, 37, 0.15);
+  border-radius: 24px;
   width: 100%;
-  max-width: 420px;
-  padding: 40px;
+  max-width: 440px;
+  padding: 48px 40px;
   position: relative;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
-  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(227, 28, 37, 0.15);
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   color: #fff;
-}
+  overflow: hidden;
 
-.closeBtn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  color: #888;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Hiệu ứng ánh đỏ từ phía trên xuống giống image_829af1_2.jpg */
+    background: radial-gradient(circle at 50% 0%, rgba(227, 28, 37, 0.12) 0%, transparent 75%);
+    pointer-events: none;
+    z-index: 0;
   }
 }
 
 .header {
+  position: relative;
+  z-index: 1;
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
-.logoIcon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--theme-surface);
+.logoBrand {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
-  box-shadow: 0 6px 20px rgba(227, 28, 37, 0.4);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.logoIconNew {
+  display: flex;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 42px;
+  font-style: italic;
+  font-weight: bold;
+  letter-spacing: 1px;
+
+  .tpgT {
+    color: #fff;
+  }
+
+  .tpgP {
+    /* Chuyển sang đỏ rực */
+    color: #E31C25;
+    text-shadow: 0 0 15px rgba(227, 28, 37, 0.6);
+  }
+}
+
+.logoDivider {
+  width: 2px;
+  height: 32px;
+  background: linear-gradient(to bottom, transparent, rgba(227, 28, 37, 0.4), transparent);
 }
 
 .title {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 32px;
-  letter-spacing: 1px;
-  margin-bottom: 4px;
+  font-size: 34px;
+  letter-spacing: 2px;
+  margin: 0;
+  color: #fff;
+}
+
+.textPrimary {
+  color: #E31C25;
+  /* Đồng bộ màu đỏ thương hiệu */
 }
 
 .subtitle {
   font-size: 1.5rem;
-  color: #aaa;
+  color: #999;
+  letter-spacing: 0.5px;
 }
 
 .form {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -84,60 +111,58 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
 
-  label {
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: #ccc;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
 
   input {
     width: 100%;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 12px 16px;
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px 16px 16px 48px;
     color: #fff;
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     outline: none;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
 
     &::placeholder {
       color: #666;
     }
 
     &:focus {
-      border-color: var(--theme-primary);
+      background: rgba(25, 25, 25, 0.9);
+      /* Focus viền đỏ */
+      border-color: #E31C25;
       box-shadow: 0 0 0 2px rgba(227, 28, 37, 0.2);
     }
   }
-}
 
-.pwdWrapper {
-  position: relative;
-
-  input {
-    padding-right: 48px;
+  .inputIcon {
+    position: absolute;
+    left: 16px;
+    color: #666;
+    transition: color 0.3s ease;
   }
 
-  button {
+  input:focus~.inputIcon {
+    color: #E31C25;
+  }
+
+  .pwdToggle {
     position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
+    right: 16px;
     background: none;
     border: none;
-    color: #888;
+    color: #666;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.2s;
+    transition: color 0.3s ease;
 
     &:hover {
-      color: #fff;
+      color: #E31C25;
     }
   }
 }
@@ -146,109 +171,103 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
 
   .checkbox {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     color: #aaa;
     cursor: pointer;
 
     input {
-      accent-color: var(--theme-primary);
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid #444;
+      border-radius: 4px;
+      background: transparent;
+      position: relative;
+      transition: all 0.2s;
+
+      &:checked {
+        /* Chuyển checkbox sang đỏ */
+        background: #E31C25;
+        border-color: #E31C25;
+
+        &::after {
+          content: '';
+          position: absolute;
+          left: 5px;
+          top: 1px;
+          width: 5px;
+          height: 10px;
+          border: solid white;
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
+        }
+      }
     }
   }
 
   .forgotLink {
     color: #aaa;
     text-decoration: none;
-    transition: color 0.2s;
 
     &:hover {
-      color: var(--theme-primary);
+      color: #E31C25;
     }
   }
 }
 
 .submitBtn {
-  background: var(--theme-primary);
+  /* Thay đổi: Nút dạng Outline với viền đỏ rực như image_829af1_2.jpg */
+  background: transparent;
   color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 14px;
-  font-size: 1.7rem;
-  font-weight: 600;
+  border: 2px solid #E31C25;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 1.6rem;
+  font-weight: bold;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(227, 28, 37, 0.2);
 
   &:hover:not(:disabled) {
-    background: theme('colors.gym.primary-hover');
+    background: #E31C25;
+    box-shadow: 0 0 20px rgba(227, 28, 37, 0.5);
     transform: translateY(-2px);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
   }
 }
 
 .switchView {
   text-align: center;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   color: #888;
-  margin-top: 8px;
+  margin-top: 16px;
 
   button {
     background: none;
     border: none;
-    color: var(--theme-primary);
+    color: #E31C25;
+    /* Link đăng ký màu đỏ */
     font-weight: 600;
     cursor: pointer;
-    padding: 0;
-    font-size: 1.5rem;
-    transition: color 0.2s;
 
     &:hover {
-      color: theme('colors.gym.primary-hover');
       text-decoration: underline;
     }
   }
 }
 
+/* Thông báo lỗi đỏ rực */
 .errorMsg {
-  background: rgba(227, 28, 37, 0.1);
-  border-left: 4px solid var(--theme-primary);
+  background: rgba(227, 28, 37, 0.15);
+  border: 1px solid #E31C25;
   color: #ff4d4d;
   padding: 12px 16px;
-  border-radius: 4px;
-  font-size: 1.5rem;
-  margin-bottom: 20px;
-}
-
-.successMsg {
-  background: rgba(76, 175, 80, 0.1);
-  border-left: 4px solid #4caf50;
-  color: #81c784;
-  padding: 12px 16px;
-  border-radius: 4px;
-  font-size: 1.5rem;
-  margin-bottom: 20px;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  border-radius: 8px;
+  font-size: 1.4rem;
+  margin-bottom: 24px;
 }

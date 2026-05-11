@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../api/axiosClient";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Tag } from "lucide-react";
+import styles from "./PromotionManagement.module.scss";
 
 export default function PromotionManagement() {
   const [promotions, setPromotions] = useState([]);
@@ -74,48 +75,54 @@ export default function PromotionManagement() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-slate-50">Chương Trình Khuyến Mãi</h1>
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.title}>
+            <Tag size={26} color="var(--theme-primary)" /> Chương Trình Khuyến Mãi
+          </h1>
+        </div>
         <button 
           onClick={() => handleOpenModal()} 
-          className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-lg"
+          className={styles.btnPrimary}
         >
-          <Plus size={20} /> Thêm Mã Mới
+          <Plus size={18} /> Thêm Mã Mới
         </button>
       </div>
 
-      <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
-        <table className="w-full text-left text-slate-300">
-          <thead className="bg-slate-900 border-b border-slate-700">
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <thead>
             <tr>
-              <th className="p-4 font-semibold text-slate-50">Mã Khuyến Mãi</th>
-              <th className="p-4 font-semibold text-slate-50">Loại Giảm</th>
-              <th className="p-4 font-semibold text-slate-50">Mức Giảm</th>
-              <th className="p-4 font-semibold text-slate-50">Hạn Sử Dụng</th>
-              <th className="p-4 font-semibold text-slate-50">Trạng Thái</th>
-              <th className="p-4 font-semibold text-slate-50">Hành Động</th>
+              <th>Mã Khuyến Mãi</th>
+              <th>Loại Giảm</th>
+              <th>Mức Giảm</th>
+              <th>Hạn Sử Dụng</th>
+              <th>Trạng Thái</th>
+              <th>Hành Động</th>
             </tr>
           </thead>
           <tbody>
             {promotions.map((promo) => (
-              <tr key={promo.PromotionID} className="border-b border-slate-700 hover:bg-slate-700/50">
-                <td className="p-4 font-bold text-sky-400">{promo.PromoCode}</td>
-                <td className="p-4">{promo.DiscountType === "PERCENT" ? "Phần Trăm (%)" : "Tiền Mặt (VNĐ)"}</td>
-                <td className="p-4">
+              <tr key={promo.PromotionID}>
+                <td style={{ fontWeight: 800, color: "var(--theme-primary)" }}>{promo.PromoCode}</td>
+                <td>{promo.DiscountType === "PERCENT" ? "Phần Trăm (%)" : "Tiền Mặt (VNĐ)"}</td>
+                <td style={{ fontWeight: 700 }}>
                   {promo.DiscountType === "PERCENT" ? `${promo.DiscountValue}%` : `${promo.DiscountValue.toLocaleString()} đ`}
                 </td>
-                <td className="p-4">{promo.ExpiryDate ? new Date(promo.ExpiryDate).toLocaleString('vi-VN', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : "Không thời hạn"}</td>
-                <td className="p-4">
-                  {promo.IsActive ? <span className="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-sm">Đang kích hoạt</span> : <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-sm">Vô hiệu hóa</span>}
+                <td>{promo.ExpiryDate ? new Date(promo.ExpiryDate).toLocaleString('vi-VN', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : "Không thời hạn"}</td>
+                <td>
+                  {promo.IsActive ? <span className={`${styles.pill} ${styles.pillActive}`}>Đang kích hoạt</span> : <span className={`${styles.pill} ${styles.pillInactive}`}>Vô hiệu hóa</span>}
                 </td>
-                <td className="p-4 flex items-center gap-3">
-                  <button onClick={() => handleOpenModal(promo)} className="text-sky-400 hover:text-sky-300">
-                    <Edit size={18} />
-                  </button>
-                  <button onClick={() => handleDelete(promo.PromotionID)} className="text-red-400 hover:text-red-300">
-                    <Trash2 size={18} />
-                  </button>
+                <td>
+                  <div className={styles.actions}>
+                    <button onClick={() => handleOpenModal(promo)} className={`${styles.btnIcon} ${styles.btnEdit}`}>
+                      <Edit size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(promo.PromotionID)} className={`${styles.btnIcon} ${styles.btnDanger}`}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -124,44 +131,44 @@ export default function PromotionManagement() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-slate-800 p-6 rounded-xl w-full max-w-lg border border-slate-700">
-            <h2 className="text-xl font-bold text-slate-50 mb-4">{editingPromo ? "Sửa Mã" : "Thêm Mã Khuyến Mãi"}</h2>
-            <form onSubmit={handleSave} className="flex flex-col gap-4">
-              <div>
-                <label className="block text-slate-400 mb-1">Mã Code (Chữ in hoa viết liền)</label>
-                <input required type="text" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500 uppercase" value={formData.PromoCode} onChange={e => setFormData({...formData, PromoCode: e.target.value.toUpperCase()})} />
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalTitle}>{editingPromo ? "✏️ Sửa Mã" : "➕ Thêm Mã Khuyến Mãi"}</h2>
+            <form onSubmit={handleSave} className={styles.form}>
+              <div className={styles.formGroup}>
+                <label>Mã Code (Chữ in hoa viết liền)</label>
+                <input required type="text" value={formData.PromoCode} onChange={e => setFormData({...formData, PromoCode: e.target.value.toUpperCase()})} />
               </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-slate-400 mb-1">Loại Giảm Giá</label>
-                  <select className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.DiscountType} onChange={e => setFormData({...formData, DiscountType: e.target.value})}>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>Loại Giảm Giá</label>
+                  <select value={formData.DiscountType} onChange={e => setFormData({...formData, DiscountType: e.target.value})}>
                     <option value="PERCENT">Theo phần trăm (%)</option>
                     <option value="AMOUNT">Theo tiền mặt (VNĐ)</option>
                   </select>
                 </div>
-                <div className="flex-1">
-                  <label className="block text-slate-400 mb-1">Mức Giảm</label>
-                  <input required type="number" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.DiscountValue} onChange={e => setFormData({...formData, DiscountValue: e.target.value})} />
+                <div className={styles.formGroup}>
+                  <label>Mức Giảm</label>
+                  <input required type="number" value={formData.DiscountValue} onChange={e => setFormData({...formData, DiscountValue: e.target.value})} />
                 </div>
               </div>
-              <div>
-                <label className="block text-slate-400 mb-1">Hạn Sử Dụng (Để trống nếu không hết hạn)</label>
-                <input type="datetime-local" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.ExpiryDate} onChange={e => setFormData({...formData, ExpiryDate: e.target.value})} />
+              <div className={styles.formGroup}>
+                <label>Hạn Sử Dụng (Để trống nếu không hết hạn)</label>
+                <input type="datetime-local" value={formData.ExpiryDate} onChange={e => setFormData({...formData, ExpiryDate: e.target.value})} />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Mô Tả Ngắn</label>
+                <textarea rows={2} value={formData.Description} onChange={e => setFormData({...formData, Description: e.target.value})} />
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">Mô Tả Ngắn</label>
-                <textarea rows={2} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-50 outline-none focus:border-sky-500" value={formData.Description} onChange={e => setFormData({...formData, Description: e.target.value})} />
-              </div>
-              <div>
-                <label className="flex items-center gap-2 text-slate-300 cursor-pointer">
-                  <input type="checkbox" checked={formData.IsActive} onChange={e => setFormData({...formData, IsActive: e.target.checked})} className="accent-sky-500 w-4 h-4" />
+                <label className={styles.checkboxGroup}>
+                  <input type="checkbox" checked={formData.IsActive} onChange={e => setFormData({...formData, IsActive: e.target.checked})} />
                   Kích hoạt mã này
                 </label>
               </div>
-              <div className="flex justify-end gap-3 mt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Hủy</button>
-                <button type="submit" className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg">Lưu Lại</button>
+              <div className={styles.formActions}>
+                <button type="button" onClick={() => setIsModalOpen(false)} className={styles.btnGhost}>Hủy</button>
+                <button type="submit" className={styles.btnPrimary}>Lưu Lại</button>
               </div>
             </form>
           </div>
