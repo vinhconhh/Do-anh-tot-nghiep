@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from datetime import datetime, date, timezone, timedelta
 from ..database import get_db
 from ..models.user import User, Role
 from ..models.profile import MemberProfile
@@ -11,7 +12,6 @@ from ..models.workout import Schedule
 from ..models.log import BodyMetric, LogWorkout
 from ..models.streak import MemberStreak, CheckInLog
 from ..middleware.auth import get_current_user
-from datetime import datetime, date, timezone, timedelta
 from ..models.pt_request import PTRequest
 from ..models.profile import PTProfile
 
