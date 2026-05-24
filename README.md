@@ -2,21 +2,6 @@
 
 QLGym (The Pro Gym) là một ứng dụng quản lý phòng gym hiện đại, cung cấp các tính năng quản lý toàn diện cho các phòng tập thể dục, bao gồm quản lý thành viên, huấn luyện viên, lịch tập, đặt phòng, kế hoạch dinh dưỡng, ghi nhận nhật ký tập luyện và tích hợp AI để tư vấn bài tập.
 
-## 📋 Mục Lục
-
-- [Tính Năng Chính](#tính-năng-chính)
-- [Công Nghệ Sử Dụng](#công-nghệ-sử-dụng)
-- [Yêu Cầu Hệ Thống](#yêu-cầu-hệ-thống)
-- [Cài Đặt](#cài-đặt)
-- [Cấu Hình](#cấu-hình)
-- [Chạy Ứng Dụng](#chạy-ứng-dụng)
-- [Cấu Trúc Dự Án](#cấu-trúc-dự-án)
-- [API Endpoints](#api-endpoints)
-- [Thành Phần Chính](#thành-phần-chính)
-- [Hướng Dẫn Phát Triển](#hướng-dẫn-phát-triển)
-
-## ✨ Tính Năng Chính
-
 ### Quản Lý Thành Viên & Chỉ Số Cơ Thể
 - Đăng ký và quản lý hồ sơ thành viên.
 - Theo dõi thông tin cá nhân, ghi chú và mục tiêu tập luyện.
