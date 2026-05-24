@@ -247,10 +247,10 @@ BEGIN TRY
     DECLARE @Log_Alice1 INT;
     
     INSERT INTO LogWorkouts (UserID, WorkoutDate)
-    SELECT @Member_AliceID, GETDATE()
-    WHERE NOT EXISTS (SELECT 1 FROM LogWorkouts WHERE UserID = @Member_AliceID AND CAST(WorkoutDate AS DATE) = CAST(GETDATE() AS DATE));
+    SELECT @Member_AliceID, '2026-04-20'
+    WHERE NOT EXISTS (SELECT 1 FROM LogWorkouts WHERE UserID = @Member_AliceID AND CAST(WorkoutDate AS DATE) = '2026-04-20');
     
-    SET @Log_Alice1 = (SELECT LogID FROM LogWorkouts WHERE UserID = @Member_AliceID AND CAST(WorkoutDate AS DATE) = CAST(GETDATE() AS DATE));
+    SET @Log_Alice1 = (SELECT TOP 1 LogID FROM LogWorkouts WHERE UserID = @Member_AliceID AND CAST(WorkoutDate AS DATE) = '2026-04-20');
 
     INSERT INTO LogWorkoutDetails (LogID, ExerciseID, SetNumber, Reps, Weight)
     SELECT @Log_Alice1, @Ex_BenchPress, 1, 10, 20
@@ -280,7 +280,7 @@ BEGIN TRY
     PRINT '>> B11: Tạo Body Metrics...';
     INSERT INTO BodyMetrics (UserID, Weight, BodyFat, BMI)
     SELECT @Member_AliceID, 54.5, 22.5, 21.3
-    WHERE NOT EXISTS (SELECT 1 FROM BodyMetrics WHERE UserID = @Member_AliceID AND CAST(MeasuredAt AS DATE) = CAST(GETDATE() AS DATE));
+    WHERE NOT EXISTS (SELECT 1 FROM BodyMetrics WHERE UserID = @Member_AliceID AND Weight = 54.5 AND BodyFat = 22.5);
 
     INSERT INTO ProgressPhotos (UserID, ImageURL)
     SELECT @Member_AliceID, '/uploads/progress/alice_20260418.jpg'

@@ -7,12 +7,26 @@ from ..models.profile import MemberProfile
 from ..middleware.auth import get_current_user, require_roles
 from ..schemas.member import MemberCreate, MemberUpdate
 from ..utils.security import hash_password
+from ..models.pt_request import PTRequest
 
 router = APIRouter(prefix="/api/members", tags=["Members"])
 
 
-def _member_to_dict(user: User) -> dict:
+def _member_to_dict(user: User, db: Session) -> dict:
     profile = user.member_profile
+
+    # Lấy PT phụ trách
+    pt_name = None
+    pt_req = db.query(PTRequest).filter(
+        PTRequest.MemberID == user.UserID,
+        PTRequest.Status == "Approved"
+    ).order_by(PTRequest.CreatedAt.desc()).first()
+    
+    if pt_req:
+        pt_user = db.query(User).filter(User.UserID == pt_req.PTID).first()
+        if pt_user:
+            pt_name = pt_user.FullName
+
     return {
         "UserID": user.UserID,
         "hoTen": user.FullName,
@@ -31,6 +45,7 @@ def _member_to_dict(user: User) -> dict:
         "hetHan": user.ExpiryDate.isoformat() if user.ExpiryDate else None,
         "gymPackageName": profile.gym_package.Name if profile and profile.gym_package else None,
         "aiPackageName": profile.ai_package.Name if profile and profile.ai_package else None,
+        "pt": pt_name,
     }
 
 
@@ -53,7 +68,7 @@ def list_members(
         .order_by(User.CreatedAt.desc())
         .all()
     )
-    return [_member_to_dict(m) for m in members]
+    return [_member_to_dict(m, db) for m in members]
 
 
 @router.get("/search")
@@ -79,7 +94,7 @@ def search_members(
         query = query.filter(
             (User.FullName.ilike(pattern)) | (User.Email.ilike(pattern))
         )
-    return [_member_to_dict(m) for m in query.all()]
+    return [_member_to_dict(m, db) for m in query.all()]
 
 
 @router.get("/{member_id}")
@@ -100,7 +115,7 @@ def get_member(
     )
     if not user:
         raise HTTPException(status_code=404, detail="Hội viên không tồn tại")
-    return _member_to_dict(user)
+    return _member_to_dict(user, db)
 
 
 @router.post("")
@@ -142,7 +157,7 @@ def create_member(
     db.add(profile)
     db.commit()
     db.refresh(user)
-    return _member_to_dict(user)
+    return _member_to_dict(user, db)
 
 
 @router.put("/{member_id}")
@@ -184,7 +199,7 @@ def update_member(
 
     db.commit()
     db.refresh(user)
-    return _member_to_dict(user)
+    return _member_to_dict(user, db)
 
 
 @router.delete("/{member_id}")

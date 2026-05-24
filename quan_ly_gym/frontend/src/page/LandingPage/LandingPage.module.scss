@@ -929,24 +929,19 @@
    SHARED BUTTONS
    ============================== */
 .btnPrimary {
-  font-family: var(--font-condensed);
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #f6c23e, #d4a017);
+  color: var(--theme-text-dark);
+  border: 0;
+  padding: 12px 20px;
+  border-radius: 9px;
+  font-size: 1.6rem;
   font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 14px 32px;
-  background: var(--gym-red);
-  color: var(--gym-white);
-  border: none;
-  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-  display: inline-block;
-
-  &:hover {
-    background: var(--gym-red-dark);
-    transform: translateY(-2px);
-  }
+  transition: all 0.2s;
+  &:hover { opacity: 0.88; }
 }
 
 .btnSecondary {

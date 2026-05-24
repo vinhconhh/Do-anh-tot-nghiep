@@ -1,7 +1,7 @@
 import os
 import re
 
-directory = r"d:\Dowloads\ql_Gym\quan_ly_gym\backend\src\app\routes"
+directory = r"C:\Users\vinhc\OneDrive\Máy tính\Do-anh-tot-nghiep\quan_ly_gym\backend\src\app\routes"
 pattern = re.compile(r'router\s*=\s*APIRouter\(.*?\)', re.DOTALL)
 
 for filename in os.listdir(directory):

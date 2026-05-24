@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useContext } from "react";
 import { Bot, Coins, Receipt, Download, ShoppingCart, Loader2 } from "lucide-react";
 import styles from "./AiPurchase.module.scss";
 import { AuthContext } from "../../context/AuthContext";
-import { authedRequestJson } from "../../api/client";
+import { useAiApi } from "../../api/aiApi";
 
 const STATUS_META = {
   success: { label: "Thành công", color: "#1cc88a" },
@@ -12,7 +12,8 @@ const STATUS_META = {
 };
 
 export default function AiPurchase() {
-  const { token, logout } = useContext(AuthContext) ?? {};
+  const { user } = useContext(AuthContext) ?? {};
+  const aiApi = useAiApi();
   const [quota, setQuota] = useState({ quota: 0, used: 0, remaining: 0 });
   const [history, setHistory] = useState([]);
   const [packages, setPackages] = useState([]);
@@ -20,32 +21,23 @@ export default function AiPurchase() {
   const [buying, setBuying] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const aj = useCallback(
-    async (path, opt = {}) => {
-      try {
-        return await authedRequestJson(path, token, opt);
-      } catch (e) {
-        if (e?.status === 401) logout?.();
-        throw e;
-      }
-    },
-    [token, logout]
-  );
-
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [qData, hData, pkgsData] = await Promise.all([
-        aj("/api/ai/quota"),
-        aj("/api/ai/purchase-history"),
-        aj("/api/packages/ai")
+        aiApi.getQuota(),
+        aiApi.getPurchaseHistory(),
+        aiApi.getAIPackages()
       ]);
       setQuota(qData);
       setHistory(hData);
       setPackages(pkgsData);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, [aj]);
+    } catch (e) {
+      console.error("AiPurchase Load Error:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [aiApi]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -58,11 +50,7 @@ export default function AiPurchase() {
     if (!window.confirm(`Xác nhận mua ${pkg.label} (${pkg.qty} lượt) với giá ${pkg.price.toLocaleString("vi-VN")}đ?`)) return;
     setBuying(pkg.id);
     try {
-      const result = await aj("/api/ai/buy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId: pkg.id }),
-      });
+      const result = await aiApi.buyPackage(pkg.id);
       alert(`✅ ${result.message}\nSố lượt mới: ${result.newQuota}`);
       fetchData(); // Refresh data
     } catch (e) {

@@ -23,6 +23,7 @@ import {
   Building2,
   BookOpen,
   UserPlus,
+  UtensilsCrossed,
 } from "lucide-react";
 import { AuthContext } from "../../../../context/AuthContext";
 
@@ -75,9 +76,11 @@ export default function Sidebar() {
         >
           <Logs size={20} />
         </button>
-        <span className={`flex items-center whitespace-nowrap ${collapsed ? 'hidden' : ''}`}>
-          <Dumbbell size={18} className="mr-1.5" />
-          The Pro Gym
+        <span 
+          onClick={() => navigate('/')}
+          className={`flex items-center whitespace-nowrap font-display text-[24px] tracking-[2px] uppercase select-none cursor-pointer hover:opacity-80 transition-opacity ${collapsed ? 'hidden' : ''}`}
+        >
+          THE <span className="text-gym-primary mx-[4px]">PRO</span> GYM
         </span>
       </div>
 
@@ -271,6 +274,16 @@ export default function Sidebar() {
               >
                 <UserPlus className="w-[16px] h-[16px] shrink-0" />
                 <span>Duyệt ĐK lớp học</span>
+              </NavLink>
+              <NavLink
+                to="/meal-plan-management"
+                className={({ isActive }) =>
+                  `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
+                  }`
+                }
+              >
+                <UtensilsCrossed className="w-[16px] h-[16px] shrink-0" />
+                <span>Thực đơn hội viên</span>
               </NavLink>
             </div>
           </div>

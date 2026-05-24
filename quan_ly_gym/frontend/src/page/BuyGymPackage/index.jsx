@@ -80,7 +80,7 @@ export default function BuyGymPackage() {
   }
 
   return (
-    <div className={styles.pageWrapper}>
+    <div className={`${styles.pageWrapper} theme-light bg-light-main`}>
       <button className={styles.logoutBtn} onClick={handleLogout}>
         <LogOut size={18} /> Đăng xuất
       </button>

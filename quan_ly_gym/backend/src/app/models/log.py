@@ -37,6 +37,8 @@ class BodyMetric(Base):
     UserID = Column(Integer, ForeignKey("Users.UserID"))
     Weight = Column(Float)
     BodyFat = Column(Float)
+    Muscle = Column(Float)
+    Height = Column(Float)
     BMI = Column(Float)
     MeasuredAt = Column(DateTime, default=datetime.utcnow)
 

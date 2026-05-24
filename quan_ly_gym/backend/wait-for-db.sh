@@ -26,22 +26,15 @@ if [ $RETRY -eq $MAX_RETRIES ]; then
     exec uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --reload
 fi
 
-# Run SQL init scripts if DB doesn't exist yet
-echo "🔍 Checking if database exists..."
-DB_EXISTS=$(/opt/mssql-tools18/bin/sqlcmd -S "$SQL_SERVER" -U sa -P "$DB_PASSWORD" -C -Q "SELECT COUNT(*) FROM sys.databases WHERE name='$DB_NAME'" -h -1 -W 2>/dev/null | head -1 | tr -d '[:space:]')
-
-if [ "$DB_EXISTS" = "0" ] || [ -z "$DB_EXISTS" ]; then
-    echo "📦 Creating database and seeding..."
-    for f in /docker-entrypoint-initdb.d/*.sql; do
-        if [ -f "$f" ]; then
-            echo "   Running: $(basename $f)"
-            /opt/mssql-tools18/bin/sqlcmd -S "$SQL_SERVER" -U sa -P "$DB_PASSWORD" -C -f 65001 -i "$f" || echo "⚠️  Warning: $f had errors"
-        fi
-    done
-    echo "✅ Database initialized!"
-else
-    echo "✅ Database '$DB_NAME' already exists, skipping init."
-fi
+# Always run migration/init scripts (they use IF NOT EXISTS so safe to re-run)
+echo "📦 Running SQL init/migration scripts..."
+for f in /docker-entrypoint-initdb.d/*.sql; do
+    if [ -f "$f" ]; then
+        echo "   Running: $(basename $f)"
+        /opt/mssql-tools18/bin/sqlcmd -S "$SQL_SERVER" -U sa -P "$DB_PASSWORD" -C -f 65001 -i "$f" || echo "⚠️  Warning: $f had errors"
+    fi
+done
+echo "✅ SQL scripts done!"
 
 echo "🚀 Starting FastAPI..."
 exec uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --reload

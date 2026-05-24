@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from datetime import datetime, date, timezone, timedelta
 from ..database import get_db
 from ..models.user import User, Role
 from ..models.profile import MemberProfile
@@ -11,7 +12,11 @@ from ..models.workout import Schedule
 from ..models.log import BodyMetric, LogWorkout
 from ..models.streak import MemberStreak, CheckInLog
 from ..middleware.auth import get_current_user
-from datetime import datetime, date
+from ..models.pt_request import PTRequest
+from ..models.profile import PTProfile
+
+# Vietnam timezone (UTC+7)
+VN_TZ = timezone(timedelta(hours=7))
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
@@ -118,14 +123,92 @@ def get_recent_members(
     results = []
     for m, profile in members_with_profiles:
         initials = "".join([w[0] for w in (m.FullName or "").split()[-2:]]).upper() or "--"
+        
+        # Get assigned PT
+        pt_req = db.query(PTRequest).filter(
+            PTRequest.MemberID == m.UserID,
+            PTRequest.Status == "Approved"
+        ).order_by(PTRequest.CreatedAt.desc()).first()
+        
+        pt_name = "—"
+        if pt_req:
+            pt_user = db.query(User).filter(User.UserID == pt_req.PTID).first()
+            if pt_user:
+                pt_name = pt_user.FullName
+
         results.append({
             "name": m.FullName,
             "email": m.Email,
             "initials": initials,
             "goal": profile.Goal if profile else None,
+            "pt": pt_name,
             "status": "active" if m.IsActive else "expired",
         })
     return results
+
+
+@router.get("/top-trainers")
+def get_top_trainers(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    pt_role = db.query(Role).filter(Role.RoleCode == "PT").first()
+    if not pt_role:
+        return []
+
+    pts = (
+        db.query(User, PTProfile)
+        .outerjoin(PTProfile, User.UserID == PTProfile.UserID)
+        .filter(User.RoleID == pt_role.RoleID, User.IsDeleted == 0)
+        .all()
+    )
+
+    from datetime import timedelta
+    now = datetime.utcnow()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    results = []
+    for pt, profile in pts:
+        initials = "".join([w[0] for w in (pt.FullName or "").split()[-2:]]).upper() or "--"
+        
+        # Distinct members from bookings or accepted requests
+        members_count = db.query(func.count(func.distinct(PTRequest.MemberID))).filter(
+            PTRequest.PTID == pt.UserID,
+            PTRequest.Status == "Approved"
+        ).scalar() or 0
+        
+        # Sessions this month
+        sessions = db.query(func.count(Booking.BookingID)).filter(
+            Booking.PTID == pt.UserID,
+            Booking.StartTime >= month_start,
+            Booking.Status == "Completed"
+        ).scalar() or 0
+
+        # Speciality
+        spec = []
+        if profile and profile.Specialty:
+            spec = [s.strip() for s in profile.Specialty.split(",")]
+        else:
+            spec = ["General"]
+
+        # Rating/Score
+        rating = 5.0
+        if profile and profile.TotalScore:
+            # assuming score is out of 100
+            rating = round((profile.TotalScore / 100) * 5.0, 1)
+
+        results.append({
+            "name": pt.FullName,
+            "initials": initials,
+            "spec": spec,
+            "members": members_count,
+            "sessions": sessions,
+            "rating": rating,
+        })
+    
+    # Sort by rating or sessions
+    results.sort(key=lambda x: (x["rating"], x["sessions"]), reverse=True)
+    return results[:5]
 
 
 @router.get("/member-stats")
@@ -168,7 +251,22 @@ def get_member_stats(
         LogWorkout.UserID == current_user.UserID
     ).scalar() or 0
 
-    # Streak info
+    # Streak info (Dựa theo số buổi đi học class thay vì tập hàng ngày)
+    from ..models.facility import ClassEnrollment
+    
+    has_registered_class = db.query(ClassEnrollment).filter(
+        ClassEnrollment.MemberID == current_user.UserID,
+        ClassEnrollment.Status == "Active"
+    ).first() is not None
+
+    if has_registered_class:
+        streak_val = db.query(func.count(ClassEnrollment.EnrollID)).filter(
+            ClassEnrollment.MemberID == current_user.UserID,
+            ClassEnrollment.AttendanceStatus == "Present"
+        ).scalar() or 0
+    else:
+        streak_val = -1
+
     streak_obj = db.query(MemberStreak).filter(MemberStreak.UserID == current_user.UserID).first()
     
     # Check if checked in today
@@ -188,14 +286,17 @@ def get_member_stats(
         "aiUsed": ai_used,
         "sessionsCompleted": sessions_completed,
         "totalSchedules": total_schedules,
-        "streak": streak_obj.CurrentStreak if streak_obj else 0,
+        "streak": streak_val,
         "totalPoints": streak_obj.TotalPoints if streak_obj else 0,
         "checkedInToday": checked_in_today,
         "weight": latest_metric.Weight if latest_metric else (profile.Weight if profile else None),
         "height": profile.Height if profile else None,
         "bodyFat": latest_metric.BodyFat if latest_metric else None,
+        "muscle": latest_metric.Muscle if latest_metric else None,
         "referralCode": current_user.ReferralCode,
-        "weightChart": weight_chart
+        "weightChart": weight_chart,
+        "gender": current_user.Gender,
+        "birthday": current_user.Birthday.isoformat() if current_user.Birthday else None,
     }
 
 from pydantic import BaseModel
@@ -256,7 +357,13 @@ def get_workout_log(
 
     result = []
     for log in logs:
-        date_str = log.WorkoutDate.strftime("%d/%m/%Y") if log.WorkoutDate else ""
+        # WorkoutDate is naive (UTC) — convert to VN timezone
+        if log.WorkoutDate:
+            utc_dt = log.WorkoutDate.replace(tzinfo=timezone.utc)
+            vn_dt = utc_dt.astimezone(VN_TZ)
+            date_str = vn_dt.strftime("%d/%m/%Y")
+        else:
+            date_str = ""
         for detail in log.details:
             exercise_name = (getattr(detail.exercise, 'AssignmentName', None) or getattr(detail.exercise, 'Name', None) or f"ID {detail.ExerciseID}") if detail.exercise else f"ID {detail.ExerciseID}"
             sets = detail.SetNumber or 0
@@ -286,7 +393,7 @@ def save_workout_log(
     from ..models.log import LogWorkout
 
     # Tìm log hôm nay
-    today = datetime.utcnow().date()
+    today = datetime.now(VN_TZ).date()
     existing = (
         db.query(LogWorkout)
         .filter(
@@ -305,7 +412,7 @@ def save_workout_log(
     else:
         new_log = LogWorkout(
             UserID=current_user.UserID,
-            WorkoutDate=datetime.utcnow(),
+            WorkoutDate=datetime.now(VN_TZ),
             RPE=rpe,
         )
         db.add(new_log)
@@ -515,6 +622,81 @@ def member_report_detail(
         "sessionChart": session_chart,
         "activities": activities[:20],
     }
+
+@router.get("/attendance-frequency")
+def get_attendance_frequency(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Thống kê tần suất đến lớp của member dựa trên ClassEnrollment từ HLV điểm danh."""
+    from ..models.facility import ClassEnrollment, GymClass
+
+    enrollments = (
+        db.query(ClassEnrollment, GymClass)
+        .join(GymClass, ClassEnrollment.ClassID == GymClass.ClassID)
+        .filter(
+            ClassEnrollment.MemberID == current_user.UserID,
+            GymClass.IsDeleted == 0,
+        )
+        .order_by(GymClass.StartTime.desc())
+        .all()
+    )
+
+    # Group by ParentClassID (or ClassID if no parent) to aggregate recurring classes
+    class_map = {}
+    for enroll, cls in enrollments:
+        group_id = cls.ParentClassID if cls.ParentClassID else cls.ClassID
+
+        # Get instructor name
+        instructor_name = "—"
+        if cls.InstructorID:
+            instructor = db.query(User).filter(User.UserID == cls.InstructorID).first()
+            instructor_name = instructor.FullName if instructor else cls.InstructorName or "—"
+        elif cls.InstructorName:
+            instructor_name = cls.InstructorName
+
+        if group_id not in class_map:
+            class_map[group_id] = {
+                "className": cls.Name,
+                "instructorName": instructor_name,
+                "total": 0,
+                "present": 0,
+                "absent": 0,
+                "notRecorded": 0,
+                "latestDate": cls.StartTime,
+            }
+
+        entry = class_map[group_id]
+        entry["total"] += 1
+        if enroll.AttendanceStatus == "Present":
+            entry["present"] += 1
+        elif enroll.AttendanceStatus == "Absent":
+            entry["absent"] += 1
+        else:
+            entry["notRecorded"] += 1
+
+        if cls.StartTime and (entry["latestDate"] is None or cls.StartTime > entry["latestDate"]):
+            entry["latestDate"] = cls.StartTime
+
+    result = []
+    for group_id, data in class_map.items():
+        attendance_rate = round(data["present"] / data["total"] * 100) if data["total"] > 0 else 0
+        result.append({
+            "classGroupId": group_id,
+            "className": data["className"],
+            "instructorName": data["instructorName"],
+            "totalSessions": data["total"],
+            "present": data["present"],
+            "absent": data["absent"],
+            "notRecorded": data["notRecorded"],
+            "attendanceRate": attendance_rate,
+            "latestDate": data["latestDate"].replace(tzinfo=timezone.utc).astimezone(VN_TZ).strftime("%d/%m/%Y") if data["latestDate"] else "—",
+        })
+
+    # Sort by latestDate descending
+    result.sort(key=lambda x: x["latestDate"], reverse=True)
+    return result
+
 
 @router.get("/trainer-report/{trainer_id}")
 def trainer_report_detail(

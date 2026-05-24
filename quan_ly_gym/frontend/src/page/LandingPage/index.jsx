@@ -76,9 +76,9 @@ function LandingPage() {
     <div className={styles.landing}>
       {/* NAVBAR */}
       <nav className={styles.navbar}>
-        <div className={styles.logo}>
+        <Link to="/" className={styles.logo} style={{ userSelect: 'none', cursor: 'pointer' }}>
           THE <span>PRO</span> GYM
-        </div>
+        </Link>
 
         <ul className={styles.navLinks}>
           <li><a href="#pricing">Giá Hội Viên</a></li>
@@ -257,9 +257,9 @@ function LandingPage() {
       <footer className={styles.footer}>
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>
-            <div className={styles.footerLogo}>
-              THE <span>NEW</span> GYM
-            </div>
+            <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className={styles.footerLogo} style={{ userSelect: 'none', cursor: 'pointer', display: 'block' }}>
+              THE <span>PRO</span> GYM
+            </Link>
             <p>
               Hệ thống phòng tập chuyên nghiệp với môi trường không phán xét,
               mở cửa 24/7 trên toàn quốc.

@@ -409,7 +409,7 @@ export default function Trainers() {
           </div>
           <div className={styles.formActions}>
             <button type="button" className={styles.btnGhost} onClick={() => setEditing(null)}>Hủy</button>
-            <button type="submit" className={styles.btnPrimary} disabled={saving}>{saving ? "Đang lưu..." : "Lưu"}</button>
+            <button type="submit" className={styles.btnSave} disabled={saving}>{saving ? "Đang lưu..." : "💾 Lưu"}</button>
           </div>
         </form>
       </Modal>

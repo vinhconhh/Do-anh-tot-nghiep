@@ -7,8 +7,8 @@ import { AuthContext } from "../../context/AuthContext";
 
 function DefaultLayout() {
   const { user } = useContext(AuthContext) ?? {};
-  const role = (user?.vaiTro || user?.role || "").toUpperCase();
-  const isLightTheme = ["ADMIN", "MANAGER", "PT"].includes(role);
+  // const role = (user?.vaiTro || user?.role || "").toUpperCase();
+  const isLightTheme = true; // Apply light theme to all roles
 
   return (
     <div className={`flex min-h-screen w-full ${isLightTheme ? "theme-light" : ""}`}>

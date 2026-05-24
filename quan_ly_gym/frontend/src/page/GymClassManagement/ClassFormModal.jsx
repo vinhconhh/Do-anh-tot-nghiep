@@ -1,4 +1,5 @@
 import { UserCog } from "lucide-react";
+import Modal from "../../components/Modal";
 
 const DAYS = [
   { v: 0, l: "T2" }, { v: 1, l: "T3" }, { v: 2, l: "T4" },
@@ -37,11 +38,12 @@ export default function ClassFormModal({ form, setForm, editing, instructors, sa
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-      <div style={{ background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 620, boxShadow: "0 25px 50px rgba(0,0,0,0.5)", maxHeight: "90vh", overflowY: "auto" }}>
-        <h2 style={{ color: "var(--theme-text-dark)", fontWeight: 800, marginBottom: 20, fontSize: "1.5rem" }}>
-          {editing ? "✏️ Sửa lớp học" : "➕ Tạo lớp học mới"}
-        </h2>
+    <Modal
+      isOpen={true}
+      onRequestClose={onClose}
+      title={editing ? "✏️ Sửa lớp học" : "➕ Tạo lớp học mới"}
+    >
+      <div style={{ padding: "0 10px" }}>
 
         {/* Conflict warnings */}
         {conflictWarnings.length > 0 && (
@@ -203,6 +205,6 @@ export default function ClassFormModal({ form, setForm, editing, instructors, sa
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }

@@ -14,7 +14,7 @@ const STATUS_COLORS = { active: "#1cc88a", pending: "#f6c23e", expired: "#858796
 
 export default function Dashboard() {
   const nav = useNavigate();
-  const { getStats, getRevenue, getRecentMembers } = useDashboardApi();
+  const { getStats, getRevenue, getRecentMembers, getTopTrainers } = useDashboardApi();
 
   const [stats, setStats] = useState({
     totalMembers: 0,
@@ -26,21 +26,24 @@ export default function Dashboard() {
   });
   const [revenueData, setRevenueData] = useState([]);
   const [recentMembers, setRecentMembers] = useState([]);
+  const [topTrainers, setTopTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
     async function fetchAll() {
       try {
-        const [s, rev, members] = await Promise.all([
+        const [s, rev, members, trainersData] = await Promise.all([
           getStats(),
           getRevenue(),
           getRecentMembers(),
+          getTopTrainers(),
         ]);
         if (!alive) return;
         setStats(s);
         setRevenueData(rev);
         setRecentMembers(members);
+        setTopTrainers(trainersData);
       } catch (err) {
         console.error("Dashboard fetch error:", err);
       } finally {
@@ -52,7 +55,6 @@ export default function Dashboard() {
   }, [getStats, getRevenue, getRecentMembers]);
 
   const TIER_DATA = [];
-  const PT_DATA = [];
 
 
   return (
@@ -200,7 +202,7 @@ export default function Dashboard() {
                       </div>
                     </td>
                     <td><span className={styles.tierBadge}>{m.goal || "—"}</span></td>
-                    <td><span className={styles.ptName}>—</span></td>
+                    <td><span className={styles.ptName}>{m.pt || "—"}</span></td>
                     <td>
                       <span className={styles.statusBadge} style={{ background: STATUS_COLORS[m.status] + "22", color: STATUS_COLORS[m.status] }}>
                         {STATUS_LABELS[m.status] || m.status}
@@ -249,15 +251,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Activity */}
-          <div className={styles.card} style={{ marginTop: 16 }}>
-            <div className={styles.cardHeader}>
-              <h6 className={styles.cardTitle}>Hoạt động gần đây</h6>
-            </div>
-            <div className={styles.cardBody}>
-              <div style={{ textAlign: "center", padding: "20px 0", color: "#858796" }}>Chưa có hoạt động</div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -283,10 +276,10 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {PT_DATA.length === 0 && (
+              {topTrainers.length === 0 && (
                 <tr><td colSpan={6} style={{ textAlign: "center", padding: "20px", color: "#858796" }}>Chưa có dữ liệu</td></tr>
               )}
-              {PT_DATA.map((pt, i) => (
+              {topTrainers.map((pt, i) => (
                 <tr key={i}>
                   <td>
                     <div className={styles.memberCell}>
@@ -301,7 +294,7 @@ export default function Dashboard() {
                   </td>
                   <td><strong>{pt.members}</strong></td>
                   <td>{pt.sessions} ca</td>
-                  <td>⭐ {pt.rating}</td>
+                  <td>⭐ {pt.rating.toFixed(1)}</td>
                   <td>
                     <div className={styles.progressTrack} style={{ width: 100 }}>
                       <div className={styles.progressFill} style={{ width: `${Math.round(pt.rating / 5 * 100)}%` }} />
