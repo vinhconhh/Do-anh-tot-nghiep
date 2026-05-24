@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Numeric
+from sqlalchemy import Column, Integer, String, Unicode, DateTime, ForeignKey, Numeric
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..database import Base
@@ -9,8 +9,8 @@ class AIRequest(Base):
 
     RequestID = Column(Integer, primary_key=True, autoincrement=True)
     UserID = Column(Integer, ForeignKey("Users.UserID"))
-    Prompt = Column(String)  # NVARCHAR(MAX)
-    Model = Column(String(100))
+    Prompt = Column(Unicode)  # NVARCHAR(MAX) - Unicode for Vietnamese support
+    Model = Column(String(100))  # ASCII-safe, VARCHAR ok
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User")
@@ -22,7 +22,7 @@ class AIResponse(Base):
 
     ResponseID = Column(Integer, primary_key=True, autoincrement=True)
     RequestID = Column(Integer, ForeignKey("AIRequests.RequestID"))
-    ResponseData = Column(String)  # NVARCHAR(MAX)
+    ResponseData = Column(Unicode)  # NVARCHAR(MAX) - Unicode for Vietnamese support
     TokensUsed = Column(Integer)
     Cost = Column(Numeric(10, 4))
     Status = Column(String(50))

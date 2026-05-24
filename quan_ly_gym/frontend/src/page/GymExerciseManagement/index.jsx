@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../../api/axiosClient";
 import { Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, BookOpen, Video } from "lucide-react";
+import Modal from "../../components/Modal";
 import styles from "./GymExerciseManagement.module.scss";
 
 const TYPES = ["Cardio", "Free Weights", "Machine", "Bodyweight", "Stretching", "Khác"];
-const MUSCLES = ["Ngực", "Lưng", "Vai", "Tay", "Bụng", "Đùi", "Bắp chân", "Mông", "Toàn thân"];
+const MUSCLES = ["Ngực", "Lưng", "Vai", "Tay", "Bụng", "Chân", "Cardio", "Toàn thân"];
 
 const EMPTY_FORM = { Name: "", AssignmentName: "", Type: "", TargetMuscle: "", MetValue: 0, EquipmentID: "", VideoURL: "" };
 
@@ -17,6 +18,7 @@ export default function GymExerciseManagement() {
   const [form, setForm]           = useState(EMPTY_FORM);
   const [search, setSearch]       = useState("");
   const [muscle, setMuscle]       = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [page, setPage]           = useState(1);
   const [saving, setSaving]       = useState(false);
 
@@ -26,11 +28,12 @@ export default function GymExerciseManagement() {
       const params = new URLSearchParams({ page, size: 15 });
       if (search) params.set("search", search);
       if (muscle) params.set("target_muscle", muscle);
+      if (typeFilter && typeFilter !== "all") params.set("type", typeFilter);
       const res = await api.get(`/gym-exercises?${params}`);
       setData(res.data || { items: [], total: 0, pages: 1 });
     } catch { setData({ items: [], total: 0, pages: 1 }); }
     finally  { setLoading(false); }
-  }, [page, search, muscle]);
+  }, [page, search, muscle, typeFilter]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
@@ -38,7 +41,7 @@ export default function GymExerciseManagement() {
     api.get("/equipment").then(r => setEquips(Array.isArray(r.data) ? r.data : [])).catch(() => {});
   }, []);
 
-  useEffect(() => { setPage(1); }, [search, muscle]);
+  useEffect(() => { setPage(1); }, [search, muscle, typeFilter]);
 
   const openCreate = () => { setEditing(null); setForm(EMPTY_FORM); setModalOpen(true); };
   const openEdit   = (item) => {
@@ -67,7 +70,9 @@ export default function GymExerciseManagement() {
   const typeColor = { Cardio: "#f6c23e", "Free Weights": "#1cc88a", Machine: "#36b9cc", Bodyweight: "#4e73df", Stretching: "#e74a3b" };
 
   return (
-    <div className={styles.page}>
+    <>
+      <div className={styles.tab} />
+      <div className={styles.page}>
       {/* Header */}
       <div className={styles.header}>
         <div>
@@ -86,13 +91,34 @@ export default function GymExerciseManagement() {
       {/* Filters */}
       <div className={styles.tools}>
         <div className={styles.searchBox}>
-          <Search size={18} className={styles.searchIcon} />
+          <Search size={16} className={styles.searchIcon} />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên bài tập..." />
+          {search && <button className={styles.clear} onClick={() => setSearch("")}>×</button>}
         </div>
-        <select value={muscle} onChange={e => setMuscle(e.target.value)} className={styles.filterSelect}>
-          <option value="">Tất cả nhóm cơ</option>
-          {MUSCLES.map(m => <option key={m}>{m}</option>)}
-        </select>
+
+        <div className={styles.filterGroup}>
+          {["all", ...TYPES].map((t) => (
+            <button
+              key={t}
+              className={`${styles.filterBtn} ${(typeFilter || "all") === t ? styles.filterActive : ""}`}
+              onClick={() => setTypeFilter(t)}
+            >
+              {t === "all" ? "Mọi thể loại" : t}
+            </button>
+          ))}
+        </div>
+
+        <div className={styles.filterGroup}>
+          {["all", ...MUSCLES].map((m) => (
+            <button
+              key={m}
+              className={`${styles.filterBtn} ${(muscle || "all") === m ? styles.filterActive : ""}`}
+              onClick={() => setMuscle(m === "all" ? "" : m)}
+            >
+              {m === "all" ? "Mọi nhóm cơ" : m}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
@@ -156,13 +182,12 @@ export default function GymExerciseManagement() {
       </div>
 
       {/* Modal */}
-      {modalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2 className={styles.modalTitle}>
-              {editing ? "✏️ Sửa bài tập" : "➕ Thêm bài tập mới"}
-            </h2>
-            <form onSubmit={handleSave} className={styles.form}>
+      <Modal
+        isOpen={modalOpen}
+        onRequestClose={() => setModalOpen(false)}
+        title={editing ? "✏️ Sửa bài tập" : "➕ Thêm bài tập mới"}
+      >
+        <form onSubmit={handleSave} className={styles.form}>
               <div className={styles.formGrid}>
                 {[
                   { label: "Tên bài tập (EN) *", key: "Name", required: true },
@@ -210,15 +235,12 @@ export default function GymExerciseManagement() {
                   placeholder="https://youtube.com/watch?v=... hoặc link video" />
               </div>
               <div className={styles.formActions}>
-                <button type="button" onClick={() => setModalOpen(false)} className={styles.btnGhost}>Hủy</button>
-                <button type="submit" disabled={saving} className={styles.btnSuccess}>
-                  {saving ? "Đang lưu..." : "💾 Lưu"}
-                </button>
+                <button type="button" onClick={() => setModalOpen(false)} className={styles.btnCancel}>Hủy</button>
+                <button type="submit" className={styles.btnPrimary} disabled={saving}>{saving ? "Đang lưu..." : "Lưu lại"}</button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-    </div>
+      </Modal>
+      </div>
+    </>
   );
 }

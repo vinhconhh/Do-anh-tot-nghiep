@@ -19,9 +19,9 @@ class GymEquipment(Base):
     __tablename__ = "GymEquipments"
 
     EquipmentID = Column(Integer, primary_key=True, autoincrement=True)
-    Name        = Column(String(200), nullable=False)
-    Category    = Column(String(100))
-    Zone        = Column(String(100))
+    Name        = Column(Unicode(200), nullable=False)
+    Category    = Column(Unicode(100))
+    Zone        = Column(Unicode(100))
     Quantity    = Column(Integer, default=1)
     Status      = Column(Unicode(50), default="Hoạt động")
     CreatedAt   = Column(DateTime, default=datetime.now)
@@ -66,10 +66,10 @@ class GymClass(Base):
     __tablename__ = "GymClasses"
 
     ClassID         = Column(Integer, primary_key=True, autoincrement=True)
-    Name            = Column(String(200), nullable=False)
+    Name            = Column(Unicode(200), nullable=False)
     InstructorID    = Column(Integer, ForeignKey("Users.UserID"), nullable=True)
-    InstructorName  = Column(String(200))          # fallback text (vẫn giữ)
-    StudioRoom      = Column(String(100))
+    InstructorName  = Column(Unicode(200))          # fallback text (vẫn giữ)
+    StudioRoom      = Column(Unicode(100))
     MaxCapacity     = Column(Integer, default=20)
     CurrentEnrolled = Column(Integer, default=0)   # fast-read counter
     StartTime       = Column(DateTime, nullable=False)
@@ -129,7 +129,7 @@ class AssignedExercise(Base):
     Reps          = Column(Integer, default=12)
     Duration      = Column(Integer, nullable=True)    # phút, cho cardio
     Weight        = Column(Float, nullable=True)      # kg
-    Note          = Column(String(500), nullable=True) # ghi chú từ HLV
+    Note          = Column(Unicode(500), nullable=True) # ghi chú từ HLV
     AssignedDate  = Column(Date, nullable=False)
     Status        = Column(String(50), default="Active")  # Active | Completed
     CreatedAt     = Column(DateTime, default=datetime.now)

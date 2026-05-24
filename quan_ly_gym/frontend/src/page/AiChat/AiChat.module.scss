@@ -122,7 +122,11 @@
   padding-left: 0;
   padding-right: 0;
 }
-.bubbleContent { }
+.bubbleContent {
+  white-space: pre-wrap;
+  font-family: inherit;
+  margin: 0;
+}
 .bubbleTime {
   font-size: 1.4rem;
   margin-top: 4px;
@@ -187,3 +191,4 @@
 
 .spinner { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+

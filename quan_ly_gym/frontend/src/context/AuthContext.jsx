@@ -14,6 +14,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem("token"));
 
   const login = useCallback(({ user, token }) => {
+    if (!token) return;
     setUser(user);
     setToken(token);
     localStorage.setItem("user", JSON.stringify(user));
@@ -25,6 +26,8 @@ export function AuthProvider({ children }) {
     setToken(null);
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    // Force reload to clear all states and stop pending requests
+    window.location.href = "/";
   }, []);
 
   const updateUser = useCallback((newData) => {

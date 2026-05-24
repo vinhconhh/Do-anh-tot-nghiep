@@ -32,6 +32,7 @@ import PTAssignments from "../../page/PTAssignments";
 import TrainingProgress from "../../page/TrainingProgress";
 import EnrollmentApproval from "../../page/EnrollmentApproval";
 import BuyGymPackage from "../../page/BuyGymPackage";
+import MealPlanManagement from "../../page/MealPlanManagement";
 
 function AppRoutes() {
   const { token, user } = useContext(AuthContext) ?? {};
@@ -165,6 +166,10 @@ function AppRoutes() {
             <Route
               path="/gym-class-management"
               element={<RequireRole roles={["ADMIN", "MANAGER"]}><GymClassManagement /></RequireRole>}
+            />
+            <Route
+              path="/meal-plan-management"
+              element={<RequireRole roles={["ADMIN", "MANAGER"]}><MealPlanManagement /></RequireRole>}
             />
             <Route
               path="/enrollment-approval"

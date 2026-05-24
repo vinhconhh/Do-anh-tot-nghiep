@@ -240,18 +240,17 @@
 .btnPrimary {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: var(--theme-primary);
-  color: var(--theme-surface);
+  gap: 8px;
+  background: linear-gradient(135deg, #f6c23e, #d4a017);
+  color: var(--theme-text-dark);
   border: 0;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 1.4rem;
+  padding: 12px 20px;
+  border-radius: 9px;
+  font-size: 1.6rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s;
-  &:hover { background: var(--theme-primary-hover); }
-  &:disabled { opacity: 0.6; cursor: not-allowed; }
+  transition: all 0.2s;
+  &:hover { opacity: 0.88; }
 }
 .btnGhost {
   background: transparent;

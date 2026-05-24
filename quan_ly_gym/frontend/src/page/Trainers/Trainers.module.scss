@@ -39,15 +39,16 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--theme-primary);
-  color: var(--theme-surface);
+  background: linear-gradient(135deg, #f6c23e, #d4a017);
+  color: var(--theme-text-dark);
   border: 0;
   padding: 12px 20px;
-  border-radius: 10px;
+  border-radius: 9px;
   font-size: 1.6rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  &:hover { background: var(--theme-primary-hover); }
+  transition: all 0.2s;
+  &:hover { opacity: 0.88; }
 }
 
 .btnGhost {
@@ -292,5 +293,41 @@
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+}
+
+
+
+
+
+.btnCancel {
+  background: var(--theme-bg);
+  color: var(--theme-text-dark);
+  border: none;
+  padding: 10px 22px;
+  border-radius: 9px;
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { opacity: 0.8; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btnSave {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: linear-gradient(135deg, #f6c23e, #d4a017);
+  color: var(--theme-text-dark);
+  border: none;
+  padding: 10px 24px;
+  border-radius: 9px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { opacity: 0.88; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 

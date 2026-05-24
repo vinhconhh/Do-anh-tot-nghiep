@@ -45,8 +45,19 @@ export function useAiApi() {
     [aj]
   );
 
-  return useMemo(
-    () => ({ getQuota, getPackages, getHistory, buyPackage }),
-    [getQuota, getPackages, getHistory, buyPackage]
-  );
+  return useMemo(() => ({
+    getQuota,
+    getPackages,
+    getHistory,
+    buyPackage,
+    getPurchaseHistory: () => aj("/api/ai/purchase-history"),
+    getAIPackages: () => aj("/api/packages/ai"),
+    getChatHistory: () => aj("/api/ai/chat-history"),
+    chat: (prompt, hidden = false) =>
+      aj("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, hidden }),
+      }),
+  }), [aj, getQuota, getPackages, getHistory, buyPackage]);
 }

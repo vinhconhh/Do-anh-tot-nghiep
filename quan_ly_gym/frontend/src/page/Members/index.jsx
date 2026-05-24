@@ -229,7 +229,7 @@ export default function Members() {
                     <td><span className={styles.tierBadge}>{m.gymPackageName || "Chưa ĐK"}</span></td>
                     <td><span className={styles.dateText}>{m.createdAt ? new Date(m.createdAt).toLocaleDateString("vi-VN") : "—"}</span></td>
                     <td><span className={styles.dateText}>—</span></td>
-                    <td><span className={styles.ptName}>—</span></td>
+                    <td><span className={styles.ptName}>{m.pt || "—"}</span></td>
                     <td><span className={styles.aiUsed}>{m.aiQuota ?? 0}</span></td>
                     <td>
                       <span className={styles.statusBadge} style={{ background: sm.color + "22", color: sm.color }}>
@@ -316,8 +316,7 @@ export default function Members() {
           </div>
           <div className={styles.formActions}>
             <button type="button" className={styles.btnGhost} onClick={() => setEditing(null)}>Hủy</button>
-            <button type="submit" className={styles.btnPrimary} disabled={saving}>
-              {saving ? "Đang lưu..." : "Lưu"}
+            <button type="submit" className={styles.btnSave} disabled={saving}>{saving ? "Đang lưu..." : "💾 Lưu"}
             </button>
           </div>
         </form>

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Numeric
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Numeric, Unicode
 from sqlalchemy.orm import relationship
 from ..database import Base
 
@@ -7,7 +7,7 @@ class MemberProfile(Base):
     __tablename__ = "MemberProfiles"
 
     UserID = Column(Integer, ForeignKey("Users.UserID"), primary_key=True)
-    Goal = Column(String(255))
+    Goal = Column(Unicode(255))
     Height = Column(Float)
     Weight = Column(Float)
     AIQuota = Column(Integer, default=0)
@@ -24,8 +24,8 @@ class PTProfile(Base):
 
     UserID = Column(Integer, ForeignKey("Users.UserID"), primary_key=True)
     ExperienceYears = Column(Integer)
-    Certifications = Column(String)  # NVARCHAR(MAX)
-    Specialty = Column(String(255))
+    Certifications = Column(Unicode)  # NVARCHAR(MAX)
+    Specialty = Column(Unicode(255))
     TotalScore = Column(Integer, default=100)
     ResponseRate = Column(Numeric(5, 2), default=100.00)
 

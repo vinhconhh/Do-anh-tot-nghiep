@@ -1,42 +1,40 @@
 import { useState, useEffect, useCallback, useContext, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Bot, Send, Loader2, Dumbbell, Trash2 } from "lucide-react";
 import styles from "./AiChat.module.scss";
 import { AuthContext } from "../../context/AuthContext";
-import { authedRequestJson } from "../../api/client";
+import { useAiApi } from "../../api/aiApi";
 
 export default function AiChat() {
-  const { token, logout } = useContext(AuthContext) ?? {};
+  const { user } = useContext(AuthContext) ?? {};
+  const aiApi = useAiApi();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [remaining, setRemaining] = useState(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const bottomRef = useRef(null);
-
-  const aj = useCallback(
-    async (path, opt = {}) => {
-      try {
-        return await authedRequestJson(path, token, opt);
-      } catch (e) {
-        if (e?.status === 401) logout?.();
-        throw e;
-      }
-    },
-    [token, logout]
-  );
+  
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Load history + quota on mount
   useEffect(() => {
     (async () => {
       try {
         const [hist, quota] = await Promise.all([
-          aj("/api/ai/chat-history"),
-          aj("/api/ai/quota"),
+          aiApi.getChatHistory(),
+          aiApi.getQuota(),
         ]);
         setMessages(hist);
         setRemaining(quota.remaining);
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error("AiChat Load Error:", e);
+      } finally {
+        setHistoryLoaded(true);
+      }
     })();
-  }, [aj]);
+  }, [aiApi]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -53,11 +51,7 @@ export default function AiChat() {
     setSending(true);
 
     try {
-      const res = await aj("/api/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: text }),
-      });
+      const res = await aiApi.chat(text);
       setMessages(prev => [...prev, {
         role: "assistant",
         content: res.response,
@@ -75,6 +69,44 @@ export default function AiChat() {
       setSending(false);
     }
   };
+
+  const handleAutoSend = useCallback(async (promptText) => {
+    if (!promptText || sending) return;
+
+    setMessages(prev => [...prev, { role: "user", content: promptText, time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) }]);
+    setSending(true);
+
+    try {
+      const res = await aiApi.chat(promptText);
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: res.response,
+        time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+      }]);
+      setRemaining(res.remainingQuota);
+    } catch (e) {
+      const errMsg = e.data?.detail || e.message || "Lỗi không xác định";
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: `❌ ${errMsg}`,
+        time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+      }]);
+    } finally {
+      setSending(false);
+    }
+  }, [aiApi, sending]);
+
+  // Handle initialPrompt from settings page
+  useEffect(() => {
+    if (location.state?.initialPrompt && historyLoaded) {
+      // If we already loaded history and an initial prompt is pending
+      const promptToSync = location.state.initialPrompt;
+      // Clear the state so it doesn't trigger again on reload
+      navigate(location.pathname, { replace: true, state: {} });
+      
+      handleAutoSend(promptToSync);
+    }
+  }, [location.state, historyLoaded, handleAutoSend, navigate, location.pathname]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -130,7 +162,7 @@ export default function AiChat() {
                 <div className={styles.avatar}><Dumbbell size={16} /></div>
               )}
               <div className={styles.bubble}>
-                <div className={styles.bubbleContent}>{msg.content}</div>
+                <pre className={styles.bubbleContent}>{msg.content}</pre>
                 <div className={styles.bubbleTime}>{msg.time}</div>
               </div>
             </div>

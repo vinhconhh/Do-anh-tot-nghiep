@@ -12,6 +12,8 @@ export default function PackageManagement() {
     Name: "", Price: 0, DurationMonths: 1, Description: "", Benefits: "", IsVisible: true, IsFeatured: false
   });
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterSt, setFilterSt] = useState("all");
 
   const fetchPackages = async () => {
     try {
@@ -49,6 +51,7 @@ export default function PackageManagement() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!formData.Name.trim()) { alert("Vui lòng nhập tên gói tập."); return; }
     setSaving(true);
     try {
       if (editingPkg) {
@@ -76,6 +79,12 @@ export default function PackageManagement() {
     }
   };
 
+  const displayedPackages = packages.filter(p => {
+    const matchSearch = !search || p.Name?.toLowerCase().includes(search.toLowerCase());
+    const matchSt = filterSt === "all" || (filterSt === "active" ? p.IsVisible : !p.IsVisible);
+    return matchSearch && matchSt;
+  });
+
   return (
     <>
       <div className={styles.tab} />
@@ -88,6 +97,40 @@ export default function PackageManagement() {
           >
             <Plus size={20} /> Thêm Gói Mới
           </button>
+        </div>
+
+        <div className={styles.statGrid}>
+          <div className={styles.statCard} style={{ borderLeftColor: "#4e73df" }}>
+            <div className={styles.statLabel}>Tổng số gói</div>
+            <div className={styles.statVal} style={{ color: "#4e73df" }}>{packages.length}</div>
+          </div>
+          <div className={styles.statCard} style={{ borderLeftColor: "#1cc88a" }}>
+            <div className={styles.statLabel}>Đang hiển thị</div>
+            <div className={styles.statVal} style={{ color: "#1cc88a" }}>{packages.filter(p => p.IsVisible).length}</div>
+          </div>
+          <div className={styles.statCard} style={{ borderLeftColor: "#f6c23e" }}>
+            <div className={styles.statLabel}>Nổi bật</div>
+            <div className={styles.statVal} style={{ color: "#f6c23e" }}>{packages.filter(p => p.IsFeatured).length}</div>
+          </div>
+        </div>
+
+        <div className={styles.tools}>
+          <div className={styles.searchBox}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm kiếm gói tập..." />
+            {search && <button className={styles.clear} onClick={() => setSearch("")}>×</button>}
+          </div>
+
+          <div className={styles.filterGroup}>
+            {["all", "active", "inactive"].map((s) => (
+              <button
+                key={s}
+                className={`${styles.filterBtn} ${filterSt === s ? styles.filterActive : ""}`}
+                onClick={() => setFilterSt(s)}
+              >
+                {{ all: "Tất cả", active: "Hiển thị", inactive: "Ẩn" }[s]}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className={styles.tableWrap}>
@@ -103,7 +146,7 @@ export default function PackageManagement() {
               </tr>
             </thead>
             <tbody>
-              {packages.map((pkg) => (
+              {displayedPackages.map((pkg) => (
                 <tr key={pkg.PackageID}>
                   <td><div style={{fontWeight: 700, color: "var(--theme-text-dark)"}}>{pkg.Name}</div></td>
                   <td>{pkg.Price.toLocaleString()} đ</td>
@@ -126,7 +169,7 @@ export default function PackageManagement() {
                   </td>
                 </tr>
               ))}
-              {packages.length === 0 && (
+              {displayedPackages.length === 0 && (
                 <tr><td colSpan={6} style={{ textAlign: "center", padding: "20px", color: "var(--theme-text)" }}>Không có dữ liệu</td></tr>
               )}
             </tbody>
@@ -137,42 +180,36 @@ export default function PackageManagement() {
       <Modal
         isOpen={isModalOpen}
         onRequestClose={() => setIsModalOpen(false)}
-        title={editingPkg ? "Sửa Gói Tập" : "Thêm Gói Tập"}
+        title={editingPkg ? "✏️ Sửa Gói Tập" : "➕ Thêm Gói Tập"}
       >
-        <form onSubmit={handleSave} className={styles.form}>
+        <div className={styles.modalBody}>
           <div className={styles.formGrid}>
-            <div className={styles.spanFull}>
-              <div className={styles.formGroup}>
-                <label>Tên Gói *</label>
-                <input required type="text" value={formData.Name} onChange={e => setFormData({...formData, Name: e.target.value})} placeholder="VD: Gói Tập 1 Năm..." />
-              </div>
+            <div className={`${styles.field} ${styles.span2}`}>
+              <label>Tên Gói <span className={styles.required}>*</span></label>
+              <input type="text" className={styles.input} value={formData.Name} onChange={e => setFormData({...formData, Name: e.target.value})} placeholder="VD: Gói Tập 1 Năm..." />
             </div>
             
-            <div className={styles.formGroup}>
-              <label>Giá Tiền (VNĐ) *</label>
-              <input required type="number" min={0} value={formData.Price} onChange={e => setFormData({...formData, Price: e.target.value})} />
+            <div className={styles.field}>
+              <label>Giá Tiền (VNĐ) <span className={styles.required}>*</span></label>
+              <input type="number" min={0} className={styles.input} value={formData.Price} onChange={e => setFormData({...formData, Price: e.target.value})} />
             </div>
             
-            <div className={styles.formGroup}>
-              <label>Thời Hạn (Tháng) *</label>
-              <input required type="number" min={1} value={formData.DurationMonths} onChange={e => setFormData({...formData, DurationMonths: e.target.value})} />
+            <div className={styles.field}>
+              <label>Thời Hạn (Tháng) <span className={styles.required}>*</span></label>
+              <input type="number" min={1} className={styles.input} value={formData.DurationMonths} onChange={e => setFormData({...formData, DurationMonths: e.target.value})} />
             </div>
 
-            <div className={styles.spanFull}>
-              <div className={styles.formGroup}>
-                <label>Quyền Lợi (Chuỗi JSON Array)</label>
-                <textarea rows={3} value={formData.Benefits} onChange={e => setFormData({...formData, Benefits: e.target.value})} placeholder='["Quyền lợi 1", "Quyền lợi 2"]' />
-              </div>
+            <div className={`${styles.field} ${styles.span2}`}>
+              <label>Quyền Lợi (Chuỗi JSON Array)</label>
+              <textarea rows={3} className={styles.input} value={formData.Benefits} onChange={e => setFormData({...formData, Benefits: e.target.value})} placeholder='["Quyền lợi 1", "Quyền lợi 2"]' />
             </div>
 
-            <div className={styles.spanFull}>
-              <div className={styles.formGroup}>
-                <label>Mô Tả Ngắn</label>
-                <textarea rows={2} value={formData.Description} onChange={e => setFormData({...formData, Description: e.target.value})} />
-              </div>
+            <div className={`${styles.field} ${styles.span2}`}>
+              <label>Mô Tả Ngắn</label>
+              <textarea rows={2} className={styles.input} value={formData.Description} onChange={e => setFormData({...formData, Description: e.target.value})} />
             </div>
 
-            <div className={styles.spanFull} style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+            <div className={styles.span2} style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
               <label className={styles.checkboxGroup}>
                 <input type="checkbox" checked={formData.IsVisible} onChange={e => setFormData({...formData, IsVisible: e.target.checked})} />
                 Hiển thị trên Landing Page
@@ -185,10 +222,10 @@ export default function PackageManagement() {
           </div>
           
           <div className={styles.formActions}>
-            <button type="button" onClick={() => setIsModalOpen(false)} className={styles.btnGhost}>Hủy</button>
-            <button type="submit" className={styles.btnPrimary} disabled={saving}>{saving ? "Đang lưu..." : "Lưu Lại"}</button>
+            <button type="button" onClick={() => setIsModalOpen(false)} className={styles.btnCancel}>Hủy</button>
+            <button type="button" onClick={handleSave} className={styles.btnSave} disabled={saving}>{saving ? "Đang lưu..." : "💾 Lưu Lại"}</button>
           </div>
-        </form>
+        </div>
       </Modal>
     </>
   );

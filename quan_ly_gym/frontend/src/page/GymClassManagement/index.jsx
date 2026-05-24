@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import api from "../../api/axiosClient";
-import { Plus, Edit, Trash2, Calendar, Users, Clock, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Users, Clock, Eye, Search } from "lucide-react";
 import ClassFormModal from "./ClassFormModal";
+import Modal from "../../components/Modal";
 import styles from "./GymClassManagement.module.scss";
 
 const EMPTY_FORM = {
@@ -36,6 +37,8 @@ export default function GymClassManagement() {
   const [viewAll, setViewAll] = useState(false);
   const [saving, setSaving] = useState(false);
   const [conflictWarnings, setConflictWarnings] = useState([]);
+  const [q, setQ] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   const fetchItems = async () => {
     setLoading(true);
@@ -169,8 +172,17 @@ export default function GymClassManagement() {
   const totalEnrolled = items.reduce((s, c) => s + (c.CurrentEnrolled || 0), 0);
   const totalCapacity = items.reduce((s, c) => s + (c.MaxCapacity || 0), 0);
 
+  const filteredItems = items.filter(i => {
+    const matchQ = !q || i.Name?.toLowerCase().includes(q.toLowerCase()) || i.InstructorName?.toLowerCase().includes(q.toLowerCase());
+    const full = i.CurrentEnrolled >= i.MaxCapacity;
+    const matchSt = filterStatus === "all" || (filterStatus === "full" ? full : !full);
+    return matchQ && matchSt;
+  });
+
   return (
-    <div className={styles.page}>
+    <>
+      <div className={styles.tab} />
+      <div className={styles.page}>
       {/* Header */}
       <div className={styles.header}>
         <div>
@@ -203,8 +215,30 @@ export default function GymClassManagement() {
         ))}
       </div>
 
+      {/* Filter & Search */}
+      <div className={styles.tools}>
+        <div className={styles.searchBox}>
+          <Search className={styles.searchIcon} size={16} />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Tìm theo tên lớp, HLV…"
+          />
+          {q && <button className={styles.clear} onClick={() => setQ("")}>×</button>}
+        </div>
 
-
+        <div className={styles.filterGroup}>
+          {["all", "available", "full"].map((s) => (
+            <button
+              key={s}
+              className={`${styles.filterBtn} ${filterStatus === s ? styles.filterActive : ""}`}
+              onClick={() => setFilterStatus(s)}
+            >
+              {{ all: "Tất cả", available: "Còn chỗ", full: "Đã đầy" }[s]}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Table */}
       <div className={styles.tableWrap}>
@@ -218,8 +252,8 @@ export default function GymClassManagement() {
           </thead>
           <tbody>
             {loading && <tr><td colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--theme-text)" }}>Đang tải...</td></tr>}
-            {!loading && items.length === 0 && <tr><td colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--theme-text)" }}>Không có lớp học nào</td></tr>}
-            {items.map((item) => {
+            {!loading && filteredItems.length === 0 && <tr><td colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--theme-text)" }}>Không có lớp học nào</td></tr>}
+            {filteredItems.map((item) => {
               const full = item.CurrentEnrolled >= item.MaxCapacity;
               const pct = item.MaxCapacity > 0 ? Math.round(item.CurrentEnrolled / item.MaxCapacity * 100) : 0;
               const dayMap = { 0: "T2", 1: "T3", 2: "T4", 3: "T5", 4: "T6", 5: "T7", 6: "CN" };
@@ -292,16 +326,12 @@ export default function GymClassManagement() {
       )}
 
       {/* Members Modal */}
-      {membersModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>
-                👥 Học viên lớp: <span style={{ color: "#f6c23e" }}>{membersModal.Name}</span>
-              </h2>
-              <button onClick={() => setMembersModal(null)} className={styles.btnGhost}>Đóng</button>
-            </div>
-
+      <Modal
+        isOpen={!!membersModal}
+        onRequestClose={() => setMembersModal(null)}
+        title={membersModal ? `👥 Học viên lớp: ${membersModal.Name}` : ""}
+      >
+        <div style={{ padding: "0 10px" }}>
             {/* Pending enrollments */}
             {pendingEnrollments.length > 0 && (
               <div className={styles.pendingBox}>
@@ -365,8 +395,8 @@ export default function GymClassManagement() {
               </>
             )}
           </div>
-        </div>
-      )}
-    </div>
+        </Modal>
+      </div>
+    </>
   );
 }

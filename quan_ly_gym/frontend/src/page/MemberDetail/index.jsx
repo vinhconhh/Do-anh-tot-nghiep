@@ -107,7 +107,6 @@ export default function MemberDetail() {
                 { label: "Giới tính",    val: member.gioiTinh || "--" },
                 { label: "Nhu cầu tập",  val: member.goal || "--" },
                 { label: "Gói tập",      val: member.gymPackageName || "Chưa đăng ký" },
-                { label: "Gói AI",       val: member.aiPackageName || "Chưa đăng ký" },
                 { label: "Ngày sinh",     val: formatDate(member.ngaySinh) },
                 { label: "Ngày đăng ký",  val: formatDate(member.createdAt) },
                 { label: "Hết hạn",       val: formatDate(member.hetHan) },
@@ -131,13 +130,6 @@ export default function MemberDetail() {
           <div className={styles.rightCol}>
             {/* Mini stats */}
             <div className={styles.miniStats}>
-              <div className={`${styles.miniCard} ${styles.blue}`}>
-                <div className={styles.miniLabel}>Lượt AI đã dùng</div>
-                <div className={styles.miniVal}>{aiUsed}/{aiTotal}</div>
-                <div className={styles.progressTrack}>
-                  <div className={styles.progressFill} style={{ width: `${aiPct}%`, background: "#4e73df" }} />
-                </div>
-              </div>
               <div className={`${styles.miniCard} ${styles.green}`}>
                 <div className={styles.miniLabel}>Buổi tập hoàn thành</div>
                 <div className={styles.miniVal}>{report?.sessionChart?.reduce((acc, curr) => acc + curr.done, 0) || 0}</div>

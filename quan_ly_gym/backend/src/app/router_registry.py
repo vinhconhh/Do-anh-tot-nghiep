@@ -24,6 +24,7 @@ from .routes import (
     packages,
     facility,
     pt_assignments,
+    meal_plans,
 )
 
 # Define router entries
@@ -43,6 +44,7 @@ ROUTERS = [
     packages.router,
     facility.router,
     pt_assignments.router,
+    meal_plans.router,
 ]
 
 

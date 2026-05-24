@@ -25,7 +25,8 @@ class BuyPackageBody(BaseModel):
 
 class AiChatBody(BaseModel):
     prompt: str
-    model: Optional[str] = "gemma-4"
+    model: Optional[str] = "openai/gpt-oss-120b:free"
+    hidden: Optional[bool] = False
 
 # ─── OpenRouter client (lazy init) ───
 _client: OpenAI | None = None
@@ -43,29 +44,47 @@ def get_openrouter_client() -> OpenAI:
     return _client
 
 # ─── System prompt cho classifier ───
-CLASSIFIER_SYSTEM = """Bạn là bộ lọc. Trả lời YES nếu câu hỏi liên quan đến bất kỳ hoạt động thể thao, tập luyện, võ thuật, gym, fitness, dinh dưỡng thể thao.
-Trả lời NO nếu không liên quan (ví dụ: chính trị, tình yêu, ẩm thực không liên quan thể thao).
-Chỉ trả lời YES hoặc NO, không thêm từ nào khác."""
+CLASSIFIER_SYSTEM = """Bạn là một AI phân loại dữ liệu nghiêm ngặt. Nhiệm vụ của bạn là kiểm tra xem câu hỏi của người dùng có liên quan đến các chủ đề: thể thao, tập luyện, võ thuật, gym, fitness, hoặc dinh dưỡng thể thao hay không.
+
+- Trả lời "YES" nếu câu hỏi liên quan đến bất kỳ chủ đề nào nêu trên.
+- Trả lời "NO" nếu câu hỏi KHÔNG liên quan (ví dụ: chính trị, tình yêu, ẩm thực thông thường, công nghệ...).
+
+QUY TẮC BẮT BUỘC:
+- Chỉ trả lời duy nhất một từ là "YES" hoặc "NO" (viết hoa).
+- Không kèm theo dấu chấm, không giải thích, không thêm bất kỳ ký tự hay từ ngữ nào khác."""
 
 # ─── System prompt cho responder ───
-RESPONDER_SYSTEM = """Bạn là chuyên gia tư vấn thể thao và tập luyện. Bạn được phép trả lời tất cả các chủ đề sau:
-- Tập gym (tạ, bodyweight, bài tập)
-- Các môn thể thao: bơi, chạy, bóng đá, tennis, cầu lông, võ thuật (boxing, kick boxing, karate, taekwondo, judo,...)
-- Tập luyện tại nhà, yoga, pilates, cardio, HIIT
-- Dinh dưỡng cho người tập (protein, macro, chế độ ăn)
-- Phục hồi, kéo giãn, chấn thương thể thao
-- Lịch tập, kỹ thuật, mục tiêu (giảm mỡ, tăng cơ)
+RESPONDER_SYSTEM = """Bạn là chuyên gia tư vấn hàng đầu về thể thao, thể hình và dinh dưỡng thể thao. Nhiệm vụ của bạn là cung cấp câu trả lời chuyên sâu, chính xác và có giá trị thực tiễn cao cho người dùng.
 
-Hãy trả lời câu hỏi một cách trực tiếp, đầy đủ, không cần hỏi lại thông tin cá nhân trừ khi thực sự cần thiết.
-Ưu tiên đưa ra hướng dẫn cụ thể, ví dụ, và lời khuyên thực tế.
-Nếu câu hỏi chung chung, hãy cung cấp một lộ trình tổng quan và khuyến khích người dùng hỏi chi tiết hơn.
-Trả lời bằng tiếng Việt, dễ hiểu, đầy đủ dấu, không trả lời bằng tiếng việt không dấu, không rút gọn câu trả lời."""
+CHỦ ĐỀ ĐƯỢC PHÉP TRẢ LỜI:
+- Gym, Fitness, Võ thuật, các môn thể thao (bơi, chạy, bóng đá, bóng rổ...).
+- Dinh dưỡng thể thao, chế độ ăn, tính toán Macros, Calories, thực phẩm bổ sung (Supplements).
+- Lịch tập luyện, kỹ thuật bài tập, phục hồi và phòng tránh chấn thương.
+- Phân tích chỉ số cơ thể (BMI, BMR, TDEE, Body Fat).
 
+QUY TẮC ĐỊNH DẠNG (BẮT BUỘC):
+1. TRẢ LỜI BẰNG TIẾNG VIỆT CÓ DẤU HOÀN CHỈNH: Không viết tắt, không thiếu dấu.
+2. TUYỆT ĐỐI KHÔNG SỬ DỤNG ĐỊNH DẠNG MARKDOWN: Không dùng các ký tự như **, *, #, ##, __, hoặc bảng markdown. 
+3. CÁCH TRÌNH BÀY PLAIN TEXT (VĂN BẢN THUẦN TÚY): 
+   - Để làm nổi bật tiêu đề, hãy viết HOA TOÀN BỘ CHỮ (Ví dụ: LỊCH TẬP KHUYẾN NGHỊ).
+   - Để liệt kê, hãy xuống dòng và sử dụng dấu gạch ngang đầu dòng (-) hoặc số thứ tự (1, 2, 3).
+   - Sử dụng các đoạn văn ngắn, cách nhau bằng một dòng trống để người dùng dễ đọc.
+
+QUY TẮC NỘI DUNG:
+1. CÁ NHÂN HÓA: Bắt buộc dựa vào các thông số người dùng cung cấp (chiều cao, cân nặng, tuổi, mục tiêu, BMI...) để đưa ra nhận xét, đánh giá dành riêng cho họ.
+2. SỐ LIỆU CỤ THỂ: Không nói chung chung như "ăn nhiều protein" hay "tập vừa phải". Phải đưa ra con số ước tính cụ thể (ví dụ: số calo, số gram protein, số buổi tập/tuần, số hiệp/bài tập).
+3. GIỌNG VĂN: Chuyên nghiệp, khoa học, mang tính khích lệ và dễ hiểu.
+
+--- CRITICAL ENCODING WARNING (MUST FOLLOW) ---
+- You MUST output FULL Vietnamese diacritics in every response (e.g.: á, à, ả, ã, ạ, ă, ắ, ặ, â, ấ, ầ, ô, ổ, ộ, ơ, ớ, ờ, ư, ứ, ừ, đ...).
+- NEVER strip tones. NEVER replace Vietnamese accented characters with plain Latin equivalents (e.g. do NOT write "tap luyen" instead of "tập luyện").
+- Your output string MUST be valid UTF-8 encoded Vietnamese text. Double-check every word before responding.
+- If you are uncertain about a character, always keep the diacritic. Losing diacritics is a critical failure."""
 # Danh sách các model dự phòng khi bị rate limit
 MODELS = [
-    "openai/gpt-oss-20b:free",
-    "qwen/qwen3-next-80b-a3b-instruct:free",
-    "openai/gpt-oss-120b:free"
+    "openai/gpt-oss-120b:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "openrouter/owl-alpha"
 ]
 
 import time
@@ -129,7 +148,7 @@ def generate_response(prompt: str) -> str:
                 {"role": "user", "content": prompt},
             ],
             max_tokens=2048,
-            temperature=0.7
+            temperature=0.1
         )
         result = response.choices[0].message.content.strip()
         tokens_used = response.usage.total_tokens if response.usage else len(result.split())
@@ -203,7 +222,8 @@ def chat_with_ai(
         raise HTTPException(status_code=400, detail="Bạn đã hết lượt AI. Vui lòng mua thêm.")
     
     # 3. Lưu request (tính 1 lượt)
-    ai_req = AIRequest(UserID=current_user.UserID, Prompt=body.prompt, Model="gemma-4-openrouter")
+    prompt_to_save = f"[HIDDEN_CONSULT]\n{body.prompt}" if body.hidden else body.prompt
+    ai_req = AIRequest(UserID=current_user.UserID, Prompt=prompt_to_save, Model="gemma-4-openrouter")
     db.add(ai_req)
     db.flush()
     
@@ -232,7 +252,11 @@ def chat_history(db: Session = Depends(get_db), current_user: User = Depends(get
     reqs = db.query(AIRequest).filter(AIRequest.UserID == current_user.UserID).order_by(AIRequest.CreatedAt.desc()).limit(30).all()
     messages = []
     for r in reversed(reqs):
-        messages.append({"role": "user", "content": r.Prompt, "time": r.CreatedAt.strftime("%H:%M") if r.CreatedAt else ""})
+        # Skip user message if it's a hidden consult prompt
+        is_hidden = r.Prompt and r.Prompt.startswith("[HIDDEN_CONSULT]")
+        if not is_hidden:
+            messages.append({"role": "user", "content": r.Prompt, "time": r.CreatedAt.strftime("%H:%M") if r.CreatedAt else ""})
+            
         resp = db.query(AIResponse).filter(AIResponse.RequestID == r.RequestID).first()
         if resp:
             messages.append({"role": "assistant", "content": resp.ResponseData, "time": resp.CreatedAt.strftime("%H:%M") if resp.CreatedAt else ""})

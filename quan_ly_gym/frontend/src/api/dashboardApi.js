@@ -59,6 +59,11 @@ export function useDashboardApi() {
     [aj]
   );
 
+  const getTopTrainers = useCallback(
+    async () => aj(`/api/dashboard/top-trainers`),
+    [aj]
+  );
+
   return useMemo(
     () => ({
       getStats,
@@ -68,7 +73,8 @@ export function useDashboardApi() {
       updateMemberMetrics,
       getMemberReportDetail,
       getTrainerReportDetail,
+      getTopTrainers,
     }),
-    [getStats, getRevenue, getRecentMembers, getMemberStats, updateMemberMetrics, getMemberReportDetail, getTrainerReportDetail]
+    [getStats, getRevenue, getRecentMembers, getMemberStats, updateMemberMetrics, getMemberReportDetail, getTrainerReportDetail, getTopTrainers]
   );
 }

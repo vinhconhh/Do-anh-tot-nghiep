@@ -263,19 +263,29 @@ export default function MemberView() {
           : myClasses.length === 0
             ? <div className={styles.empty} style={{ textAlign: "center", padding: 40 }}>Bạn chưa đăng ký lớp học nào.</div>
             : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))", gap: 16 }}>
-                {myClasses.map(c => (
-                  <div key={c.ClassID} style={{ background: "#1e293b", border: "1px solid #1cc88a33", borderRadius: 14, padding: 20 }}>
-                    <strong style={{ color: "#f8fafc", display: "block", marginBottom: 8 }}>{c.Name}</strong>
-                    <div style={{ color: "#94a3b8", fontSize: "1.1rem", marginBottom: 4 }}>🎓 {c.InstructorName || "Chưa phân công"}</div>
-                    <div style={{ color: "#64748b", fontSize: "1.0rem", marginBottom: 4 }}>
-                      🕐 {new Date(c.StartTime).toLocaleDateString("vi-VN")} · {fmtTime(c.StartTime)} – {fmtTime(c.EndTime)}
+                {myClasses.map(c => {
+                  const dayMap = { 0: "T2", 1: "T3", 2: "T4", 3: "T5", 4: "T6", 5: "T7", 6: "CN" };
+                  const daysLabel = c.RecurringDays ? c.RecurringDays.split(",").map(d => dayMap[d] || d).join(", ") : "—";
+                  const startDate = c.RecurringStartDate || (c.StartTime ? c.StartTime.slice(0, 10) : "—");
+                  const endDate = c.RecurringEndDate || (c.EndTime ? c.EndTime.slice(0, 10) : "—");
+                  const timeStr = c.StartTime ? `${fmtTime(c.StartTime)} – ${fmtTime(c.EndTime)}` : "—";
+                  return (
+                  <div key={c.ClassID} style={{ background: "var(--theme-surface)", border: "1px solid #1cc88a33", borderRadius: 14, padding: 20 }}>
+                    <strong style={{ color: "var(--theme-text-dark)", display: "block", marginBottom: 8, fontSize: "1.2rem" }}>{c.Name}</strong>
+                    <div style={{ color: "var(--theme-text)", fontSize: "1.1rem", marginBottom: 4 }}>🎓 HLV: {c.InstructorName || "Chưa phân công"}</div>
+                    <div style={{ color: "var(--theme-text)", fontSize: "1.05rem", marginBottom: 4 }}>
+                      🕐 {startDate} ➝ {endDate}
                     </div>
-                    <div style={{ color: "#64748b", fontSize: "1.0rem", marginBottom: 12 }}>📍 {c.StudioRoom || "—"} · Đăng ký: {c.EnrolledAt}</div>
+                    <div style={{ color: "var(--theme-text)", fontSize: "1.05rem", marginBottom: 4 }}>
+                      📅 Lịch: <span style={{ color: "#36b9cc", fontWeight: 600 }}>{daysLabel}</span> ({timeStr})
+                    </div>
+                    <div style={{ color: "var(--theme-text)", fontSize: "1.0rem", marginBottom: 12 }}>📍 Phòng: {c.StudioRoom || "—"}</div>
                     <button onClick={() => handleUnenroll(c.ClassID)} style={{ width: "100%", padding: "8px", background: "#e74a3b22", color: "#e74a3b", border: "1px solid #e74a3b44", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}>
                       Hủy đăng ký
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
       )}
 
@@ -304,9 +314,9 @@ export default function MemberView() {
                   onClick={() => setExperienceLevel(opt.value)}
                   style={{
                     flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: "1.1rem",
-                    background: experienceLevel === opt.value ? opt.color + "22" : "#0f172a",
-                    color: experienceLevel === opt.value ? opt.color : "#64748b",
-                    border: `2px solid ${experienceLevel === opt.value ? opt.color : "#334155"}`,
+                    background: experienceLevel === opt.value ? opt.color + "22" : "var(--theme-surface)",
+                    color: experienceLevel === opt.value ? opt.color : "var(--theme-text)",
+                    border: `2px solid ${experienceLevel === opt.value ? opt.color : "var(--theme-border)"}`,
                     transition: "all 0.2s",
                   }}
                 >

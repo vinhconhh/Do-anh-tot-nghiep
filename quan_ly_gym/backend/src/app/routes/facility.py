@@ -447,7 +447,12 @@ def my_enrollments(db: Session = Depends(get_db), current_user: User = Depends(g
     """Member: lớp tôi đã đăng ký."""
     rows = (
         db.query(ClassEnrollment)
-        .filter(ClassEnrollment.MemberID == current_user.UserID, ClassEnrollment.Status == "Active")
+        .join(GymClass, ClassEnrollment.ClassID == GymClass.ClassID)
+        .filter(
+            ClassEnrollment.MemberID == current_user.UserID, 
+            ClassEnrollment.Status == "Active",
+            GymClass.ParentClassID == None  # noqa: E711
+        )
         .all()
     )
     result = []
