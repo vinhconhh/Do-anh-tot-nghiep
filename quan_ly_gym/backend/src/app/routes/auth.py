@@ -89,7 +89,6 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     }
 
     if role.RoleCode == "MEMBER":
-        # New members have no package initially
         response_user["packageId"] = None
         response_user["gymPackageName"] = None
 

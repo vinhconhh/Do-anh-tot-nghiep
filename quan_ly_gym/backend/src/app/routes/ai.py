@@ -14,7 +14,6 @@ from ..config import settings
 
 router = APIRouter(prefix="/api/ai", tags=["AI"])
 
-# ─── Package definitions ───
 AI_PACKAGES = [
     {"id": 1, "label": "Gói nhỏ", "qty": 20, "price": 240000},
     {"id": 2, "label": "Gói phổ biến", "qty": 50, "price": 600000},
@@ -28,7 +27,6 @@ class AiChatBody(BaseModel):
     model: Optional[str] = "openai/gpt-oss-120b:free"
     hidden: Optional[bool] = False
 
-# ─── OpenRouter client (lazy init) ───
 _client: OpenAI | None = None
 
 def get_openrouter_client() -> OpenAI:
@@ -43,7 +41,6 @@ def get_openrouter_client() -> OpenAI:
         )
     return _client
 
-# ─── System prompt cho classifier ───
 CLASSIFIER_SYSTEM = """Bạn là một AI phân loại dữ liệu nghiêm ngặt. Nhiệm vụ của bạn là kiểm tra xem câu hỏi của người dùng có liên quan đến các chủ đề: thể thao, tập luyện, võ thuật, gym, fitness, hoặc dinh dưỡng thể thao hay không.
 
 - Trả lời "YES" nếu câu hỏi liên quan đến bất kỳ chủ đề nào nêu trên.
@@ -53,7 +50,6 @@ QUY TẮC BẮT BUỘC:
 - Chỉ trả lời duy nhất một từ là "YES" hoặc "NO" (viết hoa).
 - Không kèm theo dấu chấm, không giải thích, không thêm bất kỳ ký tự hay từ ngữ nào khác."""
 
-# ─── System prompt cho responder ───
 RESPONDER_SYSTEM = """Bạn là chuyên gia tư vấn hàng đầu về thể thao, thể hình và dinh dưỡng thể thao. Nhiệm vụ của bạn là cung cấp câu trả lời chuyên sâu, chính xác và có giá trị thực tiễn cao cho người dùng.
 
 CHỦ ĐỀ ĐƯỢC PHÉP TRẢ LỜI:
@@ -80,7 +76,6 @@ QUY TẮC NỘI DUNG:
 - NEVER strip tones. NEVER replace Vietnamese accented characters with plain Latin equivalents (e.g. do NOT write "tap luyen" instead of "tập luyện").
 - Your output string MUST be valid UTF-8 encoded Vietnamese text. Double-check every word before responding.
 - If you are uncertain about a character, always keep the diacritic. Losing diacritics is a critical failure."""
-# Danh sách các model dự phòng khi bị rate limit
 MODELS = [
     "openai/gpt-oss-120b:free",
     "meta-llama/llama-3.3-70b-instruct:free",
@@ -93,7 +88,6 @@ def call_openrouter_with_retry(messages: list, max_tokens: int, temperature: flo
     client = get_openrouter_client()
     last_error = None
     
-    # Thử 2 vòng (tổng cộng 6 lần gọi API)
     for attempt in range(2):
         for model in MODELS:
             try:
@@ -107,13 +101,10 @@ def call_openrouter_with_retry(messages: list, max_tokens: int, temperature: flo
             except Exception as e:
                 last_error = str(e)
                 print(f"[Warning] Model {model} failed: {last_error[:100]}...")
-                # Nếu là lỗi 429 Rate Limit thì thử model tiếp theo ngay
                 if "429" in last_error or "rate-limited" in last_error.lower():
                     continue
-                # Lỗi khác thì có thể do model bị lỗi, cũng thử next
                 continue
         
-        # Nếu vòng 1 thất bại tất cả các model, đợi 2s rồi thử lại
         print(f"[Retry] Attempt {attempt+1} failed for all models. Waiting 2s...")
         time.sleep(2)
         
@@ -137,7 +128,7 @@ def classify_prompt(prompt: str) -> bool:
         raise
     except Exception as e:
         print(f"Classifier error: {e}")
-        return True  # fallback an toàn
+        return True
 
 def generate_response(prompt: str) -> str:
     """Sinh câu trả lời qua OpenRouter."""
@@ -159,7 +150,6 @@ def generate_response(prompt: str) -> str:
     except Exception as e:
         return f"[Lỗi AI] {str(e)}", 0
 
-# ─── API Endpoints ───
 @router.get("/quota")
 def get_quota(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     profile = db.query(MemberProfile).filter(MemberProfile.UserID == current_user.UserID).first()
@@ -210,27 +200,22 @@ def chat_with_ai(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # 1. Phân loại bằng Gemma 4 (không tốn quota)
     if not classify_prompt(body.prompt):
         raise HTTPException(status_code=400, detail="Câu hỏi không liên quan đến thể thao hoặc tập luyện. Tôi chỉ tư vấn về gym, thể thao, dinh dưỡng thể thao.")
     
-    # 2. Kiểm tra quota
     profile = db.query(MemberProfile).filter(MemberProfile.UserID == current_user.UserID).first()
     ai_used = db.query(func.count(AIRequest.RequestID)).filter(AIRequest.UserID == current_user.UserID).scalar() or 0
     quota = profile.AIQuota if profile else 0
     if ai_used >= quota:
         raise HTTPException(status_code=400, detail="Bạn đã hết lượt AI. Vui lòng mua thêm.")
     
-    # 3. Lưu request (tính 1 lượt)
     prompt_to_save = f"[HIDDEN_CONSULT]\n{body.prompt}" if body.hidden else body.prompt
     ai_req = AIRequest(UserID=current_user.UserID, Prompt=prompt_to_save, Model="gemma-4-openrouter")
     db.add(ai_req)
     db.flush()
     
-    # 4. Sinh response bằng Gemma 4 qua OpenRouter
     response_text, tokens_used = generate_response(body.prompt)
     
-    # 5. Lưu response
     ai_resp = AIResponse(
         RequestID=ai_req.RequestID,
         ResponseData=response_text,
@@ -252,7 +237,6 @@ def chat_history(db: Session = Depends(get_db), current_user: User = Depends(get
     reqs = db.query(AIRequest).filter(AIRequest.UserID == current_user.UserID).order_by(AIRequest.CreatedAt.desc()).limit(30).all()
     messages = []
     for r in reversed(reqs):
-        # Skip user message if it's a hidden consult prompt
         is_hidden = r.Prompt and r.Prompt.startswith("[HIDDEN_CONSULT]")
         if not is_hidden:
             messages.append({"role": "user", "content": r.Prompt, "time": r.CreatedAt.strftime("%H:%M") if r.CreatedAt else ""})

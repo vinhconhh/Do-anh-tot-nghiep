@@ -15,7 +15,6 @@ router = APIRouter(prefix="/api/members", tags=["Members"])
 def _member_to_dict(user: User, db: Session) -> dict:
     profile = user.member_profile
 
-    # Lấy PT phụ trách
     pt_name = None
     pt_req = db.query(PTRequest).filter(
         PTRequest.MemberID == user.UserID,
@@ -122,7 +121,7 @@ def get_member(
 def create_member(
     req: MemberCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     if db.query(User).filter(User.Email == req.email).first():
         raise HTTPException(status_code=400, detail="Email đã tồn tại")
@@ -165,7 +164,7 @@ def update_member(
     member_id: int,
     req: MemberUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     user = db.query(User).filter(User.UserID == member_id, User.IsDeleted == 0).first()
     if not user:
@@ -206,7 +205,7 @@ def update_member(
 def delete_member(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     user = db.query(User).filter(User.UserID == member_id, User.IsDeleted == 0).first()
     if not user:

@@ -14,24 +14,22 @@ from typing import Optional
 router = APIRouter(prefix="/api/pt-requests", tags=["PT Requests"])
 
 
-# ─── Schemas ───
 class CreatePTRequestBody(BaseModel):
     ptId: int
     goal: Optional[str] = ""
     note: Optional[str] = ""
-    experienceLevel: Optional[str] = "new"     # "new" | "experienced" | "other"
-    bodyNote: Optional[str] = ""               # mô tả tình trạng cơ thể (khi chọn "other")
+    experienceLevel: Optional[str] = "new"
+    bodyNote: Optional[str] = ""
 
 
 class RespondBody(BaseModel):
-    status: str  # "approved" or "rejected"
+    status: str
 
 
 class AssignBody(BaseModel):
     ptId: int
 
 
-# ─── Helpers ───
 def _expire_pending(db: Session):
     """Lazy check: mark expired requests, deduct PT points, notify managers."""
     now = datetime.utcnow()
@@ -53,18 +51,15 @@ def _expire_pending(db: Session):
     for req in expired:
         req.Status = "Expired"
 
-        # Deduct PT score
         score_log = PTScoreLog(
             PTID=req.PTID, Points=-15,
             Reason="EXPIRED_NO_RESPONSE", ReferenceID=req.RequestID,
         )
         db.add(score_log)
 
-        # Update PT profile score
         pt_profile = db.query(PTProfile).filter(PTProfile.UserID == req.PTID).first()
         if pt_profile:
             pt_profile.TotalScore = max(0, (pt_profile.TotalScore or 100) - 15)
-            # Recalc response rate
             total = db.query(func.count(PTRequest.RequestID)).filter(
                 PTRequest.PTID == req.PTID,
                 PTRequest.Status.in_(["Approved", "Rejected", "Expired"]),
@@ -75,7 +70,6 @@ def _expire_pending(db: Session):
             ).scalar() or 0
             pt_profile.ResponseRate = round((responded / total) * 100, 2)
 
-        # Notify managers
         pt_user = db.query(User).filter(User.UserID == req.PTID).first()
         pt_name = pt_user.FullName if pt_user else f"PT #{req.PTID}"
         for mgr in managers:
@@ -110,7 +104,6 @@ def _award_pt_points(db: Session, pt_request: PTRequest):
     pt_profile = db.query(PTProfile).filter(PTProfile.UserID == pt_request.PTID).first()
     if pt_profile:
         pt_profile.TotalScore = (pt_profile.TotalScore or 100) + points
-        # Recalc response rate
         total = db.query(func.count(PTRequest.RequestID)).filter(
             PTRequest.PTID == pt_request.PTID,
             PTRequest.Status.in_(["Approved", "Rejected", "Expired"]),
@@ -149,7 +142,6 @@ def _format_request(r: PTRequest) -> dict:
     }
 
 
-# ─── Endpoints ───
 
 @router.get("/available-pts")
 def available_pts(
@@ -179,7 +171,6 @@ def available_pts(
             "totalScore": float(prof.TotalScore) if prof and prof.TotalScore else 100,
             "responseRate": float(prof.ResponseRate) if prof and prof.ResponseRate else 100,
         })
-    # Sort by score descending
     result.sort(key=lambda x: x["totalScore"], reverse=True)
     return result
 
@@ -187,7 +178,7 @@ def available_pts(
 @router.get("")
 def list_all(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     """Admin/Manager: all requests."""
     _expire_pending(db)
@@ -250,12 +241,10 @@ def create_request(
     current_user: User = Depends(get_current_user),
 ):
     """Member: create a new PT hire request."""
-    # Check PT exists
     pt = db.query(User).filter(User.UserID == body.ptId, User.IsDeleted == 0).first()
     if not pt:
         raise HTTPException(status_code=404, detail="PT không tồn tại")
 
-    # Check no duplicate pending request
     existing = db.query(PTRequest).filter(
         PTRequest.MemberID == current_user.UserID,
         PTRequest.PTID == body.ptId,
@@ -278,7 +267,6 @@ def create_request(
     )
     db.add(req)
 
-    # Notify PT
     db.add(Notification(
         UserID=body.ptId,
         Message=f"📩 {current_user.FullName} muốn thuê bạn làm PT. Hãy phản hồi trong 3 ngày!",
@@ -307,7 +295,7 @@ def respond(
     if req.Status != "Pending":
         raise HTTPException(status_code=400, detail=f"Yêu cầu đã ở trạng thái: {req.Status}")
 
-    status = body.status.capitalize()  # "Approved" or "Rejected"
+    status = body.status.capitalize()
     if status not in ("Approved", "Rejected"):
         raise HTTPException(status_code=400, detail="Status phải là 'approved' hoặc 'rejected'")
 
@@ -315,10 +303,8 @@ def respond(
     req.RespondedAt = datetime.utcnow()
     db.commit()
 
-    # Award PT points
     _award_pt_points(db, req)
 
-    # Notify member
     action_text = "đồng ý" if status == "Approved" else "từ chối"
     db.add(Notification(
         UserID=req.MemberID,
@@ -335,7 +321,7 @@ def assign_pt(
     request_id: int,
     body: AssignBody,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     """Manager: reassign a PT to an expired request."""
     req = db.query(PTRequest).filter(PTRequest.RequestID == request_id).first()
@@ -352,7 +338,6 @@ def assign_pt(
     req.RespondedAt = None
     db.commit()
 
-    # Notify new PT
     db.add(Notification(
         UserID=body.ptId,
         Message=f"📋 Quản lý đã phân công bạn cho yêu cầu #{request_id}. Hãy phản hồi trong 3 ngày!",

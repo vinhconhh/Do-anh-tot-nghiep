@@ -18,7 +18,6 @@ export default function AiChat() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Load history + quota on mount
   useEffect(() => {
     (async () => {
       try {
@@ -36,7 +35,6 @@ export default function AiChat() {
     })();
   }, [aiApi]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -45,7 +43,6 @@ export default function AiChat() {
     const text = input.trim();
     if (!text || sending) return;
 
-    // Add user message immediately
     setMessages(prev => [...prev, { role: "user", content: text, time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) }]);
     setInput("");
     setSending(true);
@@ -96,12 +93,9 @@ export default function AiChat() {
     }
   }, [aiApi, sending]);
 
-  // Handle initialPrompt from settings page
   useEffect(() => {
     if (location.state?.initialPrompt && historyLoaded) {
-      // If we already loaded history and an initial prompt is pending
       const promptToSync = location.state.initialPrompt;
-      // Clear the state so it doesn't trigger again on reload
       navigate(location.pathname, { replace: true, state: {} });
       
       handleAutoSend(promptToSync);
@@ -119,7 +113,7 @@ export default function AiChat() {
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-        {/* Header */}
+        {}
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <div className={styles.botIcon}><Dumbbell size={22} /></div>
@@ -133,7 +127,7 @@ export default function AiChat() {
           </div>
         </div>
 
-        {/* Chat area */}
+        {}
         <div className={styles.chatArea}>
           {messages.length === 0 && (
             <div className={styles.welcome}>
@@ -182,7 +176,7 @@ export default function AiChat() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Input bar */}
+        {}
         <div className={styles.inputBar}>
           <textarea
             className={styles.inputField}

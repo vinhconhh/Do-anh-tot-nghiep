@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
-# --- Membership Package Schemas ---
 class MembershipPackageBase(BaseModel):
     Name: str
     Price: float
@@ -31,7 +30,6 @@ class MembershipPackageResponse(MembershipPackageBase):
     class Config:
         from_attributes = True
 
-# --- AI Package Schemas ---
 class AIPackageBase(BaseModel):
     Name: str
     Price: float
@@ -56,7 +54,6 @@ class AIPackageResponse(AIPackageBase):
     class Config:
         from_attributes = True
 
-# --- Promotion Schemas ---
 class PromotionBase(BaseModel):
     PromoCode: str
     DiscountType: str

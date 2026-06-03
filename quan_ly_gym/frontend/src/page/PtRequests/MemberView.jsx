@@ -43,7 +43,6 @@ export default function MemberView() {
   const [experienceLevel, setExperienceLevel] = useState("new");
   const [bodyNote, setBodyNote] = useState("");
 
-  // Check if member has an approved PT
   const hasApprovedPT = useMemo(
     () => myReqs.some(r => r.status === "approved"),
     [myReqs]
@@ -73,7 +72,6 @@ export default function MemberView() {
 
   useEffect(() => { fetchPT(); }, [fetchPT]);
 
-  // Switch default tab to classes when PT is approved and still on browse
   useEffect(() => {
     if (hasApprovedPT && tab === "browse") {
       setTab("classes");
@@ -117,7 +115,6 @@ export default function MemberView() {
 
   if (loading) return <div className={styles.loadingState}><Loader2 className={styles.spinner}/><span>Đang tải...</span></div>;
 
-  // Build tabs dynamically: hide "Tìm PT" if member already has approved PT
   const allTabs = [
     ...(!hasApprovedPT ? [{ key: "browse", icon: <UserCog size={16}/>, label: "Tìm PT" }] : []),
     { key: "myRequests", icon: <Clock size={16}/>,    label: `Yêu cầu PT (${myReqs.length})` },
@@ -127,7 +124,7 @@ export default function MemberView() {
 
   return (
     <>
-      {/* Tabs */}
+      {}
       <div className={styles.tabs}>
         {allTabs.map(t => (
           <button key={t.key} className={`${styles.tabBtn} ${tab === t.key ? styles.tabActive : ""}`} onClick={() => setTab(t.key)}>
@@ -136,7 +133,7 @@ export default function MemberView() {
         ))}
       </div>
 
-      {/* Browse PT */}
+      {}
       {tab === "browse" && (
         <>
           <div className={styles.searchBox}>
@@ -167,7 +164,7 @@ export default function MemberView() {
         </>
       )}
 
-      {/* My PT requests */}
+      {}
       {tab === "myRequests" && (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -191,7 +188,7 @@ export default function MemberView() {
         </div>
       )}
 
-      {/* Browse Classes */}
+      {}
       {tab === "classes" && (
         <>
           {classLoading
@@ -256,7 +253,7 @@ export default function MemberView() {
         </>
       )}
 
-      {/* My enrolled classes */}
+      {}
       {tab === "myClasses" && (
         classLoading
           ? <div className={styles.loadingState}><Loader2 className={styles.spinner}/><span>Đang tải...</span></div>
@@ -289,7 +286,7 @@ export default function MemberView() {
               </div>
       )}
 
-      {/* Modal PT request */}
+      {}
       {modal && (
         <div className={styles.overlay} onClick={() => setModal(null)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>

@@ -10,7 +10,6 @@ class MemberOut(BaseModel):
     IsActive: Optional[int] = 1
     RoleCode: Optional[str] = None
     CreatedAt: Optional[datetime] = None
-    # MemberProfile fields
     Goal: Optional[str] = None
     Height: Optional[float] = None
     Weight: Optional[float] = None

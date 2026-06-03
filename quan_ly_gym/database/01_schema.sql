@@ -120,6 +120,9 @@ CREATE TABLE MemberProfiles (
     AIQuota INT DEFAULT 0,
     PackageID INT NULL,
     AIPackageID INT NULL,
+    CurrentStreak INT DEFAULT 0,
+    LongestStreak INT DEFAULT 0,
+    LastAttendanceDate DATE NULL,
     FOREIGN KEY (UserID) REFERENCES Users(UserID),
     FOREIGN KEY (PackageID) REFERENCES MembershipPackages(PackageID),
     FOREIGN KEY (AIPackageID) REFERENCES AIPackages(PackageID)
@@ -256,30 +259,6 @@ CREATE TABLE CheckIns (
     CONSTRAINT CK_CheckIns_Source CHECK (CheckInTime IS NOT NULL)
 );
 
-CREATE TABLE CheckInLog (
-    LogID INT IDENTITY PRIMARY KEY,
-    UserID INT NOT NULL,
-    CheckInDate DATE NOT NULL,
-    Points INT DEFAULT 0,
-    StreakDay INT DEFAULT 1,
-    ExercisesCompleted INT DEFAULT 0,
-    TotalSets INT DEFAULT 0,
-    RPE INT NULL,
-    PTID INT NULL,
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID),
-    FOREIGN KEY (PTID) REFERENCES Users(UserID)
-);
-
-CREATE TABLE MemberStreak (
-    StreakID INT IDENTITY PRIMARY KEY,
-    UserID INT NOT NULL UNIQUE,
-    CurrentStreak INT DEFAULT 0,
-    LongestStreak INT DEFAULT 0,
-    TotalPoints INT DEFAULT 0,
-    LastCheckInDate DATE NULL,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
-);
 
 -- 9. BODY METRICS
 CREATE TABLE BodyMetrics (

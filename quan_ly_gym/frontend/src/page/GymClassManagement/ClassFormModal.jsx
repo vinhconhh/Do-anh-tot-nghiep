@@ -45,7 +45,7 @@ export default function ClassFormModal({ form, setForm, editing, instructors, sa
     >
       <div style={{ padding: "0 10px" }}>
 
-        {/* Conflict warnings */}
+        {}
         {conflictWarnings.length > 0 && (
           <div style={{ padding: "10px 14px", background: "#e74a3b11", border: "1px solid #e74a3b55", borderRadius: 8, color: "#e74a3b", fontSize: "1.3rem", marginBottom: 14 }}>
             <strong>⚠️ Xung đột lịch HLV:</strong>
@@ -57,7 +57,7 @@ export default function ClassFormModal({ form, setForm, editing, instructors, sa
 
         <form onSubmit={onSave} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-          {/* ── SECTION 1: Thông tin cơ bản ── */}
+          {}
           <div style={sectionSt}>
             {sectionTitle("1", "Thông tin cơ bản")}
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -65,7 +65,7 @@ export default function ClassFormModal({ form, setForm, editing, instructors, sa
                 <label style={{ color: "var(--theme-text)", fontSize: "1.3rem", display: "block", marginBottom: 4 }}>Tên lớp học *</label>
                 <input required value={form.Name} onChange={e => setForm(p => ({ ...p, Name: e.target.value }))} placeholder="Yoga, Zumba, HIIT, Pilates..." style={inputSt} />
               </div>
-              {/* Instructor */}
+              {}
               <div>
                 <label style={{ color: "var(--theme-text)", fontSize: "1.3rem", display: "block", marginBottom: 4 }}>
                   <UserCog size={13} style={{ display: "inline", marginRight: 4 }} />Huấn luyện viên (PT)
@@ -109,7 +109,7 @@ export default function ClassFormModal({ form, setForm, editing, instructors, sa
             </div>
           </div>
 
-          {/* ── SECTION 2: Cường độ ── */}
+          {}
           <div style={sectionSt}>
             {sectionTitle("2", "Cường độ lớp học")}
             <div style={{ display: "flex", gap: 10 }}>
@@ -128,7 +128,7 @@ export default function ClassFormModal({ form, setForm, editing, instructors, sa
             </div>
           </div>
 
-          {/* ── SECTION 3: Lịch học (only for new classes) ── */}
+          {}
           {!editing && (
             <div style={sectionSt}>
               {sectionTitle("3", "Lịch học trong tuần")}
@@ -152,7 +152,7 @@ export default function ClassFormModal({ form, setForm, editing, instructors, sa
             </div>
           )}
 
-          {/* ── SECTION 4: Phạm vi ngày + Giờ học (only when days selected) ── */}
+          {}
           {!editing && selectedDays.length > 0 && (
             <div style={sectionSt}>
               {sectionTitle("4", "Phạm vi ngày & Giờ học")}
@@ -179,7 +179,7 @@ export default function ClassFormModal({ form, setForm, editing, instructors, sa
             </div>
           )}
 
-          {/* ── Giờ học cho chế độ sửa ── */}
+          {}
           {editing && (
             <div style={sectionSt}>
               {sectionTitle("3", "Giờ học")}
@@ -196,7 +196,7 @@ export default function ClassFormModal({ form, setForm, editing, instructors, sa
             </div>
           )}
 
-          {/* ── Buttons ── */}
+          {}
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
             <button type="button" onClick={onClose} style={{ padding: "10px 22px", background: "var(--theme-bg)", color: "var(--theme-text-dark)", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 600 }}>Hủy</button>
             <button type="submit" disabled={saving} style={{ padding: "10px 24px", background: "linear-gradient(135deg,#f6c23e,#d4a017)", color: "var(--theme-text-dark)", border: "none", borderRadius: 9, cursor: "pointer", fontWeight: 700 }}>

@@ -69,7 +69,7 @@ def get_trainer(
 def create_trainer(
     req: TrainerCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     if db.query(User).filter(User.Email == req.email).first():
         raise HTTPException(status_code=400, detail="Email đã tồn tại")
@@ -111,7 +111,7 @@ def update_trainer(
     trainer_id: int,
     req: TrainerUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     user = db.query(User).filter(User.UserID == trainer_id, User.IsDeleted == 0).first()
     if not user:
@@ -152,7 +152,7 @@ def update_trainer(
 def delete_trainer(
     trainer_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     user = db.query(User).filter(User.UserID == trainer_id, User.IsDeleted == 0).first()
     if not user:

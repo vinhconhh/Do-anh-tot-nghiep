@@ -9,8 +9,8 @@ class AIRequest(Base):
 
     RequestID = Column(Integer, primary_key=True, autoincrement=True)
     UserID = Column(Integer, ForeignKey("Users.UserID"))
-    Prompt = Column(Unicode)  # NVARCHAR(MAX) - Unicode for Vietnamese support
-    Model = Column(String(100))  # ASCII-safe, VARCHAR ok
+    Prompt = Column(Unicode)
+    Model = Column(String(100))
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User")
@@ -22,7 +22,7 @@ class AIResponse(Base):
 
     ResponseID = Column(Integer, primary_key=True, autoincrement=True)
     RequestID = Column(Integer, ForeignKey("AIRequests.RequestID"))
-    ResponseData = Column(Unicode)  # NVARCHAR(MAX) - Unicode for Vietnamese support
+    ResponseData = Column(Unicode)
     TokensUsed = Column(Integer)
     Cost = Column(Numeric(10, 4))
     Status = Column(String(50))

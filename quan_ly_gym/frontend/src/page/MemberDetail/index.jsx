@@ -87,7 +87,7 @@ export default function MemberDetail() {
         </div>
 
         <div className={styles.mainGrid}>
-          {/* Profile Card */}
+          {}
           <div className={styles.profileCard}>
             <div className={styles.avatarWrap}>
               <img src={avatarUrl} alt={member.hoTen} className={styles.avatar} />
@@ -126,9 +126,9 @@ export default function MemberDetail() {
             </div>
           </div>
 
-          {/* Stats & Activity */}
+          {}
           <div className={styles.rightCol}>
-            {/* Mini stats */}
+            {}
             <div className={styles.miniStats}>
               <div className={`${styles.miniCard} ${styles.green}`}>
                 <div className={styles.miniLabel}>Buổi tập hoàn thành</div>
@@ -140,7 +140,7 @@ export default function MemberDetail() {
               </div>
             </div>
 
-            {/* Activity */}
+            {}
             <div className={styles.activityCard}>
               <div className={styles.activityHeader}>
                 <h6 className={styles.activityTitle}>Lịch sử hoạt động</h6>

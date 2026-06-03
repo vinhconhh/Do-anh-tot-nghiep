@@ -24,6 +24,7 @@ import {
   BookOpen,
   UserPlus,
   UtensilsCrossed,
+  Shield,
 } from "lucide-react";
 import { AuthContext } from "../../../../context/AuthContext";
 
@@ -45,11 +46,11 @@ export default function Sidebar() {
     navigate("/");
   };
 
-  const isAdmin = ["ADMIN", "MANAGER"].includes(role);
+  const isAdmin = role === "ADMIN";
+  const isManager = role === "MANAGER";
   const isMember = role === "MEMBER";
   const isPT = role === "PT";
 
-  // Check if member has an approved PT
   const [hasApprovedPT, setHasApprovedPT] = useState(false);
   useEffect(() => {
     if (!isMember) return;
@@ -85,77 +86,22 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex flex-col gap-[2px] p-[4px]">
+
+        {}
         {isAdmin && (
           <NavLink
-            to="/dashboard"
+            to="/account-management"
             className={({ isActive }) =>
               `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
               }`
             }
           >
-            <LayoutDashboard className="w-[18px] h-[18px] shrink-0" />
-            <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Dashboard</span>
+            <Shield className="w-[18px] h-[18px] shrink-0" />
+            <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Quản lý tài khoản</span>
           </NavLink>
         )}
 
-        {/* Quản lý hội viên & PT */}
-        {isAdmin && (
-          <div className="flex flex-col">
-            <button
-              type="button"
-              className={`flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 w-full text-left hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${openGroup === "members" ? "text-white bg-white/5" : "text-white/60"
-                }`}
-              onClick={() => toggleGroup("members")}
-            >
-              <Users className="w-[18px] h-[18px] shrink-0" />
-              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Hội viên & PT</span>
-              <span className={`ml-auto inline-flex ${collapsed ? 'hidden' : ''}`}>
-                {openGroup === "members" ? (
-                  <ChevronDown size={16} />
-                ) : (
-                  <ChevronRight size={16} />
-                )}
-              </span>
-            </button>
-            <div
-              className={`overflow-hidden transition-[max-height] duration-250 ease-in-out ${openGroup === "members" ? "max-h-[300px]" : "max-h-0"
-                } ${collapsed ? "hidden" : ""}`}
-            >
-              <NavLink
-                to="/members"
-                className={({ isActive }) =>
-                  `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
-                  }`
-                }
-              >
-                <Users className="w-[16px] h-[16px] shrink-0" />
-                <span>Danh sách hội viên</span>
-              </NavLink>
-              <NavLink
-                to="/trainers"
-                className={({ isActive }) =>
-                  `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
-                  }`
-                }
-              >
-                <UserCheck className="w-[16px] h-[16px] shrink-0" />
-                <span>Huấn luyện viên</span>
-              </NavLink>
-              <NavLink
-                to="/pt-requests"
-                className={({ isActive }) =>
-                  `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
-                  }`
-                }
-              >
-                <ClipboardList className="w-[16px] h-[16px] shrink-0" />
-                <span>Yêu cầu thuê PT</span>
-              </NavLink>
-            </div>
-          </div>
-        )}
-
-        {/* Cấu Hình Hệ Thống */}
+        {}
         {isAdmin && (
           <div className="flex flex-col">
             <button
@@ -212,8 +158,79 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* Cơ Sở Vật Chất */}
-        {isAdmin && (
+        {}
+        {isManager && (
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
+              }`
+            }
+          >
+            <LayoutDashboard className="w-[18px] h-[18px] shrink-0" />
+            <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Dashboard</span>
+          </NavLink>
+        )}
+
+        {}
+        {isManager && (
+          <div className="flex flex-col">
+            <button
+              type="button"
+              className={`flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 w-full text-left hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${openGroup === "members" ? "text-white bg-white/5" : "text-white/60"
+                }`}
+              onClick={() => toggleGroup("members")}
+            >
+              <Users className="w-[18px] h-[18px] shrink-0" />
+              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Hội viên & PT</span>
+              <span className={`ml-auto inline-flex ${collapsed ? 'hidden' : ''}`}>
+                {openGroup === "members" ? (
+                  <ChevronDown size={16} />
+                ) : (
+                  <ChevronRight size={16} />
+                )}
+              </span>
+            </button>
+            <div
+              className={`overflow-hidden transition-[max-height] duration-250 ease-in-out ${openGroup === "members" ? "max-h-[300px]" : "max-h-0"
+                } ${collapsed ? "hidden" : ""}`}
+            >
+              <NavLink
+                to="/members"
+                className={({ isActive }) =>
+                  `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
+                  }`
+                }
+              >
+                <Users className="w-[16px] h-[16px] shrink-0" />
+                <span>Danh sách hội viên</span>
+              </NavLink>
+              <NavLink
+                to="/trainers"
+                className={({ isActive }) =>
+                  `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
+                  }`
+                }
+              >
+                <UserCheck className="w-[16px] h-[16px] shrink-0" />
+                <span>Huấn luyện viên</span>
+              </NavLink>
+              <NavLink
+                to="/pt-requests"
+                className={({ isActive }) =>
+                  `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
+                  }`
+                }
+              >
+                <ClipboardList className="w-[16px] h-[16px] shrink-0" />
+                <span>Yêu cầu thuê PT</span>
+              </NavLink>
+            </div>
+          </div>
+        )}
+
+        {}
+        {isManager && (
           <div className="flex flex-col">
             <button
               type="button"
@@ -289,8 +306,8 @@ export default function Sidebar() {
           </div>
         )}
 
-
-        {isAdmin && (
+        {}
+        {isManager && (
           <NavLink
             to="/member-report"
             className={({ isActive }) =>
@@ -303,7 +320,7 @@ export default function Sidebar() {
           </NavLink>
         )}
 
-        {/* Member: lịch sử tập và các mục khác */}
+        {}
         {isMember && (
           <>
             <NavLink
@@ -352,7 +369,7 @@ export default function Sidebar() {
           </>
         )}
 
-        {/* PT */}
+        {}
         {isPT && (
           <>
             <NavLink
@@ -424,8 +441,8 @@ export default function Sidebar() {
           </>
         )}
 
-        {/* Admin/Manager: lịch tổng */}
-        {isAdmin && (
+        {}
+        {isManager && (
           <NavLink
             to="/schedules"
             className={({ isActive }) =>
@@ -438,17 +455,19 @@ export default function Sidebar() {
           </NavLink>
         )}
 
-        {/* AI Chat - cho tất cả role */}
-        <NavLink
-          to="/ai-chat"
-          className={({ isActive }) =>
-            `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
-            }`
-          }
-        >
-          <MessageSquare className="w-[18px] h-[18px] shrink-0" />
-          <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Hỏi đáp AI</span>
-        </NavLink>
+        {}
+        {isMember && (
+          <NavLink
+            to="/ai-chat"
+            className={({ isActive }) =>
+              `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
+              }`
+            }
+          >
+            <MessageSquare className="w-[18px] h-[18px] shrink-0" />
+            <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Hỏi đáp AI</span>
+          </NavLink>
+        )}
       </nav>
 
       <div className="h-px bg-white/15 my-[10px] mx-[8px]" />

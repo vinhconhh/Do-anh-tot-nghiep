@@ -12,12 +12,11 @@ from ..middleware.auth import require_roles
 router = APIRouter(prefix="/api/meal-plans", tags=["meal-plans"])
 
 
-# ---------- Schemas ----------
 
 class MealPlanCreate(BaseModel):
     name: str
-    category: str               # Bữa sáng / Bữa chính / Bữa phụ
-    goal: Optional[str] = None  # tăng cơ / giảm mỡ / duy trì
+    category: str
+    goal: Optional[str] = None
     calories: int = 0
     protein: float = 0
     carbs: float = 0
@@ -46,14 +45,13 @@ def _to_dict(mp: MealPlan) -> dict:
     }
 
 
-# ---------- Member endpoints (xem thực đơn) ----------
 
 @router.get("", summary="Lấy danh sách thực đơn (member xem)")
 def list_meal_plans(
     goal: Optional[str] = Query(None, description="Lọc theo mục tiêu"),
     category: Optional[str] = Query(None, description="Lọc theo loại bữa"),
     db: Session = Depends(get_db),
-    _=Depends(require_roles("MEMBER", "ADMIN", "MANAGER", "PT")),
+    _=Depends(require_roles("MEMBER", "MANAGER", "PT")),
 ):
     q = db.query(MealPlan)
     if goal:
@@ -68,7 +66,7 @@ def list_meal_plans(
 def get_meal_plan(
     plan_id: int,
     db: Session = Depends(get_db),
-    _=Depends(require_roles("MEMBER", "ADMIN", "MANAGER", "PT")),
+    _=Depends(require_roles("MEMBER", "MANAGER", "PT")),
 ):
     mp = db.query(MealPlan).filter(MealPlan.PlanID == plan_id).first()
     if not mp:
@@ -76,13 +74,12 @@ def get_meal_plan(
     return _to_dict(mp)
 
 
-# ---------- Manager / Admin endpoints (quản lý) ----------
 
 @router.post("", status_code=201, summary="Tạo thực đơn mới (manager)")
 def create_meal_plan(
     body: MealPlanCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_roles("ADMIN", "MANAGER")),
+    current_user=Depends(require_roles("MANAGER")),
 ):
     mp = MealPlan(
         Name=body.name,
@@ -107,7 +104,7 @@ def update_meal_plan(
     plan_id: int,
     body: MealPlanUpdate,
     db: Session = Depends(get_db),
-    _=Depends(require_roles("ADMIN", "MANAGER")),
+    _=Depends(require_roles("MANAGER")),
 ):
     mp = db.query(MealPlan).filter(MealPlan.PlanID == plan_id).first()
     if not mp:
@@ -131,7 +128,7 @@ def update_meal_plan(
 def delete_meal_plan(
     plan_id: int,
     db: Session = Depends(get_db),
-    _=Depends(require_roles("ADMIN", "MANAGER")),
+    _=Depends(require_roles("MANAGER")),
 ):
     mp = db.query(MealPlan).filter(MealPlan.PlanID == plan_id).first()
     if not mp:

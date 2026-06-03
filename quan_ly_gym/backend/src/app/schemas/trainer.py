@@ -10,7 +10,6 @@ class TrainerOut(BaseModel):
     IsActive: Optional[int] = 1
     RoleCode: Optional[str] = None
     CreatedAt: Optional[datetime] = None
-    # PTProfile fields
     ExperienceYears: Optional[int] = 0
     Certifications: Optional[str] = None
     Specialty: Optional[str] = None

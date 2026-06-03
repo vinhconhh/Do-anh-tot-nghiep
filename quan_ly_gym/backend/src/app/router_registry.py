@@ -7,7 +7,6 @@ adding a new tuple to ``ROUTERS``.
 
 from fastapi import FastAPI
 
-# Import routers
 from .routes import (
     auth,
     members,
@@ -25,9 +24,9 @@ from .routes import (
     facility,
     pt_assignments,
     meal_plans,
+    accounts,
 )
 
-# Define router entries
 ROUTERS = [
     auth.router,
     members.router,
@@ -45,6 +44,7 @@ ROUTERS = [
     facility.router,
     pt_assignments.router,
     meal_plans.router,
+    accounts.router,
 ]
 
 

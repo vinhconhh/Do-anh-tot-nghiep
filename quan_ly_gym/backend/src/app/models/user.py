@@ -40,8 +40,8 @@ class User(Base):
     Email = Column(String(255), unique=True)
     PasswordHash = Column(String(255))
     RoleID = Column(Integer, ForeignKey("Roles.RoleID"))
-    IsActive = Column(Integer, default=1)  # BIT
-    IsDeleted = Column(Integer, default=0)  # BIT
+    IsActive = Column(Integer, default=1)
+    IsDeleted = Column(Integer, default=0)
     PhoneNumber = Column(String(20), nullable=True)
     Age = Column(Integer, nullable=True)
     Gender = Column(String(20), nullable=True)

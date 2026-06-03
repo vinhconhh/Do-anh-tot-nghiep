@@ -21,9 +21,6 @@ function timeLeft(expiresAt) {
   return `${h}h ${m}m`;
 }
 
-/* ══════════════════════════════════════════════════════════
-   PT VIEW
-   ══════════════════════════════════════════════════════════ */
 function PtView() {
   const api = usePtRequestsApi();
   const [rows, setRows] = useState([]);
@@ -43,7 +40,6 @@ function PtView() {
     return rows.filter(r => r.status === filter);
   }, [rows, filter]);
 
-  // Stats
   const stats = useMemo(() => {
     const total = rows.length;
     const pending = rows.filter(r => r.status === "pending").length;
@@ -113,9 +109,6 @@ function PtView() {
   );
 }
 
-/* ══════════════════════════════════════════════════════════
-   ADMIN / MANAGER VIEW
-   ══════════════════════════════════════════════════════════ */
 function AdminView() {
   const api = usePtRequestsApi();
   const [q, setQ] = useState("");
@@ -206,9 +199,6 @@ function AdminView() {
   );
 }
 
-/* ══════════════════════════════════════════════════════════
-   MAIN COMPONENT
-   ══════════════════════════════════════════════════════════ */
 export default function PtRequests() {
   const { user } = useContext(AuthContext) ?? {};
   const role = (user?.vaiTro || user?.role || "").toUpperCase();

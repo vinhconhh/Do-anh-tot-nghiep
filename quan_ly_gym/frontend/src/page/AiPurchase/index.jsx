@@ -52,7 +52,7 @@ export default function AiPurchase() {
     try {
       const result = await aiApi.buyPackage(pkg.id);
       alert(`✅ ${result.message}\nSố lượt mới: ${result.newQuota}`);
-      fetchData(); // Refresh data
+      fetchData();
     } catch (e) {
       alert("❌ Mua thất bại: " + (e.data?.detail || e.message));
     } finally {
@@ -66,7 +66,7 @@ export default function AiPurchase() {
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-        {/* Heading */}
+        {}
         <div className={styles.header}>
           <h2 className={styles.title}>
             <ShoppingCart size={20} /> Mua thêm lượt AI
@@ -82,7 +82,7 @@ export default function AiPurchase() {
           </div>
         ) : (
           <>
-            {/* Summary cards */}
+            {}
             <div className={styles.statGrid}>
               {[
                 { label: "Lượt AI còn lại", val: String(quota.remaining), icon: <Bot size={28} color="#d1d3e2" />, border: "#4e73df" },
@@ -99,10 +99,10 @@ export default function AiPurchase() {
               ))}
             </div>
 
-            {/* Packages */}
+            {}
             <div className={styles.packagesGrid}>
               {packages.map((pkg, idx) => {
-                const popular = idx === 1; // Highlight the 2nd package or modify logic based on pkg data
+                const popular = idx === 1;
                 const color = popular ? "#1cc88a" : "#4e73df";
                 return (
                   <div
@@ -136,7 +136,7 @@ export default function AiPurchase() {
               })}
             </div>
 
-            {/* History table */}
+            {}
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <h6 className={styles.cardTitle}>Lịch sử mua lượt AI</h6>

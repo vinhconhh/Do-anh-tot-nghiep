@@ -128,7 +128,7 @@ export default function MealPlanManagement() {
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-        {/* Header */}
+        {}
         <div className={styles.header}>
           <div>
             <h2 className={styles.title}><Flame size={22} /> Quản lý Thực đơn</h2>
@@ -139,7 +139,7 @@ export default function MealPlanManagement() {
           </button>
         </div>
 
-        {/* Stats strip */}
+        {}
         <div className={styles.statGrid}>
           <div className={styles.statCard} style={{ borderLeftColor: "#4e73df" }}>
             <div className={styles.statLabel}>Tổng cộng</div>
@@ -178,7 +178,7 @@ export default function MealPlanManagement() {
           </div>
         </div>
 
-        {/* Table */}
+        {}
         <div className={styles.tableCard}>
           {loading ? (
             <div className={styles.emptyState}>
@@ -310,7 +310,7 @@ export default function MealPlanManagement() {
         >
           <div className={styles.modalBody}>
             <div className={styles.formGrid}>
-              {/* Tên bữa ăn */}
+              {}
               <div className={`${styles.field} ${styles.span2}`}>
                 <label>Tên bữa ăn <span className={styles.required}>*</span></label>
                 <input
@@ -322,7 +322,7 @@ export default function MealPlanManagement() {
                 />
               </div>
 
-              {/* Loại bữa */}
+              {}
               <div className={styles.field}>
                 <label>Loại bữa <span className={styles.required}>*</span></label>
                 <select value={form.category} onChange={f("category")} className={styles.input}>
@@ -330,7 +330,7 @@ export default function MealPlanManagement() {
                 </select>
               </div>
 
-              {/* Mục tiêu */}
+              {}
               <div className={styles.field}>
                 <label>Mục tiêu</label>
                 <select value={form.goal} onChange={f("goal")} className={styles.input}>
@@ -339,7 +339,7 @@ export default function MealPlanManagement() {
                 </select>
               </div>
 
-              {/* Macros */}
+              {}
               <div className={styles.field}>
                 <label>🔥 Calories (kcal)</label>
                 <input type="number" min="0" value={form.calories} onChange={f("calories")} className={styles.input} placeholder="350" />
@@ -357,7 +357,7 @@ export default function MealPlanManagement() {
                 <input type="number" min="0" step="0.1" value={form.fat} onChange={f("fat")} className={styles.input} placeholder="5" />
               </div>
 
-              {/* Mô tả */}
+              {}
               <div className={`${styles.field} ${styles.span2}`}>
                 <label>Mô tả / Hướng dẫn chế biến</label>
                 <textarea

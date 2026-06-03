@@ -73,7 +73,7 @@ export default function GymExerciseManagement() {
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-      {/* Header */}
+      {}
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>
@@ -88,7 +88,7 @@ export default function GymExerciseManagement() {
         </button>
       </div>
 
-      {/* Filters */}
+      {}
       <div className={styles.tools}>
         <div className={styles.searchBox}>
           <Search size={16} className={styles.searchIcon} />
@@ -121,7 +121,7 @@ export default function GymExerciseManagement() {
         </div>
       </div>
 
-      {/* Table */}
+      {}
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
@@ -168,7 +168,7 @@ export default function GymExerciseManagement() {
         </table>
       </div>
 
-      {/* Pagination */}
+      {}
       <div className={styles.pagination}>
         <span className={styles.pageInfo}>Trang {data.page || page} / {data.pages || 1} ({data.total} bài tập)</span>
         <div className={styles.pageControls}>
@@ -181,7 +181,7 @@ export default function GymExerciseManagement() {
         </div>
       </div>
 
-      {/* Modal */}
+      {}
       <Modal
         isOpen={modalOpen}
         onRequestClose={() => setModalOpen(false)}
@@ -228,7 +228,7 @@ export default function GymExerciseManagement() {
                   </select>
                 </div>
               </div>
-              {/* Video URL */}
+              {}
               <div className={styles.formGroup}>
                 <label>🎥 Link Video hướng dẫn</label>
                 <input value={form.VideoURL} onChange={e => setForm(p => ({ ...p, VideoURL: e.target.value }))}

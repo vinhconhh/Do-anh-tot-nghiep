@@ -28,7 +28,6 @@ export default function Members() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load members from API
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -37,7 +36,6 @@ export default function Members() {
       .catch((err) => { if (alive) setError(err.message); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const stats = useMemo(() => ({
@@ -124,7 +122,7 @@ export default function Members() {
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-        {/* Heading */}
+        {}
         <div className={styles.header}>
           <h2 className={styles.title}>Quản lý Hội viên</h2>
           <button className={styles.btnPrimary} onClick={openCreate}>
@@ -132,7 +130,7 @@ export default function Members() {
           </button>
         </div>
 
-        {/* Stat Cards */}
+        {}
         <div className={styles.statGrid}>
           {[
             { label: "Tổng hội viên",    val: stats.total,    color: "#4e73df" },
@@ -147,7 +145,7 @@ export default function Members() {
           ))}
         </div>
 
-        {/* Filter & Search */}
+        {}
         <div className={styles.tools}>
           <div className={styles.searchBox}>
             <Search className={styles.searchIcon} size={16} />
@@ -184,7 +182,7 @@ export default function Members() {
           </div>
         </div>
 
-        {/* Table */}
+        {}
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
@@ -263,7 +261,7 @@ export default function Members() {
         </div>
       </div>
 
-      {/* Add / Edit Modal */}
+      {}
       <Modal
         isOpen={!!editing}
         onRequestClose={() => setEditing(null)}

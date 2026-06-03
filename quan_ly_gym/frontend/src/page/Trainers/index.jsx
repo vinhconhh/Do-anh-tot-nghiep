@@ -62,7 +62,6 @@ export default function Trainers() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
-  // Load trainers from API
   useEffect(() => {
     let alive = true;
     setLoading(true);

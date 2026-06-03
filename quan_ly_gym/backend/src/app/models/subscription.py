@@ -8,11 +8,11 @@ class UserSubscription(Base):
 
     SubscriptionID = Column(Integer, primary_key=True, autoincrement=True)
     UserID = Column(Integer, ForeignKey("Users.UserID"), nullable=False)
-    PackageType = Column(String(50), nullable=False) # 'GYM' or 'AI'
-    PackageID = Column(Integer, nullable=False) # ID of MembershipPackage or AIPackage
+    PackageType = Column(String(50), nullable=False)
+    PackageID = Column(Integer, nullable=False)
     StartDate = Column(DateTime, default=datetime.utcnow)
     EndDate = Column(DateTime, nullable=True)
-    Status = Column(String(50), default="Active") # Active, Expired, Cancelled
+    Status = Column(String(50), default="Active")
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="subscriptions")

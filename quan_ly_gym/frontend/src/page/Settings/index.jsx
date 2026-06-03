@@ -18,12 +18,10 @@ export default function Settings() {
     Gender: "",
     Birthday: "",
     
-    // Member specific
     Height: "",
     Weight: "",
     Goal: "",
     
-    // PT specific
     ExperienceYears: "",
     Certifications: "",
     Specialty: "",
@@ -73,7 +71,6 @@ export default function Settings() {
       setSaving(true);
       setMessage({ type: "", text: "" });
       
-      // Clean up empty strings to null where applicable for backend
       const payload = { ...formData };
       if (!payload.Birthday) payload.Birthday = null;
       if (payload.Height === "") payload.Height = null;
@@ -84,7 +81,6 @@ export default function Settings() {
       
       setMessage({ type: "success", text: "Cập nhật thông tin thành công!" });
       
-      // Update AuthContext user to keep it in sync globally
       if (updateUser) {
         updateUser({ 
           hoTen: payload.FullName,
@@ -94,7 +90,6 @@ export default function Settings() {
         });
       }
 
-      // Re-fetch from server to ensure data is synced and persisted
       await fetchProfile();
     } catch (err) {
       console.error("Failed to update profile", err);

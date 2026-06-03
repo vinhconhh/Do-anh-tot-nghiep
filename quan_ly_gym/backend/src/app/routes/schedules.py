@@ -85,16 +85,13 @@ def list_schedules(
 ):
     target_id = user_id or current_user.UserID
 
-    # Workout schedules
     schedules = db.query(Schedule).filter(Schedule.UserID == target_id).order_by(Schedule.WorkoutDate.desc()).all()
 
-    # Classes teaching (PT) - exclude the recurring parent template
     q_teach = db.query(GymClass).filter(
         GymClass.InstructorID == target_id, 
         GymClass.IsDeleted == 0,
         or_(GymClass.IsRecurring == 0, GymClass.IsRecurring == None)
     )
-    # Classes enrolled (Member)
     enrolled_ids = [r[0] for r in db.query(ClassEnrollment.ClassID).filter(
         ClassEnrollment.MemberID == target_id, ClassEnrollment.Status == "Active"
     ).all()]

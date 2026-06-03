@@ -44,7 +44,6 @@ export function usePtRequestsApi() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ptId }),
       }),
-    // ── MyClients (PT) ──
     getMyClients: () => aj("/api/pt-assignments/my-clients"),
     getClientProfile: (memberId) => aj(`/api/pt-assignments/client/${memberId}/profile`),
   }), [aj]);

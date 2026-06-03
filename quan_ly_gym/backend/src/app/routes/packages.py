@@ -17,13 +17,10 @@ router = APIRouter(prefix="/api/packages", tags=["Packages"])
 
 def require_admin_or_manager(current_user: User = Depends(get_current_user)):
     role_code = current_user.role.RoleCode.upper()
-    if role_code not in ["ADMIN", "MANAGER"]:
+    if role_code not in ["ADMIN"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Không có quyền thực hiện thao tác này.")
     return current_user
 
-# ==========================================
-# MEMBERSHIP PACKAGES
-# ==========================================
 @router.get("/membership", response_model=List[MembershipPackageResponse])
 def get_membership_packages(db: Session = Depends(get_db)):
     """Lấy danh sách các gói tập hiển thị."""
@@ -73,19 +70,16 @@ def purchase_membership_package(req: PurchasePackageRequest, db: Session = Depen
     if not pkg:
         raise HTTPException(status_code=404, detail="Gói tập không tồn tại hoặc không khả dụng")
 
-    # Update MemberProfile
     if not current_user.member_profile:
         raise HTTPException(status_code=400, detail="Hồ sơ hội viên không hợp lệ")
     
     current_user.member_profile.PackageID = pkg.PackageID
 
-    # Update User ExpiryDate
     months = pkg.DurationMonths
     current_expiry = current_user.ExpiryDate if current_user.ExpiryDate and current_user.ExpiryDate > datetime.utcnow() else datetime.utcnow()
     new_expiry = current_expiry + timedelta(days=30 * months)
     current_user.ExpiryDate = new_expiry
 
-    # Create UserSubscription record
     sub = UserSubscription(
         UserID=current_user.UserID,
         PackageType="GYM",
@@ -99,9 +93,6 @@ def purchase_membership_package(req: PurchasePackageRequest, db: Session = Depen
 
     return {"message": "Mua gói tập thành công", "packageId": pkg.PackageID, "gymPackageName": pkg.Name}
 
-# ==========================================
-# AI PACKAGES
-# ==========================================
 @router.get("/ai", response_model=List[AIPackageResponse])
 def get_ai_packages(db: Session = Depends(get_db)):
     packages = db.query(AIPackage).filter(AIPackage.IsVisible == True).all()
@@ -139,9 +130,6 @@ def delete_ai_package(pkg_id: int, db: Session = Depends(get_db), current_user: 
     db.commit()
     return {"message": "Đã xóa gói AI thành công."}
 
-# ==========================================
-# PROMOTIONS & REFERRALS
-# ==========================================
 @router.get("/promotions", response_model=List[PromotionResponse])
 def get_promotions(db: Session = Depends(get_db), current_user: User = Depends(require_admin_or_manager)):
     return db.query(Promotion).all()
@@ -179,7 +167,6 @@ def verify_code(req: VerifyCodeRequest, db: Session = Depends(get_db)):
     """Kiểm tra mã giảm giá hoặc mã Referral."""
     code = req.code.strip()
     
-    # Kiểm tra mã Promotion
     promo = db.query(Promotion).filter(Promotion.PromoCode == code, Promotion.IsActive == True).first()
     if promo:
         if promo.ExpiryDate and promo.ExpiryDate < datetime.utcnow():
@@ -197,12 +184,11 @@ def verify_code(req: VerifyCodeRequest, db: Session = Depends(get_db)):
 
         return {"valid": True, "type": "PROMOTION", "discount": final_discount, "message": f"Giảm {final_discount:,.0f} VNĐ"}
     
-    # Kiểm tra mã Referral
     referrer = db.query(User).filter(User.ReferralCode == code, User.IsActive == 1).first()
     if referrer:
         discount = 0.0
         if req.package_price:
-            discount = (req.package_price * 10) / 100.0 # Giảm 10% cho referral
+            discount = (req.package_price * 10) / 100.0
         return {"valid": True, "type": "REFERRAL", "referrer_id": referrer.UserID, "discount": discount, "message": "Giảm 10% từ mã giới thiệu"}
     
     raise HTTPException(status_code=404, detail="Mã không hợp lệ hoặc không tồn tại.")

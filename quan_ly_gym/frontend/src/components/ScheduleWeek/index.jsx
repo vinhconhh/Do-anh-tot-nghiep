@@ -11,7 +11,7 @@ function fmtDate(d) {
 
 function startOfWeekMonday(date) {
   const d = new Date(date);
-  const day = (d.getDay() + 6) % 7; // 0..6, Monday=0
+  const day = (d.getDay() + 6) % 7;
   d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() - day);
   return d;

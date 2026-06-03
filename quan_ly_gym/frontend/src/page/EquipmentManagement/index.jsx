@@ -102,7 +102,7 @@ export default function EquipmentManagement() {
         </button>
       </div>
 
-      {/* Stat Cards */}
+      {}
       <div className={styles.statGrid}>
         {[
           { label: "Tổng thiết bị", val: stats.total, color: "#4e73df" },

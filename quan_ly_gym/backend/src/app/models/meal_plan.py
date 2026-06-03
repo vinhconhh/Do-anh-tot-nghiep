@@ -9,14 +9,14 @@ class MealPlan(Base):
     __tablename__ = "MealPlans"
 
     PlanID = Column(Integer, primary_key=True, autoincrement=True)
-    Name = Column(Unicode(255), nullable=False)           # Tên thực đơn / bữa ăn
-    Category = Column(Unicode(100), nullable=False)       # Bữa sáng / Bữa chính / Bữa phụ
-    Goal = Column(Unicode(255), nullable=True)            # Mục tiêu: tăng cơ, giảm mỡ, ...
+    Name = Column(Unicode(255), nullable=False)
+    Category = Column(Unicode(100), nullable=False)
+    Goal = Column(Unicode(255), nullable=True)
     Calories = Column(Integer, default=0)
-    Protein = Column(Float, default=0)                   # gram
-    Carbs = Column(Float, default=0)                     # gram
-    Fat = Column(Float, default=0)                       # gram
-    Description = Column(UnicodeText, nullable=True)      # Mô tả / hướng dẫn chế biến
+    Protein = Column(Float, default=0)
+    Carbs = Column(Float, default=0)
+    Fat = Column(Float, default=0)
+    Description = Column(UnicodeText, nullable=True)
     ImageURL = Column(String(500), nullable=True)
     CreatedBy = Column(Integer, ForeignKey("Users.UserID"), nullable=True)
     CreatedAt = Column(DateTime, default=datetime.utcnow)

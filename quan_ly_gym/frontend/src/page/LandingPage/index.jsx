@@ -51,10 +51,9 @@ const TICKER_ITEMS = [
   "TỪ 299.000Đ/THÁNG",
 ];
 
-/* ── Component ── */
 function LandingPage() {
   const { token, user } = useContext(AuthContext) ?? {};
-  const [authModalView, setAuthModalView] = useState(null); // 'login' | 'register' | null
+  const [authModalView, setAuthModalView] = useState(null);
   const [packages, setPackages] = useState([]);
 
   useEffect(() => {
@@ -69,12 +68,11 @@ function LandingPage() {
     fetchPackages();
   }, []);
 
-  // Xác định link dashboard dựa trên role
   const dashboardLink = user?.vaiTro?.toUpperCase() === "MEMBER" ? "/my-dashboard" : "/dashboard";
 
   return (
     <div className={styles.landing}>
-      {/* NAVBAR */}
+      {}
       <nav className={styles.navbar}>
         <Link to="/" className={styles.logo} style={{ userSelect: 'none', cursor: 'pointer' }}>
           THE <span>PRO</span> GYM
@@ -101,7 +99,7 @@ function LandingPage() {
         </div>
       </nav>
 
-      {/* HERO */}
+      {}
       <section className={styles.hero}>
         <div className={styles.heroBg} />
 
@@ -147,7 +145,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* TICKER */}
+      {}
       <div className={styles.ticker}>
         <div className={styles.tickerInner}>
           {TICKER_ITEMS.map((item, i) => (
@@ -158,7 +156,7 @@ function LandingPage() {
         </div>
       </div>
 
-      {/* PRICING */}
+      {}
       <section id="pricing" className={styles.pricing}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionLabel}>Hội Viên The Pro Gym</div>
@@ -205,7 +203,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* FEATURES */}
+      {}
       <section id="features" className={styles.features}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionLabel}>Tiện Ích</div>
@@ -227,7 +225,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* VALUES */}
+      {}
       <section className={styles.values}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionLabel}>Tại Sao Chọn Chúng Tôi</div>
@@ -253,7 +251,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER */}
+      {}
       <footer className={styles.footer}>
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>

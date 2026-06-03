@@ -15,8 +15,6 @@ export default function BuyGymPackage() {
   const fetchPackages = useCallback(async () => {
     setLoading(true);
     try {
-      // Dùng requestJson nếu endpoint không yêu cầu auth, hoặc authedRequestJson nếu cần.
-      // Endpoint /api/packages/membership hiện tại không check auth gắt (vì ai cũng xem được).
       const data = await authedRequestJson("/api/packages/membership", token);
       setPackages(data || []);
     } catch (e) {
@@ -28,7 +26,6 @@ export default function BuyGymPackage() {
   }, [token]);
 
   useEffect(() => {
-    // Nếu user đã có gói tập, chuyển thẳng vào dashboard
     if (user?.packageId) {
       navigate("/my-dashboard");
     } else {
@@ -49,7 +46,6 @@ export default function BuyGymPackage() {
       
       alert(`✅ Mua thành công gói ${result.gymPackageName}!`);
       
-      // Cập nhật AuthContext, AppRoutes sẽ tự động cho phép vào trang chính
       updateUser({
         packageId: result.packageId,
         gymPackageName: result.gymPackageName,
@@ -92,7 +88,6 @@ export default function BuyGymPackage() {
 
       <div className={styles.packagesGrid}>
         {packages.map((pkg, idx) => {
-          // Highlight the package in the middle or marked as Featured
           const isPopular = pkg.IsFeatured || idx === 1;
           
           let features = [];

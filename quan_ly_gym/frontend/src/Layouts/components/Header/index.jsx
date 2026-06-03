@@ -21,7 +21,7 @@ export default function Header() {
   return (
     <>
       <header className="h-[70px] bg-slate-800 shadow-md border-b border-slate-700 flex items-center justify-end px-[24px] sticky top-0 z-[100]">
-        {/* Alert bell */}
+        {}
         <div className="flex items-center gap-[12px]">
           <button
             className="relative bg-transparent border-0 cursor-pointer text-slate-400 flex items-center p-[6px] rounded-lg hover:text-sky-500 hover:bg-slate-900 transition-colors"
@@ -33,7 +33,7 @@ export default function Header() {
 
           <div className="w-[1px] h-[32px] bg-slate-700" />
 
-          {/* User menu */}
+          {}
           <button
             className="flex items-center gap-[8px] bg-transparent border-0 cursor-pointer text-slate-400 text-[14px] p-[4px] px-[8px] rounded-lg hover:text-sky-500 hover:bg-slate-900 transition-colors"
             onClick={() => setIsUserOpen(true)}
@@ -45,7 +45,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Alert Modal */}
+      {}
       <Modal
         isOpen={isAlertOpen}
         onRequestClose={() => setIsAlertOpen(false)}
@@ -56,7 +56,7 @@ export default function Header() {
         </div>
       </Modal>
 
-      {/* User Modal */}
+      {}
       <Modal
         isOpen={isUserOpen}
         onRequestClose={() => setIsUserOpen(false)}
