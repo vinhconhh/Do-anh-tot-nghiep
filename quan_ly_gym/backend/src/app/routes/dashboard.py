@@ -10,8 +10,8 @@ from ..models.booking import Booking
 from ..models.workout import Schedule
 from ..models.log import BodyMetric, LogWorkout
 from ..middleware.auth import get_current_user
-from ..models.pt_request import PTRequest
 from ..models.profile import PTProfile
+from ..models.member_pt_relation import MemberPTRelation
 
 VN_TZ = timezone(timedelta(hours=7))
 
@@ -110,10 +110,10 @@ def get_recent_members(
     for m, profile in members_with_profiles:
         initials = "".join([w[0] for w in (m.FullName or "").split()[-2:]]).upper() or "--"
         
-        pt_req = db.query(PTRequest).filter(
-            PTRequest.MemberID == m.UserID,
-            PTRequest.Status == "Approved"
-        ).order_by(PTRequest.CreatedAt.desc()).first()
+        pt_req = db.query(MemberPTRelation).filter(
+            MemberPTRelation.MemberID == m.UserID,
+            MemberPTRelation.Status == "Active"
+        ).order_by(MemberPTRelation.CreatedAt.desc()).first()
         
         pt_name = "—"
         if pt_req:
@@ -156,9 +156,9 @@ def get_top_trainers(
     for pt, profile in pts:
         initials = "".join([w[0] for w in (pt.FullName or "").split()[-2:]]).upper() or "--"
         
-        members_count = db.query(func.count(func.distinct(PTRequest.MemberID))).filter(
-            PTRequest.PTID == pt.UserID,
-            PTRequest.Status == "Approved"
+        members_count = db.query(func.count(func.distinct(MemberPTRelation.MemberID))).filter(
+            MemberPTRelation.PTID == pt.UserID,
+            MemberPTRelation.Status == "Active"
         ).scalar() or 0
         
         sessions = db.query(func.count(Booking.BookingID)).filter(
@@ -654,7 +654,7 @@ def trainer_report_detail(
 ):
     """Detailed report for a specific trainer: session chart, activities."""
     from ..models.facility import AssignedExercise
-    from ..models.pt_request import PTRequest
+    from ..models.member_pt_relation import MemberPTRelation
     from ..models.booking import Booking
     from datetime import datetime, timedelta
 
@@ -699,20 +699,20 @@ def trainer_report_detail(
             "result": a.Status or "—",
         })
 
-    requests = (
-        db.query(PTRequest)
-        .filter(PTRequest.PTID == trainer_id)
-        .order_by(PTRequest.CreatedAt.desc())
+    pt_clients = (
+        db.query(MemberPTRelation)
+        .filter(MemberPTRelation.PTID == trainer_id)
+        .order_by(MemberPTRelation.CreatedAt.desc())
         .limit(10)
         .all()
     )
-    for r in requests:
-        m = db.query(User).filter(User.UserID == r.MemberID).first()
+    for c in pt_clients:
+        m = db.query(User).filter(User.UserID == c.MemberID).first()
         activities.append({
-            "date": r.CreatedAt.strftime("%d/%m/%Y") if r.CreatedAt else "",
-            "action": f"Yêu cầu từ {m.FullName if m else 'Hội viên'}",
+            "date": c.CreatedAt.strftime("%d/%m/%Y") if c.CreatedAt else "",
+            "action": f"Kết nối với {m.FullName if m else 'Hội viên'}",
             "member": m.FullName if m else "—",
-            "result": r.Status or "—",
+            "result": "Đã kết nối",
         })
 
     bookings = (

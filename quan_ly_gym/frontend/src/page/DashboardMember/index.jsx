@@ -79,6 +79,10 @@ export default function DashboardMember() {
   const [attendanceFrequency, setAttendanceFrequency] = useState([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
 
+  const [assignedExercises, setAssignedExercises] = useState([]);
+  const [assignedMeals, setAssignedMeals] = useState([]);
+  const [assignmentLoading, setAssignmentLoading] = useState(false);
+
   const navigate = useNavigate();
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiRequest, setAiRequest] = useState("");
@@ -188,7 +192,45 @@ export default function DashboardMember() {
     fetchAllExercises();
     fetchAttendanceFrequency();
     fetchMealPlans();
+    fetchAssignments();
   }, []);
+
+  const fetchAssignments = useCallback(async () => {
+    setAssignmentLoading(true);
+    try {
+      const { default: api } = await import("../../api/axiosClient");
+      const [exRes, mealRes] = await Promise.all([
+        api.get("/pt-assignments/my-exercises"),
+        api.get("/pt-assignments/my-meals")
+      ]);
+      setAssignedExercises(exRes.data || []);
+      setAssignedMeals(mealRes.data || []);
+    } catch (e) {
+      console.error("Failed to fetch assignments", e);
+    } finally {
+      setAssignmentLoading(false);
+    }
+  }, []);
+
+  const completeExercise = async (id) => {
+    try {
+      const { default: api } = await import("../../api/axiosClient");
+      await api.put(`/pt-assignments/${id}/complete`);
+      fetchAssignments();
+    } catch (e) {
+      alert("Lỗi: " + (e.response?.data?.detail || e.message));
+    }
+  };
+
+  const completeMeal = async (id) => {
+    try {
+      const { default: api } = await import("../../api/axiosClient");
+      await api.put(`/pt-assignments/meals/${id}/complete`);
+      fetchAssignments();
+    } catch (e) {
+      alert("Lỗi: " + (e.response?.data?.detail || e.message));
+    }
+  };
 
   const handleSaveMetrics = async () => {
     try {
@@ -363,8 +405,90 @@ YÊU CẦU NỘI DUNG:
           ))}
         </div>
 
+        {/* Assigned Exercises & Meals from PT */}
+        <div className={styles.card} style={{ marginTop: 20 }}>
+          <div className={styles.cardHeader}>
+            <h6 className={styles.cardTitle}>
+              <CheckCircle size={16} /> Giáo án hôm nay của PT
+            </h6>
+          </div>
+          <div className={styles.cardBody}>
+            {assignmentLoading ? (
+              <div style={{ textAlign: "center", padding: "20px 0", color: "#858796", fontSize: "1.4rem" }}>Đang tải giáo án...</div>
+            ) : assignedExercises.length === 0 && assignedMeals.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "20px 0", color: "#858796", fontSize: "1.4rem" }}>
+                Hôm nay bạn chưa có bài tập hay thực đơn nào được PT giao.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {assignedExercises.length > 0 && (
+                  <div>
+                    <h4 style={{ color: "#0f172a", fontSize: "1.35rem", marginBottom: 8, fontWeight: 700 }}>💪 Bài tập được giao</h4>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {assignedExercises.map(a => (
+                        <div key={a.assignmentId} style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "12px 14px", background: a.status === "Completed" ? "#f1fdf5" : "#f8fafc", 
+                          borderRadius: 10, border: `1px solid ${a.status === "Completed" ? "#10b981" : "#e2e8f0"}`
+                        }}>
+                          <div>
+                            <span style={{ fontWeight: 700, color: a.status === "Completed" ? "#10b981" : "#0f172a", fontSize: "1.4rem" }}>
+                              {a.status === "Completed" && "✅ "}{a.exerciseName}
+                            </span>
+                            {a.assignmentName && <span style={{ color: "#64748b", marginLeft: 8, fontSize: "1.3rem" }}>({a.assignmentName})</span>}
+                            <div style={{ color: "#64748b", fontSize: "1.3rem", marginTop: 4 }}>
+                              {a.sets} hiệp × {a.reps} lần {a.duration ? `· ${a.duration} phút` : ""} {a.weight ? `· ${a.weight}kg` : ""}
+                              {a.note && <span style={{ color: "#f59e0b", marginLeft: 6 }}>💬 {a.note}</span>}
+                            </div>
+                          </div>
+                          {a.status !== "Completed" && (
+                            <button onClick={() => completeExercise(a.assignmentId)}
+                              style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontWeight: 600, fontSize: "1.3rem", boxShadow: "0 2px 4px rgba(16,185,129,0.2)" }}>
+                              Hoàn thành
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {assignedMeals.length > 0 && (
+                  <div>
+                    <h4 style={{ color: "#0f172a", fontSize: "1.35rem", marginBottom: 8, fontWeight: 700, marginTop: 8 }}>🥗 Thực đơn được giao</h4>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {assignedMeals.map(a => (
+                        <div key={a.assignmentId} style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "12px 14px", background: a.status === "Completed" ? "#f1fdf5" : "#f8fafc", 
+                          borderRadius: 10, border: `1px solid ${a.status === "Completed" ? "#10b981" : "#e2e8f0"}`
+                        }}>
+                          <div>
+                            <span style={{ fontWeight: 700, color: a.status === "Completed" ? "#10b981" : "#0f172a", fontSize: "1.4rem" }}>
+                              {a.status === "Completed" && "✅ "}{a.mealPlanName}
+                            </span>
+                            {a.category && <span style={{ color: "#64748b", marginLeft: 8, fontSize: "1.3rem" }}>({a.category})</span>}
+                            <div style={{ color: "#64748b", fontSize: "1.3rem", marginTop: 4 }}>
+                              {a.calories} Kcal
+                              {a.note && <span style={{ color: "#f59e0b", marginLeft: 6 }}>💬 {a.note}</span>}
+                            </div>
+                          </div>
+                          {a.status !== "Completed" && (
+                            <button onClick={() => completeMeal(a.assignmentId)}
+                              style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontWeight: 600, fontSize: "1.3rem", boxShadow: "0 2px 4px rgba(16,185,129,0.2)" }}>
+                              Hoàn thành
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
-        {}
         <div className={styles.card} style={{ marginTop: 20 }}>
           <div className={styles.cardHeader}>
             <h6 className={styles.cardTitle}>

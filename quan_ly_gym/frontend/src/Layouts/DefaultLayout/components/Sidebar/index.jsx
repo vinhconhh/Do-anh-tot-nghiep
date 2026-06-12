@@ -25,6 +25,7 @@ import {
   UserPlus,
   UtensilsCrossed,
   Shield,
+  Calendar,
 } from "lucide-react";
 import { AuthContext } from "../../../../context/AuthContext";
 
@@ -50,19 +51,9 @@ export default function Sidebar() {
   const isManager = role === "MANAGER";
   const isMember = role === "MEMBER";
   const isPT = role === "PT";
+  const isReceptionist = role === "RECEPTIONIST";
 
-  const [hasApprovedPT, setHasApprovedPT] = useState(false);
-  useEffect(() => {
-    if (!isMember) return;
-    import("../../../../api/axiosClient").then(({ default: api }) => {
-      api.get("/pt-requests/my-requests")
-        .then(res => {
-          const reqs = Array.isArray(res.data) ? res.data : [];
-          setHasApprovedPT(reqs.some(r => r.status === "approved"));
-        })
-        .catch(() => {});
-    });
-  }, [isMember]);
+
 
   return (
     <aside
@@ -102,6 +93,32 @@ export default function Sidebar() {
         )}
 
 
+
+        {/* RECEPTIONIST MENU */}
+        {isReceptionist && (
+          <>
+            <NavLink
+              to="/receptionist-dashboard"
+              className={({ isActive }) =>
+                `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
+                }`
+              }
+            >
+              <Users className="w-[18px] h-[18px] shrink-0" />
+              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Lễ Tân - Hội viên</span>
+            </NavLink>
+            <NavLink
+              to="/gym-class-management"
+              className={({ isActive }) =>
+                `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
+                }`
+              }
+            >
+              <CalendarCheck className="w-[18px] h-[18px] shrink-0" />
+              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Quản lý Lớp học</span>
+            </NavLink>
+          </>
+        )}
 
         {}
         {isManager && (
@@ -161,14 +178,14 @@ export default function Sidebar() {
                 <span>Huấn luyện viên</span>
               </NavLink>
               <NavLink
-                to="/pt-requests"
+                to="/members"
                 className={({ isActive }) =>
                   `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
                   }`
                 }
               >
                 <ClipboardList className="w-[16px] h-[16px] shrink-0" />
-                <span>Yêu cầu thuê PT</span>
+                <span>Phân bổ PT</span>
               </NavLink>
             </div>
           </div>
@@ -253,16 +270,28 @@ export default function Sidebar() {
 
         {}
         {isManager && (
-          <NavLink
-            to="/member-report"
-            className={({ isActive }) =>
-              `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
-              }`
-            }
-          >
-            <BarChart2 className="w-[18px] h-[18px] shrink-0" />
-            <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Báo cáo hội viên</span>
-          </NavLink>
+          <>
+            <NavLink
+              to="/member-report"
+              className={({ isActive }) =>
+                `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
+                }`
+              }
+            >
+              <BarChart2 className="w-[18px] h-[18px] shrink-0" />
+              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Báo cáo hội viên</span>
+            </NavLink>
+            <NavLink
+              to="/pt-request-approvals"
+              className={({ isActive }) =>
+                `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
+                }`
+              }
+            >
+              <ClipboardList className="w-[18px] h-[18px] shrink-0" />
+              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Duyệt đăng ký PT</span>
+            </NavLink>
+          </>
         )}
 
         {}
@@ -289,17 +318,28 @@ export default function Sidebar() {
               <CalendarCheck className="w-[18px] h-[18px] shrink-0" />
               <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Lịch tập của tôi</span>
             </NavLink>
-
             <NavLink
-              to="/pt-requests"
+              to="/my-classes"
+              className={({ isActive }) =>
+                `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
+                }`
+              }
+            >
+              <BookOpen className="w-[18px] h-[18px] shrink-0" />
+              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Lịch Lớp học</span>
+            </NavLink>
+            <NavLink
+              to="/request-pt"
               className={({ isActive }) =>
                 `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
                 }`
               }
             >
               <HandshakeIcon className="w-[18px] h-[18px] shrink-0" />
-              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>{hasApprovedPT ? "PT & Lớp học" : "Thuê PT"}</span>
+              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Đăng ký PT</span>
             </NavLink>
+
+
           </>
         )}
 
@@ -318,16 +358,6 @@ export default function Sidebar() {
             </NavLink>
 
 
-            <NavLink
-              to="/pt-requests"
-              className={({ isActive }) =>
-                `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
-                }`
-              }
-            >
-              <ClipboardList className="w-[18px] h-[18px] shrink-0" />
-              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Yêu cầu thuê PT</span>
-            </NavLink>
 
             <NavLink
               to="/my-clients"
@@ -376,7 +406,7 @@ export default function Sidebar() {
         )}
 
         {}
-        {isManager && (
+        {(isManager || isReceptionist) && (
           <NavLink
             to="/schedules"
             className={({ isActive }) =>
@@ -402,6 +432,22 @@ export default function Sidebar() {
             <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Hỏi đáp AI</span>
           </NavLink>
         )}
+
+        <div className="h-px bg-white/15 my-[10px] mx-[8px]" />
+        
+        <NavLink
+          to="/attendance-history"
+          className={({ isActive }) =>
+            `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
+            }`
+          }
+        >
+          <Calendar className="w-[18px] h-[18px] shrink-0" />
+          <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>
+            {user?.vaiTro === "MEMBER" || user?.role === "MEMBER" ? "Ngày đi tập" : "Ngày công"}
+          </span>
+        </NavLink>
+
       </nav>
 
       <div className="h-px bg-white/15 my-[10px] mx-[8px]" />

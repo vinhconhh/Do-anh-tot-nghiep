@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
+from datetime import datetime
+from pydantic import BaseModel
+from typing import List, Optional
+
 from ..database import get_db
 from ..models.user import User
 from ..models.booking import Booking
-from ..middleware.auth import get_current_user
+from ..models.member_pt_relation import MemberPTRelation
+from ..middleware.auth import get_current_user, require_roles
 
 router = APIRouter(prefix="/api/bookings", tags=["Bookings"])
 
@@ -84,3 +89,70 @@ def update_booking_status(
     db.commit()
     db.refresh(booking)
     return {"message": "Success", "status": booking.Status}
+
+class BookingCreate(BaseModel):
+    memberId: int
+    ptId: int
+    startTime: datetime
+    endTime: datetime
+
+@router.get("/pt-relations")
+def get_pt_relations(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("ADMIN", "MANAGER", "RECEPTIONIST")),
+):
+    """Lấy danh sách các cặp PT - Hội viên đã được phân bổ để lên lịch."""
+    relations = db.query(MemberPTRelation).filter(MemberPTRelation.Status == "Active").all()
+    result = []
+    for r in relations:
+        m = r.member
+        p = r.pt
+        result.append({
+            "RelationID": r.RelationID,
+            "MemberID": r.MemberID,
+            "MemberName": m.FullName if m else "Unknown",
+            "PTID": r.PTID,
+            "PTName": p.FullName if p else "Unknown",
+            "AssignedAt": r.CreatedAt.isoformat() if r.CreatedAt else None,
+        })
+    return result
+
+@router.post("")
+def create_booking(
+    req: BookingCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("ADMIN", "MANAGER", "RECEPTIONIST", "PT")),
+):
+    """Tạo booking lịch tập giữa PT và Hội viên."""
+    booking = Booking(
+        MemberID=req.memberId,
+        PTID=req.ptId,
+        StartTime=req.startTime,
+        EndTime=req.endTime,
+        Status="Approved",
+    )
+    db.add(booking)
+    db.commit()
+    db.refresh(booking)
+    return {"message": "Tạo lịch hẹn thành công!", "bookingId": booking.BookingID}
+
+@router.post("/batch")
+def create_batch_bookings(
+    req_list: List[BookingCreate],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("ADMIN", "MANAGER", "RECEPTIONIST", "PT")),
+):
+    """Tạo nhiều booking lịch tập cùng lúc (xếp lịch theo tuần)."""
+    count = 0
+    for req in req_list:
+        booking = Booking(
+            MemberID=req.memberId,
+            PTID=req.ptId,
+            StartTime=req.startTime,
+            EndTime=req.endTime,
+            Status="Approved",
+        )
+        db.add(booking)
+        count += 1
+    db.commit()
+    return {"message": f"Tạo {count} lịch hẹn thành công!"}

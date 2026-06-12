@@ -111,6 +111,7 @@ class AssignedExercise(Base):
     Duration      = Column(Integer, nullable=True)
     Weight        = Column(Float, nullable=True)
     Note          = Column(Unicode(500), nullable=True)
+    MediaURL      = Column(String(500), nullable=True)
     AssignedDate  = Column(Date, nullable=False)
     Status        = Column(String(50), default="Active")
     CreatedAt     = Column(DateTime, default=datetime.now)

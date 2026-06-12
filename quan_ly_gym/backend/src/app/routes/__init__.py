@@ -8,7 +8,7 @@ from . import (
     users,
     notifications,
     exercises,
-    pt_requests,
+    managers,
     streaks,
     ai,
     facility,

@@ -125,6 +125,13 @@ export default function MyClients() {
                   <div>
                     <h3 className={styles.profileName}>{selectedClient.memberName}</h3>
                     <p className={styles.profileEmail}>{selectedClient.memberEmail}</p>
+                    <button onClick={() => navigate("/pt-assignments")} style={{
+                      marginTop: 12, padding: "8px 16px", background: "linear-gradient(135deg,#1cc88a,#17a673)",
+                      color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: "1.3rem",
+                      display: "flex", alignItems: "center", gap: 6, boxShadow: "0 2px 4px rgba(28,200,138,0.2)"
+                    }}>
+                      <Dumbbell size={16} /> Giao giáo án (Bài tập & Bữa ăn)
+                    </button>
                   </div>
                 </div>
 

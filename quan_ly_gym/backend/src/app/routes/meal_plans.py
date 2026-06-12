@@ -4,7 +4,6 @@ from sqlalchemy import desc
 from typing import Optional
 from pydantic import BaseModel
 from datetime import datetime
-
 from ..database import get_db
 from ..models.meal_plan import MealPlan
 from ..middleware.auth import require_roles
@@ -75,11 +74,11 @@ def get_meal_plan(
 
 
 
-@router.post("", status_code=201, summary="Tạo thực đơn mới (manager)")
+@router.post("", status_code=201, summary="Tạo thực đơn mới (manager/pt)")
 def create_meal_plan(
     body: MealPlanCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_roles("MANAGER")),
+    current_user=Depends(require_roles("MANAGER", "PT")),
 ):
     mp = MealPlan(
         Name=body.name,
@@ -99,12 +98,12 @@ def create_meal_plan(
     return _to_dict(mp)
 
 
-@router.put("/{plan_id}", summary="Cập nhật thực đơn (manager)")
+@router.put("/{plan_id}", summary="Cập nhật thực đơn (manager/pt)")
 def update_meal_plan(
     plan_id: int,
     body: MealPlanUpdate,
     db: Session = Depends(get_db),
-    _=Depends(require_roles("MANAGER")),
+    _=Depends(require_roles("MANAGER", "PT")),
 ):
     mp = db.query(MealPlan).filter(MealPlan.PlanID == plan_id).first()
     if not mp:
@@ -124,11 +123,11 @@ def update_meal_plan(
     return _to_dict(mp)
 
 
-@router.delete("/{plan_id}", summary="Xóa thực đơn (manager)")
+@router.delete("/{plan_id}", summary="Xóa thực đơn (manager/pt)")
 def delete_meal_plan(
     plan_id: int,
     db: Session = Depends(get_db),
-    _=Depends(require_roles("MANAGER")),
+    _=Depends(require_roles("MANAGER", "PT")),
 ):
     mp = db.query(MealPlan).filter(MealPlan.PlanID == plan_id).first()
     if not mp:

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import styles from "./Modal.module.scss";
 import PropTypes from "prop-types";
 
-function Modal({ isOpen = false, children, onRequestClose, title }) {
+function Modal({ isOpen = false, children, onRequestClose, title, width, maxWidth }) {
   useEffect(() => {
     const handle = (e) => {
       if (e.code === "Escape") onRequestClose?.();
@@ -15,7 +15,7 @@ function Modal({ isOpen = false, children, onRequestClose, title }) {
 
   return (
     <div className={styles.modal}>
-      <div className={styles.content}>
+      <div className={styles.content} style={{ ...(width && { width }), ...(maxWidth && { maxWidth }) }}>
         <div className={styles.header}>
           {title && <h3 className={styles.title}>{title}</h3>}
           <button className={styles.closeBtn} onClick={onRequestClose}>
