@@ -133,7 +133,7 @@ def create_account(
     db.flush()
 
     if role.RoleCode == "MEMBER":
-        db.add(MemberProfile(UserID=new_user.UserID, AIQuota=10))
+        db.add(MemberProfile(UserID=new_user.UserID))
     elif role.RoleCode == "PT":
         db.add(PTProfile(UserID=new_user.UserID, ExperienceYears=0))
 

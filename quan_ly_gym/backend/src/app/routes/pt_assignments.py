@@ -14,7 +14,6 @@ from ..models.user import User
 from ..models.profile import MemberProfile
 from ..models.facility import GymExercise, AssignedExercise
 from ..models.pt_request import PTRequest
-from ..models.streak import MemberStreak
 from ..middleware.auth import get_current_user
 
 router = APIRouter(prefix="/api/pt-assignments", tags=["PT Assignments"])
@@ -105,10 +104,6 @@ def client_profile(
 
     # Member profile
     profile = db.query(MemberProfile).filter(MemberProfile.UserID == member_id).first()
-
-    # Streak info
-    streak = db.query(MemberStreak).filter(MemberStreak.UserID == member_id).first() if MemberStreak else None
-
     # Count completed sessions (from LogWorkouts)
     from ..models.log import LogWorkout
     sessions = db.query(func.count(LogWorkout.LogID)).filter(
@@ -136,9 +131,9 @@ def client_profile(
         "sessionsCompleted": sessions,
         "totalSchedules": schedules,
         "exercisesCompleted": completed,
-        "streak": streak.CurrentStreak if streak else 0,
-        "longestStreak": streak.LongestStreak if streak else 0,
-        "totalPoints": streak.TotalPoints if streak else 0,
+        "streak": profile.CurrentStreak if profile else 0,
+        "longestStreak": profile.LongestStreak if profile else 0,
+        "totalPoints": 0,
     }
 
 
@@ -314,41 +309,46 @@ def training_progress(
     current_user: User = Depends(_require_pt),
 ):
     """PT: xem tiến độ tập luyện của tất cả học viên dựa trên check-in."""
-    from ..models.streak import CheckInLog
+    try:
+        from ..models.streak import CheckInLog
+    except ImportError:
+        return []
 
     client_ids = _get_pt_client_ids(db, current_user.UserID)
     if not client_ids:
         return []
 
-    q = (
-        db.query(CheckInLog)
-        .filter(CheckInLog.PTID == current_user.UserID)
-        .order_by(CheckInLog.CheckInDate.desc())
-    )
+    try:
+        q = (
+            db.query(CheckInLog)
+            .filter(CheckInLog.PTID == current_user.UserID)
+            .order_by(CheckInLog.CheckInDate.desc())
+        )
 
-    if member_id:
-        if member_id not in client_ids:
-            raise HTTPException(status_code=403, detail="Bạn không phải HLV của hội viên này.")
-        q = q.filter(CheckInLog.UserID == member_id)
+        if member_id:
+            if member_id not in client_ids:
+                raise HTTPException(status_code=403, detail="Bạn không phải HLV của hội viên này.")
+            q = q.filter(CheckInLog.UserID == member_id)
 
-    if date_from:
-        try:
-            q = q.filter(CheckInLog.CheckInDate >= date.fromisoformat(date_from))
-        except ValueError:
-            pass
-    if date_to:
-        try:
-            q = q.filter(CheckInLog.CheckInDate <= date.fromisoformat(date_to))
-        except ValueError:
-            pass
+        if date_from:
+            try:
+                q = q.filter(CheckInLog.CheckInDate >= date.fromisoformat(date_from))
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                q = q.filter(CheckInLog.CheckInDate <= date.fromisoformat(date_to))
+            except ValueError:
+                pass
 
-    checkins = q.limit(200).all()
+        checkins = q.limit(200).all()
+    except Exception:
+        return []
 
     result = []
     for c in checkins:
         member = db.query(User).filter(User.UserID == c.UserID).first()
 
-        # Get the exercises completed on that day
         day_exercises = (
             db.query(AssignedExercise)
             .options(joinedload(AssignedExercise.exercise))
@@ -395,7 +395,10 @@ def training_progress_summary(
     current_user: User = Depends(_require_pt),
 ):
     """PT: tổng hợp tiến độ tập luyện của tất cả học viên."""
-    from ..models.streak import CheckInLog
+    try:
+        from ..models.streak import CheckInLog
+    except ImportError:
+        return {"totalCheckins": 0, "weekCheckins": 0, "avgRPE": 0, "totalClients": 0, "activeClients": 0, "topStudents": []}
     from datetime import timedelta
 
     client_ids = _get_pt_client_ids(db, current_user.UserID)
@@ -409,26 +412,24 @@ def training_progress_summary(
             "topStudents": [],
         }
 
-    # All check-ins for this PT
-    all_checkins = db.query(CheckInLog).filter(
-        CheckInLog.PTID == current_user.UserID
-    ).all()
+    try:
+        all_checkins = db.query(CheckInLog).filter(
+            CheckInLog.PTID == current_user.UserID
+        ).all()
+    except Exception:
+        all_checkins = []
 
     total_checkins = len(all_checkins)
 
-    # This week
     today = date.today()
     week_start = today - timedelta(days=today.weekday())
     week_checkins = len([c for c in all_checkins if c.CheckInDate and c.CheckInDate >= week_start])
 
-    # Average RPE
     rpe_values = [c.RPE for c in all_checkins if c.RPE is not None]
     avg_rpe = round(sum(rpe_values) / len(rpe_values), 1) if rpe_values else 0
 
-    # Active clients (checked in this week)
     active_user_ids = set(c.UserID for c in all_checkins if c.CheckInDate and c.CheckInDate >= week_start)
 
-    # Top students by check-in count
     from collections import Counter
     student_counts = Counter(c.UserID for c in all_checkins)
     top_ids = student_counts.most_common(5)

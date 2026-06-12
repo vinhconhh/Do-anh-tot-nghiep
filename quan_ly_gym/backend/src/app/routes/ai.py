@@ -1,26 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from pydantic import BaseModel
 from typing import Optional
 from openai import OpenAI
 from ..database import get_db
 from ..models.user import User
-from ..models.profile import MemberProfile
 from ..models.ai import AIRequest, AIResponse
-from ..models.finance import Transaction, Invoice
 from ..middleware.auth import get_current_user
 from ..config import settings
 
 router = APIRouter(prefix="/api/ai", tags=["AI"])
-
-AI_PACKAGES = [
-    {"id": 1, "label": "Gói nhỏ", "qty": 20, "price": 240000},
-    {"id": 2, "label": "Gói phổ biến", "qty": 50, "price": 600000},
-]
-
-class BuyPackageBody(BaseModel):
-    packageId: int
 
 class AiChatBody(BaseModel):
     prompt: str
@@ -76,6 +65,7 @@ QUY TẮC NỘI DUNG:
 - NEVER strip tones. NEVER replace Vietnamese accented characters with plain Latin equivalents (e.g. do NOT write "tap luyen" instead of "tập luyện").
 - Your output string MUST be valid UTF-8 encoded Vietnamese text. Double-check every word before responding.
 - If you are uncertain about a character, always keep the diacritic. Losing diacritics is a critical failure."""
+
 MODELS = [
     "openai/gpt-oss-120b:free",
     "meta-llama/llama-3.3-70b-instruct:free",
@@ -150,50 +140,6 @@ def generate_response(prompt: str) -> str:
     except Exception as e:
         return f"[Lỗi AI] {str(e)}", 0
 
-@router.get("/quota")
-def get_quota(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    profile = db.query(MemberProfile).filter(MemberProfile.UserID == current_user.UserID).first()
-    ai_used = db.query(func.count(AIRequest.RequestID)).filter(AIRequest.UserID == current_user.UserID).scalar() or 0
-    quota = profile.AIQuota if profile else 0
-    return {"quota": quota, "used": ai_used, "remaining": max(0, quota - ai_used)}
-
-@router.get("/packages")
-def get_packages(current_user: User = Depends(get_current_user)):
-    return AI_PACKAGES
-
-@router.post("/buy")
-def buy_package(body: BuyPackageBody, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    pkg = next((p for p in AI_PACKAGES if p["id"] == body.packageId), None)
-    if not pkg:
-        raise HTTPException(status_code=404, detail="Gói không tồn tại")
-    profile = db.query(MemberProfile).filter(MemberProfile.UserID == current_user.UserID).first()
-    if not profile:
-        profile = MemberProfile(UserID=current_user.UserID, AIQuota=0)
-        db.add(profile)
-        db.flush()
-    profile.AIQuota = (profile.AIQuota or 0) + pkg["qty"]
-    invoice = Invoice(UserID=current_user.UserID, TotalAmount=pkg["price"], Status="Paid")
-    db.add(invoice)
-    db.flush()
-    transaction = Transaction(UserID=current_user.UserID, InvoiceID=invoice.InvoiceID, Amount=pkg["price"], Status="Paid")
-    db.add(transaction)
-    db.commit()
-    return {"message": f"Mua thành công {pkg['label']} — +{pkg['qty']} lượt AI!", "newQuota": profile.AIQuota, "transactionId": transaction.TransactionID}
-
-@router.get("/purchase-history")
-def purchase_history(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    transactions = db.query(Transaction).filter(Transaction.UserID == current_user.UserID).order_by(Transaction.CreatedAt.desc()).limit(20).all()
-    result = []
-    for t in transactions:
-        pkg = next((p for p in AI_PACKAGES if p["price"] == float(t.Amount)), None)
-        result.append({
-            "date": t.CreatedAt.strftime("%d/%m/%Y %H:%M") if t.CreatedAt else "",
-            "qty": pkg["qty"] if pkg else "—",
-            "price": f"{int(t.Amount):,}đ".replace(",", ".") if t.Amount else "—",
-            "status": (t.Status or "pending").lower(),
-        })
-    return result
-
 @router.post("/chat")
 def chat_with_ai(
     body: AiChatBody,
@@ -202,20 +148,14 @@ def chat_with_ai(
 ):
     if not classify_prompt(body.prompt):
         raise HTTPException(status_code=400, detail="Câu hỏi không liên quan đến thể thao hoặc tập luyện. Tôi chỉ tư vấn về gym, thể thao, dinh dưỡng thể thao.")
-    
-    profile = db.query(MemberProfile).filter(MemberProfile.UserID == current_user.UserID).first()
-    ai_used = db.query(func.count(AIRequest.RequestID)).filter(AIRequest.UserID == current_user.UserID).scalar() or 0
-    quota = profile.AIQuota if profile else 0
-    if ai_used >= quota:
-        raise HTTPException(status_code=400, detail="Bạn đã hết lượt AI. Vui lòng mua thêm.")
-    
+
     prompt_to_save = f"[HIDDEN_CONSULT]\n{body.prompt}" if body.hidden else body.prompt
     ai_req = AIRequest(UserID=current_user.UserID, Prompt=prompt_to_save, Model="gemma-4-openrouter")
     db.add(ai_req)
     db.flush()
-    
+
     response_text, tokens_used = generate_response(body.prompt)
-    
+
     ai_resp = AIResponse(
         RequestID=ai_req.RequestID,
         ResponseData=response_text,
@@ -225,11 +165,10 @@ def chat_with_ai(
     )
     db.add(ai_resp)
     db.commit()
-    
+
     return {
         "response": response_text,
         "tokensUsed": ai_resp.TokensUsed,
-        "remainingQuota": quota - ai_used - 1,
     }
 
 @router.get("/chat-history")

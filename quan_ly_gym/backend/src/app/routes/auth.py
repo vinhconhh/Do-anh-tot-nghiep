@@ -30,10 +30,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         "vaiTro": role_code,
     }
 
-    if role_code == "MEMBER" and user.member_profile:
-        response_user["packageId"] = user.member_profile.PackageID
-        if user.member_profile.gym_package:
-            response_user["gymPackageName"] = user.member_profile.gym_package.Name
+
 
     return {
         "user": response_user,
@@ -45,8 +42,6 @@ def _process_referral(db: Session, referral_code: str):
     """Xử lý mã giới thiệu và cộng điểm AI Quota cho người giới thiệu."""
     referrer = db.query(User).filter(User.ReferralCode == referral_code.strip(), User.IsActive == 1).first()
     if referrer:
-        if referrer.role and referrer.role.RoleCode == "MEMBER" and referrer.member_profile:
-            referrer.member_profile.AIQuota = (referrer.member_profile.AIQuota or 0) + 10
         return referrer.UserID
     return None
 
@@ -76,7 +71,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     db.flush()
 
     if role.RoleCode == "MEMBER":
-        db.add(MemberProfile(UserID=new_user.UserID, AIQuota=10))
+        db.add(MemberProfile(UserID=new_user.UserID))
 
     db.commit()
     db.refresh(new_user)
@@ -88,9 +83,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         "vaiTro": role.RoleCode,
     }
 
-    if role.RoleCode == "MEMBER":
-        response_user["packageId"] = None
-        response_user["gymPackageName"] = None
+
 
     return {
         "user": response_user,

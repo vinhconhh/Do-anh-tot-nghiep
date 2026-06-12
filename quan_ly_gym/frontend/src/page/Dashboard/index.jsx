@@ -59,7 +59,7 @@ export default function Dashboard() {
 
   return (
     <div className={styles.page}>
-      {}
+      { }
       <div className={styles.pageHeading}>
         <h1 className={styles.title}>Dashboard Tổng quan</h1>
         <div className={styles.headActions}>
@@ -70,7 +70,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {}
+      { }
       <div className={styles.statGrid}>
         <div className={`${styles.statCard} ${styles.borderBlue}`}>
           <div className={styles.statInfo}>
@@ -108,7 +108,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {}
+      { }
       <div className={styles.chartGrid}>
         <div className={styles.card}>
           <div className={styles.cardHeader}>
@@ -165,9 +165,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {}
+      { }
       <div className={styles.tableGrid}>
-        {}
+        { }
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <h6 className={styles.cardTitle}>Hội viên mới nhất</h6>
@@ -220,11 +220,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {}
+        { }
         <div className={styles.aiCard}>
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <h6 className={styles.cardTitle}>Tiêu thụ Gemini API tháng này</h6>
+              <h6 className={styles.cardTitle}>Tiêu thụ API tháng này</h6>
             </div>
             <div className={styles.cardBody}>
               <div className={styles.aiRow}>
@@ -254,7 +254,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {}
+      { }
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h6 className={styles.cardTitle}>

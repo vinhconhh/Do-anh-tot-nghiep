@@ -27,8 +27,6 @@ from .models import (
     LogWorkoutDetail,
     BodyMetric,
     ProgressPhoto,
-    Invoice,
-    Transaction,
     DietPlan,
     Meal,
     MealItem,
@@ -38,9 +36,6 @@ from .models import (
     AuditLog,
     PTRequest,
     PTScoreLog,
-    MembershipPackage,
-    AIPackage,
-    Promotion,
 )
 
 from .routes.auth import router as auth_router
@@ -55,7 +50,6 @@ from .routes.exercises import router as exercises_router
 from .routes.pt_requests import router as pt_requests_router
 from .routes.streaks import router as streaks_router
 from .routes.ai import router as ai_router
-from .routes.packages import router as packages_router
 from .routes.facility import router as facility_router
 
 import os

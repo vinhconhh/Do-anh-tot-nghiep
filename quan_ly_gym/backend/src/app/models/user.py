@@ -56,7 +56,6 @@ class User(Base):
     pt_profile = relationship("PTProfile", uselist=False, back_populates="user")
     refresh_tokens = relationship("RefreshToken", back_populates="user")
     sessions = relationship("UserSession", back_populates="user")
-    subscriptions = relationship("UserSubscription", back_populates="user")
 
 
 class RefreshToken(Base):

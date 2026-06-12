@@ -5,7 +5,6 @@ from datetime import datetime, date, timezone, timedelta
 from ..database import get_db
 from ..models.user import User, Role
 from ..models.profile import MemberProfile
-from ..models.finance import Transaction
 from ..models.ai import AIRequest, AIResponse
 from ..models.booking import Booking
 from ..models.workout import Schedule
@@ -38,10 +37,6 @@ def get_stats(
             User.RoleID == pt_role.RoleID, User.IsDeleted == 0
         ).scalar() or 0
 
-    total_revenue = db.query(func.coalesce(func.sum(Transaction.Amount), 0)).filter(
-        Transaction.Status == "Paid"
-    ).scalar() or 0
-
     ai_used = db.query(func.count(AIRequest.RequestID)).scalar() or 0
 
     pending_bookings = db.query(func.count(Booking.BookingID)).filter(
@@ -51,9 +46,9 @@ def get_stats(
     return {
         "totalMembers": total_members,
         "totalTrainers": total_trainers,
-        "revenue": f"{float(total_revenue)/1_000_000:.1f}M đ" if total_revenue else "0đ",
+        "revenue": "0đ",
         "aiUsed": ai_used,
-        "aiTotal": 5000,
+        "aiTotal": 0,
         "trainers": total_trainers,
         "pendingRequests": pending_bookings,
     }
@@ -75,12 +70,6 @@ def get_revenue(
         else:
             month_end = month_start.replace(month=d.month + 1)
 
-        rev = db.query(func.coalesce(func.sum(Transaction.Amount), 0)).filter(
-            Transaction.Status == "Paid",
-            Transaction.CreatedAt >= month_start,
-            Transaction.CreatedAt < month_end,
-        ).scalar() or 0
-
         member_role = db.query(Role).filter(Role.RoleCode == "MEMBER").first()
         new_members = 0
         if member_role:
@@ -93,7 +82,7 @@ def get_revenue(
 
         result.append({
             "month": f"T{d.month}/{str(d.year)[-2:]}",
-            "revenue": round(float(rev) / 1_000_000, 1),
+            "revenue": 0,
             "newMembers": new_members,
         })
     return result
@@ -258,7 +247,6 @@ def get_member_stats(
         db.commit()
 
     return {
-        "aiQuota": profile.AIQuota if profile else 0,
         "aiUsed": ai_used,
         "sessionsCompleted": sessions_completed,
         "totalSchedules": total_schedules,
@@ -421,7 +409,6 @@ def member_report_list(
         ai_used = db.query(func.count(AIRequest.RequestID)).filter(
             AIRequest.UserID == m.UserID
         ).scalar() or 0
-        ai_total = profile.AIQuota if profile else 0
 
         sessions = db.query(func.count(LogWorkout.LogID)).filter(
             LogWorkout.UserID == m.UserID
@@ -450,7 +437,6 @@ def member_report_list(
             "height": profile.Height if profile else None,
             "weight": profile.Weight if profile else None,
             "aiUsed": ai_used,
-            "aiTotal": ai_total,
             "sessions": sessions,
             "completion": completion,
             "streak": streak.CurrentStreak if streak and streak.CurrentStreak is not None else 0,

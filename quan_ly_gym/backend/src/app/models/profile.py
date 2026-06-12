@@ -10,16 +10,11 @@ class MemberProfile(Base):
     Goal = Column(Unicode(255))
     Height = Column(Float)
     Weight = Column(Float)
-    AIQuota = Column(Integer, default=0)
-    PackageID = Column(Integer, ForeignKey("MembershipPackages.PackageID"), nullable=True)
-    AIPackageID = Column(Integer, ForeignKey("AIPackages.PackageID"), nullable=True)
     CurrentStreak = Column(Integer, default=0)
     LongestStreak = Column(Integer, default=0)
     LastAttendanceDate = Column(Date, nullable=True)
 
     user = relationship("User", back_populates="member_profile")
-    gym_package = relationship("MembershipPackage")
-    ai_package = relationship("AIPackage")
 
 
 class PTProfile(Base):

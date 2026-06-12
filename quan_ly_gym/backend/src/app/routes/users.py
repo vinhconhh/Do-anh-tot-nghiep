@@ -33,9 +33,6 @@ def get_me(
                 "goal": profile.Goal,
                 "height": profile.Height,
                 "weight": profile.Weight,
-                "aiQuota": profile.AIQuota,
-                "packageId": profile.PackageID,
-                "gymPackageName": profile.gym_package.Name if profile.gym_package else None,
             })
     elif role_code == "PT":
         profile = db.query(PTProfile).filter(PTProfile.UserID == current_user.UserID).first()

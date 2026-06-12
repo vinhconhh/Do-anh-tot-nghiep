@@ -7,13 +7,9 @@ import Dashboard from "../../page/Dashboard";
 import Members from "../../page/Members";
 import MemberDetail from "../../page/MemberDetail";
 import DashboardMember from "../../page/DashboardMember";
-import AiPurchase from "../../page/AiPurchase";
 import MemberReport from "../../page/MemberReport";
 import Trainers from "../../page/Trainers";
 import TrainerDetail from "../../page/TrainerDetail";
-import PackageManagement from "../../page/PackageManagement";
-import AiPackageManagement from "../../page/AiPackageManagement";
-import PromotionManagement from "../../page/PromotionManagement";
 import Exercises from "../../page/Exercises";
 import PtRequests from "../../page/PtRequests";
 import Settings from "../../page/Settings";
@@ -26,9 +22,11 @@ import EquipmentManagement from "../../page/EquipmentManagement";
 import GymExerciseManagement from "../../page/GymExerciseManagement";
 import GymClassManagement from "../../page/GymClassManagement";
 import EnrollmentApproval from "../../page/EnrollmentApproval";
-import BuyGymPackage from "../../page/BuyGymPackage";
 import MealPlanManagement from "../../page/MealPlanManagement";
 import AccountManagement from "../../page/AccountManagement";
+import MyClients from "../../page/MyClients";
+import PTAssignments from "../../page/PTAssignments";
+import TrainingProgress from "../../page/TrainingProgress";
 
 function AppRoutes() {
   const { token, user } = useContext(AuthContext) ?? {};
@@ -40,13 +38,8 @@ function AppRoutes() {
   const RequireAuth = ({ children }) =>
     token ? children : <Navigate to="/" replace />;
 
-  const RequireRole = ({ roles, children, allowNoPackage = false }) => {
+  const RequireRole = ({ roles, children }) => {
     if (!token) return <Navigate to="/" replace />;
-
-    if (role === "MEMBER" && !user?.packageId && !allowNoPackage) {
-      return <Navigate to="/buy-gym-package" replace />;
-    }
-
     if (!roles?.length) return children;
     return roles.includes(role) ? children : <Navigate to={getDefaultRoute()} replace />;
   };
@@ -70,7 +63,6 @@ function AppRoutes() {
           />
           <Route path="/forgot-password" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
-          <Route path="/buy-gym-package" element={<RequireAuth><RequireRole roles={["MEMBER"]} allowNoPackage={true}><BuyGymPackage /></RequireRole></RequireAuth>} />
 
           <Route
             element={
@@ -85,30 +77,6 @@ function AppRoutes() {
               element={
                 <RequireRole roles={["ADMIN"]}>
                   <AccountManagement />
-                </RequireRole>
-              }
-            />
-            <Route
-              path="/package-management"
-              element={
-                <RequireRole roles={["ADMIN"]}>
-                  <PackageManagement />
-                </RequireRole>
-              }
-            />
-            <Route
-              path="/ai-package-management"
-              element={
-                <RequireRole roles={["ADMIN"]}>
-                  <AiPackageManagement />
-                </RequireRole>
-              }
-            />
-            <Route
-              path="/promotion-management"
-              element={
-                <RequireRole roles={["ADMIN"]}>
-                  <PromotionManagement />
                 </RequireRole>
               }
             />
@@ -201,7 +169,6 @@ function AppRoutes() {
 
             {}
             <Route path="/my-dashboard" element={<RequireRole roles={["MEMBER"]}><DashboardMember /></RequireRole>} />
-            <Route path="/ai-purchase" element={<RequireRole roles={["MEMBER"]}><AiPurchase /></RequireRole>} />
             <Route path="/my-workout-schedule" element={<RequireRole roles={["MEMBER"]}><MyWorkoutSchedule /></RequireRole>} />
 
             {}
@@ -222,6 +189,9 @@ function AppRoutes() {
                 </RequireRole>
               }
             />
+            <Route path="/my-clients" element={<RequireRole roles={["PT"]}><MyClients /></RequireRole>} />
+            <Route path="/pt-assignments" element={<RequireRole roles={["PT"]}><PTAssignments /></RequireRole>} />
+            <Route path="/training-progress" element={<RequireRole roles={["PT"]}><TrainingProgress /></RequireRole>} />
 
             {}
             <Route path="/settings" element={<Settings />} />

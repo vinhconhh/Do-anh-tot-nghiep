@@ -101,62 +101,7 @@ export default function Sidebar() {
           </NavLink>
         )}
 
-        {}
-        {isAdmin && (
-          <div className="flex flex-col">
-            <button
-              type="button"
-              className={`flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 w-full text-left hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${openGroup === "system" ? "text-white bg-white/5" : "text-white/60"
-                }`}
-              onClick={() => toggleGroup("system")}
-            >
-              <Settings className="w-[18px] h-[18px] shrink-0" />
-              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Cấu hình hệ thống</span>
-              <span className={`ml-auto inline-flex ${collapsed ? 'hidden' : ''}`}>
-                {openGroup === "system" ? (
-                  <ChevronDown size={16} />
-                ) : (
-                  <ChevronRight size={16} />
-                )}
-              </span>
-            </button>
-            <div
-              className={`overflow-hidden transition-[max-height] duration-250 ease-in-out ${openGroup === "system" ? "max-h-[300px]" : "max-h-0"
-                } ${collapsed ? "hidden" : ""}`}
-            >
-              <NavLink
-                to="/package-management"
-                className={({ isActive }) =>
-                  `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
-                  }`
-                }
-              >
-                <ShoppingCart className="w-[16px] h-[16px] shrink-0" />
-                <span>Quản lý Gói tập</span>
-              </NavLink>
-              <NavLink
-                to="/ai-package-management"
-                className={({ isActive }) =>
-                  `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
-                  }`
-                }
-              >
-                <Bot className="w-[16px] h-[16px] shrink-0" />
-                <span>Cấu hình Gói AI</span>
-              </NavLink>
-              <NavLink
-                to="/promotion-management"
-                className={({ isActive }) =>
-                  `flex items-center gap-[10px] h-[38px] pl-[38px] pr-[12px] rounded-lg text-[14px] transition-colors duration-150 hover:text-gym-primary ${isActive ? "text-white" : "text-white/60"
-                  }`
-                }
-              >
-                <ClipboardList className="w-[16px] h-[16px] shrink-0" />
-                <span>Chương trình Khuyến mãi</span>
-              </NavLink>
-            </div>
-          </div>
-        )}
+
 
         {}
         {isManager && (
@@ -343,17 +288,6 @@ export default function Sidebar() {
             >
               <CalendarCheck className="w-[18px] h-[18px] shrink-0" />
               <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Lịch tập của tôi</span>
-            </NavLink>
-
-            <NavLink
-              to="/ai-purchase"
-              className={({ isActive }) =>
-                `flex items-center gap-[12px] h-[44px] px-[10px] rounded-lg text-[14px] font-medium transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-0.5 ${isActive ? "text-white bg-white/15" : "text-white/60"
-                }`
-              }
-            >
-              <Bot className="w-[18px] h-[18px] shrink-0" />
-              <span className={`whitespace-nowrap overflow-hidden text-ellipsis ${collapsed ? 'hidden' : ''}`}>Mua thêm lượt AI</span>
             </NavLink>
 
             <NavLink
