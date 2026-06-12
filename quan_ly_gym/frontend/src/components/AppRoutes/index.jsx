@@ -27,6 +27,11 @@ import AccountManagement from "../../page/AccountManagement";
 import MyClients from "../../page/MyClients";
 import PTAssignments from "../../page/PTAssignments";
 import TrainingProgress from "../../page/TrainingProgress";
+import ReceptionistDashboard from "../../page/ReceptionistDashboard";
+import MemberClasses from "../../page/MemberClasses";
+import MemberPTRequest from "../../page/MemberPTRequest";
+import PTRequestApprovals from "../../page/PTRequestApprovals";
+import AttendanceHistory from "../../page/AttendanceHistory";
 
 function AppRoutes() {
   const { token, user } = useContext(AuthContext) ?? {};
@@ -47,6 +52,7 @@ function AppRoutes() {
   const getDefaultRoute = () => {
     if (role === "ADMIN") return "/account-management";
     if (role === "MANAGER") return "/dashboard";
+    if (role === "RECEPTIONIST") return "/receptionist-dashboard";
     if (role === "MEMBER") return "/my-dashboard";
     if (role === "PT") return "/my-schedule";
     return "/";
@@ -132,7 +138,7 @@ function AppRoutes() {
             />
             <Route
               path="/gym-class-management"
-              element={<RequireRole roles={["MANAGER"]}><GymClassManagement /></RequireRole>}
+              element={<RequireRole roles={["MANAGER", "RECEPTIONIST"]}><GymClassManagement /></RequireRole>}
             />
             <Route
               path="/meal-plan-management"
@@ -159,9 +165,17 @@ function AppRoutes() {
               }
             />
             <Route
+              path="/attendance-history"
+              element={
+                <RequireRole roles={["MEMBER", "MANAGER", "PT", "RECEPTIONIST", "ADMIN"]}>
+                  <AttendanceHistory />
+                </RequireRole>
+              }
+            />
+            <Route
               path="/schedules"
               element={
-                <RequireRole roles={["MANAGER"]}>
+                <RequireRole roles={["MANAGER", "RECEPTIONIST"]}>
                   <Schedules />
                 </RequireRole>
               }
@@ -170,13 +184,26 @@ function AppRoutes() {
             {}
             <Route path="/my-dashboard" element={<RequireRole roles={["MEMBER"]}><DashboardMember /></RequireRole>} />
             <Route path="/my-workout-schedule" element={<RequireRole roles={["MEMBER"]}><MyWorkoutSchedule /></RequireRole>} />
+            <Route path="/my-classes" element={<RequireRole roles={["MEMBER"]}><MemberClasses /></RequireRole>} />
+            <Route path="/request-pt" element={<RequireRole roles={["MEMBER"]}><MemberPTRequest /></RequireRole>} />
+            
+            {}
+            <Route path="/pt-request-approvals" element={<RequireRole roles={["MANAGER"]}><PTRequestApprovals /></RequireRole>} />
 
             {}
-            <Route
+            {/* <Route
               path="/pt-requests"
               element={
                 <RequireRole roles={["MANAGER", "MEMBER", "PT"]}>
                   <PtRequests />
+                </RequireRole>
+              }
+            /> */}
+            <Route
+              path="/receptionist-dashboard"
+              element={
+                <RequireRole roles={["RECEPTIONIST"]}>
+                  <ReceptionistDashboard />
                 </RequireRole>
               }
             />

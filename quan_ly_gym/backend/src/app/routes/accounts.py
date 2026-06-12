@@ -38,7 +38,7 @@ def _user_to_response(user: User) -> dict:
 @router.get("/roles")
 def get_roles(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN")),
+    current_user: User = Depends(require_roles("ADMIN", "MANAGER", "RECEPTIONIST")),
 ):
     """Lấy danh sách tất cả vai trò."""
     roles = db.query(Role).all()
@@ -55,7 +55,7 @@ def get_roles(
 @router.get("")
 def get_accounts(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN")),
+    current_user: User = Depends(require_roles("ADMIN", "MANAGER", "RECEPTIONIST")),
     role: str = Query(None, description="Filter by role code: ADMIN, MANAGER, PT, MEMBER"),
     search: str = Query(None, description="Search by name or email"),
     page: int = Query(1, ge=1),
@@ -94,7 +94,7 @@ def get_accounts(
 def get_account(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN")),
+    current_user: User = Depends(require_roles("ADMIN", "MANAGER", "RECEPTIONIST")),
 ):
     """Lấy chi tiết 1 tài khoản."""
     user = db.query(User).filter(User.UserID == user_id, User.IsDeleted == 0).first()
@@ -107,7 +107,7 @@ def get_account(
 def create_account(
     req: AccountCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN")),
+    current_user: User = Depends(require_roles("ADMIN", "MANAGER", "RECEPTIONIST")),
 ):
     """Tạo tài khoản mới."""
     if db.query(User).filter(User.Email == req.Email, User.IsDeleted == 0).first():
@@ -148,7 +148,7 @@ def update_account(
     user_id: int,
     req: AccountUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN")),
+    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     """Cập nhật thông tin tài khoản."""
     user = db.query(User).filter(User.UserID == user_id, User.IsDeleted == 0).first()
@@ -192,7 +192,7 @@ def update_account(
 def delete_account(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN")),
+    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     """Xóa mềm tài khoản (soft delete)."""
     if user_id == current_user.UserID:
@@ -212,7 +212,7 @@ def delete_account(
 def toggle_account_status(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN")),
+    current_user: User = Depends(require_roles("ADMIN", "MANAGER", "RECEPTIONIST")),
 ):
     """Khóa/Mở khóa tài khoản."""
     if user_id == current_user.UserID:

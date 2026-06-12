@@ -3,18 +3,17 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import Optional
 from datetime import datetime, date, timedelta, time as dt_time
-
 from ..database import get_db
 from ..models.user import User
 from ..models.workout import Schedule
 from ..models.facility import GymClass, ClassEnrollment
+from ..models.booking import Booking
 from ..middleware.auth import get_current_user
 
 router = APIRouter(prefix="/api/schedules", tags=["Schedules"])
 
 
-def _schedule_events(db, schedules, classes_teaching, classes_enrolled, target_id):
-    """Merge workout schedules + class events into ScheduleWeek format."""
+def _schedule_events(db, schedules, classes_teaching, classes_enrolled, pt_bookings, target_id):
     events = []
     for s in schedules:
         if s.WorkoutDate:
@@ -73,6 +72,30 @@ def _schedule_events(db, schedules, classes_teaching, classes_enrolled, target_i
             "attendanceStatus": att_status,
             "color": "blue",
         })
+    for b in pt_bookings:
+        if b.MemberID == target_id:
+            pt_name = b.pt.FullName if b.pt else "PT"
+            title = f"Tập PT: {pt_name}"
+            meta = "Lịch tập cùng PT"
+            color = "purple"
+        elif b.PTID == target_id:
+            member_name = b.member.FullName if b.member else "HV"
+            title = f"Dạy PT: {member_name}"
+            meta = "Lịch hướng dẫn"
+            color = "purple"
+        else:
+            title = "Tập PT"
+            meta = "Lịch tập"
+            color = "purple"
+
+        events.append({
+            "id": f"pt_booking_{b.BookingID}",
+            "start": b.StartTime.isoformat() if b.StartTime else "",
+            "end": b.EndTime.isoformat() if b.EndTime else "",
+            "title": title,
+            "meta": meta,
+            "color": color,
+        })
     return events
 
 
@@ -111,7 +134,11 @@ def list_schedules(
     classes_teaching = q_teach.order_by(GymClass.StartTime).all()
     classes_enrolled = q_enroll.order_by(GymClass.StartTime).all() if q_enroll else []
 
-    return _schedule_events(db, schedules, classes_teaching, classes_enrolled, target_id)
+    pt_bookings = db.query(Booking).filter(
+        or_(Booking.MemberID == target_id, Booking.PTID == target_id)
+    ).all()
+
+    return _schedule_events(db, schedules, classes_teaching, classes_enrolled, pt_bookings, target_id)
 
 
 @router.get("/my")
@@ -144,4 +171,8 @@ def my_schedules(
     else:
         classes_enrolled = []
 
-    return _schedule_events(db, schedules, classes_teaching, classes_enrolled, uid)
+    pt_bookings = db.query(Booking).filter(
+        or_(Booking.MemberID == uid, Booking.PTID == uid)
+    ).all()
+
+    return _schedule_events(db, schedules, classes_teaching, classes_enrolled, pt_bookings, uid)

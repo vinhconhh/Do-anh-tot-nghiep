@@ -4,21 +4,23 @@ import { Search, Plus, Pencil, Trash2, Eye, RefreshCw } from "lucide-react";
 import Modal from "../../components/Modal";
 import styles from "./Members.module.scss";
 import { useMembersApi } from "../../api/membersApi";
+import { useTrainersApi } from "../../api/trainersApi";
+import axiosClient from "../../api/axiosClient";
 
-const TIER_COLORS = { Gold: "tier-gold", Platinum: "tier-platinum", Silver: "tier-silver" };
 const STATUS_META = {
   active:   { label: "Hoạt động",    color: "#1cc88a" },
   pending:  { label: "Chờ PT",       color: "#f6c23e" },
-  expiring: { label: "Sắp hết hạn",  color: "#f6c23e" },
-  expired:  { label: "Hết hạn",      color: "#858796" },
+  inactive: { label: "Tạm nghỉ",     color: "#858796" },
 };
 
-const EMPTY_FORM = { hoTen: "", ngaySinh: "", gioiTinh: "Nam", nhuCauTap: "", email: "", sdt: "", tier: "Silver", pt: "" };
+const EMPTY_FORM = { hoTen: "", ngaySinh: "", gioiTinh: "Nam", nhuCauTap: "", email: "", sdt: "", pt: "" };
 
 export default function Members() {
   const nav = useNavigate();
   const api = useMembersApi();
+  const trainersApi = useTrainersApi();
   const [rows, setRows] = useState([]);
+  const [trainers, setTrainers] = useState([]);
   const [q, setQ] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterTier, setFilterTier] = useState("all");
@@ -31,8 +33,13 @@ export default function Members() {
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    api.list()
-      .then((data) => { if (alive) setRows(data); })
+    Promise.all([api.list(), trainersApi.list()])
+      .then(([data, tData]) => { 
+        if (alive) {
+          setRows(data); 
+          setTrainers(tData);
+        }
+      })
       .catch((err) => { if (alive) setError(err.message); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
@@ -41,18 +48,16 @@ export default function Members() {
   const stats = useMemo(() => ({
     total:    rows.length,
     active:   rows.filter((r) => r.status === "active").length,
-    expiring: rows.filter((r) => r.status === "expiring").length,
-    expired:  rows.filter((r) => r.status === "expired").length,
+    inactive: rows.filter((r) => r.status === "inactive").length,
   }), [rows]);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
       const matchQ = !q || r.hoTen.toLowerCase().includes(q.toLowerCase()) || r.email.toLowerCase().includes(q.toLowerCase());
       const matchStatus = filterStatus === "all" || r.status === filterStatus;
-      const matchTier = filterTier === "all" || r.tier === filterTier;
-      return matchQ && matchStatus && matchTier;
+      return matchQ && matchStatus;
     });
-  }, [rows, q, filterStatus, filterTier]);
+  }, [rows, q, filterStatus]);
 
   const openCreate = () => { setForm(EMPTY_FORM); setEditing({}); };
   const openEdit = (row) => {
@@ -63,7 +68,6 @@ export default function Members() {
       nhuCauTap: row.nhuCauTap || "",
       email: row.email || "",
       sdt: row.sdt || "",
-      tier: row.tier || "Silver",
       pt: row.pt || "",
     });
     setEditing(row);
@@ -85,6 +89,10 @@ export default function Members() {
           gender: form.gioiTinh,
           phoneNumber: form.sdt,
         });
+        if (form.pt) {
+          await axiosClient.post("/managers/assign-pt", { member_id: editing.UserID, pt_id: parseInt(form.pt) });
+          updated.pt = trainers.find(t => t.UserID === parseInt(form.pt))?.FullName;
+        }
         setRows((prev) => prev.map((r) => r.UserID === editing.UserID ? { ...r, ...updated } : r));
       } else {
         const created = await api.create({
@@ -99,6 +107,10 @@ export default function Members() {
         });
         const initials = form.hoTen.split(" ").map((w) => w[0]).slice(-2).join("").toUpperCase();
         setRows((prev) => [...prev, { ...created, initials, status: "active" }]);
+        if (form.pt) {
+          await axiosClient.post("/managers/assign-pt", { member_id: created.UserID, pt_id: parseInt(form.pt) });
+          setRows((prev) => prev.map((r) => r.UserID === created.UserID ? { ...r, pt: trainers.find(t => t.UserID === parseInt(form.pt))?.FullName } : r));
+        }
       }
     } catch (err) {
       alert(err.message || "Lưu thất bại");
@@ -135,8 +147,7 @@ export default function Members() {
           {[
             { label: "Tổng hội viên",    val: stats.total,    color: "#4e73df" },
             { label: "Đang hoạt động",   val: stats.active,   color: "#1cc88a" },
-            { label: "Sắp hết hạn",      val: stats.expiring, color: "#f6c23e" },
-            { label: "Đã hết hạn",       val: stats.expired,  color: "#e74a3b" },
+            { label: "Tạm nghỉ",         val: stats.inactive, color: "#e74a3b" },
           ].map((s) => (
             <div key={s.label} className={styles.statCard} style={{ borderLeftColor: s.color }}>
               <div className={styles.statLabel}>{s.label}</div>
@@ -158,25 +169,13 @@ export default function Members() {
           </div>
 
           <div className={styles.filterGroup}>
-            {["all", "active", "expiring", "expired"].map((s) => (
+            {["all", "active", "inactive"].map((s) => (
               <button
                 key={s}
                 className={`${styles.filterBtn} ${filterStatus === s ? styles.filterActive : ""}`}
                 onClick={() => setFilterStatus(s)}
               >
-                {{ all: "Tất cả", active: "Hoạt động", expiring: "Sắp hết hạn", expired: "Hết hạn" }[s]}
-              </button>
-            ))}
-          </div>
-
-          <div className={styles.filterGroup}>
-            {["all", "Silver", "Gold", "Platinum"].map((t) => (
-              <button
-                key={t}
-                className={`${styles.filterBtn} ${filterTier === t ? styles.filterActive : ""}`}
-                onClick={() => setFilterTier(t)}
-              >
-                {t === "all" ? "Mọi gói" : t}
+                {{ all: "Tất cả", active: "Hoạt động", inactive: "Tạm nghỉ" }[s]}
               </button>
             ))}
           </div>
@@ -189,11 +188,8 @@ export default function Members() {
               <tr>
                 <th>Hội viên</th>
                 <th>Nhu cầu tập</th>
-                <th>Gói thẻ</th>
-                <th>Ngày đăng ký</th>
-                <th>Hết hạn</th>
+                <th>Ngày tham gia</th>
                 <th>PT phụ trách</th>
-                <th>AI đã dùng</th>
                 <th>Trạng thái</th>
                 <th>Thao tác</th>
               </tr>
@@ -224,11 +220,8 @@ export default function Members() {
                       </div>
                     </td>
                     <td><span className={styles.dateText}>{m.goal || "—"}</span></td>
-                    <td><span className={styles.tierBadge}>{m.gymPackageName || "Chưa ĐK"}</span></td>
                     <td><span className={styles.dateText}>{m.createdAt ? new Date(m.createdAt).toLocaleDateString("vi-VN") : "—"}</span></td>
-                    <td><span className={styles.dateText}>—</span></td>
                     <td><span className={styles.ptName}>{m.pt || "—"}</span></td>
-                    <td><span className={styles.aiUsed}>{m.aiQuota ?? 0}</span></td>
                     <td>
                       <span className={styles.statusBadge} style={{ background: sm.color + "22", color: sm.color }}>
                         {sm.label}
@@ -239,15 +232,9 @@ export default function Members() {
                         <button className={styles.btnIcon} title="Xem chi tiết" onClick={() => nav(`/members/${m.UserID}`)}>
                           <Eye size={15} />
                         </button>
-                        {m.status === "expired" || m.status === "expiring" ? (
-                          <button className={`${styles.btnIcon} ${styles.btnSuccess}`} title="Gia hạn">
-                            <RefreshCw size={15} />
-                          </button>
-                        ) : (
-                          <button className={`${styles.btnIcon} ${styles.btnEdit}`} title="Sửa" onClick={() => openEdit(m)}>
-                            <Pencil size={15} />
-                          </button>
-                        )}
+                        <button className={`${styles.btnIcon} ${styles.btnEdit}`} title="Sửa" onClick={() => openEdit(m)}>
+                          <Pencil size={15} />
+                        </button>
                         <button className={`${styles.btnIcon} ${styles.btnDelete}`} title="Xóa" onClick={() => handleDelete(m)}>
                           <Trash2 size={15} />
                         </button>
@@ -297,18 +284,14 @@ export default function Members() {
               <label>Nhu cầu tập</label>
               <input value={form.nhuCauTap || ""} onChange={(e) => setForm((f) => ({ ...f, nhuCauTap: e.target.value }))} placeholder="VD: Giảm mỡ, Tăng cơ, Yoga..." />
             </div>
-            <div className={styles.formGroup}>
-              <label>Gói thẻ *</label>
-              <select value={form.tier || "Silver"} onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value }))}>
-                <option>Silver</option>
-                <option>Gold</option>
-                <option>Platinum</option>
-              </select>
-            </div>
+
             <div className={`${styles.formGroup} ${styles.spanFull}`}>
               <label>Phân công PT</label>
               <select value={form.pt || ""} onChange={(e) => setForm((f) => ({ ...f, pt: e.target.value }))}>
                 <option value="">— Chưa phân công —</option>
+                {trainers.map((t) => (
+                  <option key={t.UserID} value={t.UserID}>{t.FullName}</option>
+                ))}
               </select>
             </div>
           </div>

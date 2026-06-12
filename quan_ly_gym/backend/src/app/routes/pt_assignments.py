@@ -13,7 +13,8 @@ from ..database import get_db
 from ..models.user import User
 from ..models.profile import MemberProfile
 from ..models.facility import GymExercise, AssignedExercise
-from ..models.pt_request import PTRequest
+from ..models.meal_plan import MealPlan, AssignedMeal
+from ..models.member_pt_relation import MemberPTRelation
 from ..middleware.auth import get_current_user
 
 router = APIRouter(prefix="/api/pt-assignments", tags=["PT Assignments"])
@@ -34,13 +35,22 @@ class BatchAssignBody(BaseModel):
     assignedDate: str          # "YYYY-MM-DD"
     exercises: List[AssignmentItem]
 
+class MealAssignmentItem(BaseModel):
+    mealPlanId: int
+    note: Optional[str] = ""
+
+class BatchAssignMealBody(BaseModel):
+    memberId: int
+    assignedDate: str
+    meals: List[MealAssignmentItem]
+
 
 # ─── Helpers ───
 def _get_pt_client_ids(db: Session, pt_id: int) -> set:
-    """Lấy danh sách MemberID mà PT này đã Approved."""
-    rows = db.query(PTRequest.MemberID).filter(
-        PTRequest.PTID == pt_id,
-        PTRequest.Status == "Approved",
+    """Lấy danh sách MemberID mà PT này được gán."""
+    rows = db.query(MemberPTRelation.MemberID).filter(
+        MemberPTRelation.PTID == pt_id,
+        MemberPTRelation.Status == "Active",
     ).distinct().all()
     return {r[0] for r in rows}
 
@@ -61,13 +71,13 @@ def my_clients(
 ):
     """PT: lấy danh sách client đã approved, kèm trình độ."""
     requests = (
-        db.query(PTRequest)
-        .options(joinedload(PTRequest.member))
+        db.query(MemberPTRelation)
+        .options(joinedload(MemberPTRelation.member))
         .filter(
-            PTRequest.PTID == current_user.UserID,
-            PTRequest.Status == "Approved",
+            MemberPTRelation.PTID == current_user.UserID,
+            MemberPTRelation.Status == "Active",
         )
-        .order_by(PTRequest.CreatedAt.desc())
+        .order_by(MemberPTRelation.CreatedAt.desc())
         .all()
     )
     # Deduplicate by MemberID (keep latest)
@@ -82,10 +92,10 @@ def my_clients(
             "memberId": r.MemberID,
             "memberName": m.FullName if m else "Unknown",
             "memberEmail": m.Email if m else "",
-            "goal": r.MemberGoal or "",
-            "experienceLevel": r.ExperienceLevel or "new",
-            "bodyNote": r.BodyNote or "",
-            "connectedSince": r.RespondedAt.strftime("%d/%m/%Y") if r.RespondedAt else "",
+            "goal": m.member_profile.Goal if (m and m.member_profile) else "",
+            "experienceLevel": "new",
+            "bodyNote": "",
+            "connectedSince": r.CreatedAt.strftime("%d/%m/%Y") if r.CreatedAt else "",
         })
     return result
 
@@ -202,6 +212,7 @@ def assign_exercises(
             Duration=item.duration,
             Weight=item.weight,
             Note=item.note,
+            MediaURL=None, # Tạm để null, có thể mở rộng schema request sau
             AssignedDate=target_date,
             Status="Active",
         )
@@ -235,6 +246,93 @@ def delete_assignment(
     db.commit()
     return {"message": "Đã xóa bài tập"}
 
+@router.get("/client/{member_id}/meals")
+def client_meals(
+    member_id: int,
+    assigned_date: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(_require_pt),
+):
+    """PT: xem thực đơn đã phân cho 1 client."""
+    client_ids = _get_pt_client_ids(db, current_user.UserID)
+    if member_id not in client_ids:
+        raise HTTPException(status_code=403, detail="Bạn không phải HLV của hội viên này.")
+
+    q = db.query(AssignedMeal).options(
+        joinedload(AssignedMeal.meal_plan)
+    ).filter(
+        AssignedMeal.PTID == current_user.UserID,
+        AssignedMeal.MemberID == member_id,
+    )
+    if assigned_date:
+        q = q.filter(AssignedMeal.AssignedDate == assigned_date)
+
+    items = q.order_by(AssignedMeal.CreatedAt.desc()).all()
+    return [_format_meal_assignment(a) for a in items]
+
+@router.post("/meals")
+def assign_meals(
+    body: BatchAssignMealBody,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(_require_pt),
+):
+    """PT: phân thực đơn cho client (batch)."""
+    client_ids = _get_pt_client_ids(db, current_user.UserID)
+    if body.memberId not in client_ids:
+        raise HTTPException(status_code=403, detail="Bạn không phải HLV của hội viên này.")
+
+    try:
+        target_date = date.fromisoformat(body.assignedDate)
+        target_datetime = datetime.combine(target_date, datetime.min.time())
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Ngày không hợp lệ. Định dạng: YYYY-MM-DD")
+
+    if not body.meals:
+        raise HTTPException(status_code=400, detail="Danh sách thực đơn trống.")
+
+    created = []
+    for item in body.meals:
+        mp = db.query(MealPlan).filter(MealPlan.PlanID == item.mealPlanId).first()
+        if not mp:
+            continue
+
+        assignment = AssignedMeal(
+            PTID=current_user.UserID,
+            MemberID=body.memberId,
+            MealPlanID=item.mealPlanId,
+            Note=item.note,
+            AssignedDate=target_datetime,
+            Status="Active",
+        )
+        db.add(assignment)
+        created.append(assignment)
+
+    db.commit()
+    for a in created:
+        db.refresh(a)
+
+    return {
+        "message": f"Đã phân {len(created)} thực đơn thành công!",
+        "count": len(created),
+    }
+
+@router.delete("/meals/{assignment_id}")
+def delete_meal_assignment(
+    assignment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(_require_pt),
+):
+    """PT: xóa thực đơn đã phân."""
+    obj = db.query(AssignedMeal).filter(
+        AssignedMeal.AssignmentID == assignment_id,
+        AssignedMeal.PTID == current_user.UserID,
+    ).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Không tìm thấy thực đơn đã phân.")
+    db.delete(obj)
+    db.commit()
+    return {"message": "Đã xóa thực đơn"}
+
 
 @router.get("/my-exercises")
 def my_exercises(
@@ -256,6 +354,26 @@ def my_exercises(
     return [_format_assignment(a, include_video=True) for a in items]
 
 
+@router.get("/my-meals")
+def my_meals(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Member: lấy thực đơn được phân cho hôm nay."""
+    today = date.today()
+    items = (
+        db.query(AssignedMeal)
+        .options(joinedload(AssignedMeal.meal_plan))
+        .filter(
+            AssignedMeal.MemberID == current_user.UserID,
+            AssignedMeal.AssignedDate == today,
+        )
+        .order_by(AssignedMeal.CreatedAt.asc())
+        .all()
+    )
+    return [_format_meal_assignment(a) for a in items]
+
+
 @router.put("/{assignment_id}/complete")
 def complete_exercise(
     assignment_id: int,
@@ -274,6 +392,24 @@ def complete_exercise(
     return {"message": "Đã hoàn thành bài tập! 💪"}
 
 
+@router.put("/meals/{assignment_id}/complete")
+def complete_meal(
+    assignment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Member: đánh dấu thực đơn hoàn thành."""
+    obj = db.query(AssignedMeal).filter(
+        AssignedMeal.AssignmentID == assignment_id,
+        AssignedMeal.MemberID == current_user.UserID,
+    ).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Không tìm thấy thực đơn.")
+    obj.Status = "Completed"
+    db.commit()
+    return {"message": "Đã hoàn thành thực đơn! 🥗"}
+
+
 # ─── Serializer ───
 def _format_assignment(a: AssignedExercise, include_video: bool = False) -> dict:
     ex = a.exercise
@@ -289,6 +425,7 @@ def _format_assignment(a: AssignedExercise, include_video: bool = False) -> dict
         "duration": a.Duration,
         "weight": a.Weight,
         "note": a.Note,
+        "mediaURL": a.MediaURL,
         "assignedDate": a.AssignedDate.isoformat() if a.AssignedDate else "",
         "status": a.Status,
     }
@@ -296,6 +433,19 @@ def _format_assignment(a: AssignedExercise, include_video: bool = False) -> dict
         d["videoURL"] = ex.VideoURL
         d["equipmentName"] = ex.gym_equipment.Name if ex.gym_equipment else None
     return d
+
+def _format_meal_assignment(a: AssignedMeal) -> dict:
+    mp = a.meal_plan
+    return {
+        "assignmentId": a.AssignmentID,
+        "mealPlanId": a.MealPlanID,
+        "mealPlanName": mp.Name if mp else "",
+        "category": mp.Category if mp else "",
+        "calories": mp.Calories if mp else 0,
+        "note": a.Note,
+        "assignedDate": a.AssignedDate.isoformat() if a.AssignedDate else "",
+        "status": a.Status,
+    }
 
 
 # ─── Training Progress (PT views student check-ins) ───

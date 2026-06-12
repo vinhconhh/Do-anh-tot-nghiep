@@ -27,30 +27,17 @@ from .models import (
     LogWorkoutDetail,
     BodyMetric,
     ProgressPhoto,
-    DietPlan,
-    Meal,
-    MealItem,
+    MealPlan,
+    AssignedMeal,
     AIRequest,
     AIResponse,
     Notification,
     AuditLog,
-    PTRequest,
-    PTScoreLog,
+    MemberPTRelation,
+    MemberRequest,
 )
 
-from .routes.auth import router as auth_router
-from .routes.members import router as members_router
-from .routes.trainers import router as trainers_router
-from .routes.dashboard import router as dashboard_router
-from .routes.schedules import router as schedules_router
-from .routes.bookings import router as bookings_router
-from .routes.users import router as users_router
-from .routes.notifications import router as notifications_router
-from .routes.exercises import router as exercises_router
-from .routes.pt_requests import router as pt_requests_router
-from .routes.streaks import router as streaks_router
-from .routes.ai import router as ai_router
-from .routes.facility import router as facility_router
+
 
 import os
 import logging

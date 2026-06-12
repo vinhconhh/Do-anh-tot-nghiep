@@ -9,15 +9,19 @@ export default function PTAssignments() {
   const [clients, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState(null);
   const [exercises, setExercises] = useState({ items: [], total: 0, pages: 1 });
-  const [assigned, setAssigned] = useState([]);
+  const [mealPlans, setMealPlans] = useState([]);
+  const [assignedEx, setAssignedEx] = useState([]);
+  const [assignedMeals, setAssignedMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [exLoading, setExLoading] = useState(false);
+  const [mealLoading, setMealLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [assignDate, setAssignDate] = useState(new Date().toISOString().slice(0, 10));
 
-  // Checked exercises with config
-  const [checked, setChecked] = useState({});
+  // Checked exercises and meals
+  const [checkedEx, setCheckedEx] = useState({});
+  const [checkedMeals, setCheckedMeals] = useState({});
   // Confirmation dialog
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
@@ -34,7 +38,6 @@ export default function PTAssignments() {
 
   useEffect(() => { fetchClients(); }, [fetchClients]);
 
-  // Fetch exercises catalog
   const fetchExercises = useCallback(async () => {
     setExLoading(true);
     try {
@@ -46,22 +49,43 @@ export default function PTAssignments() {
     finally { setExLoading(false); }
   }, [page, search]);
 
-  useEffect(() => { if (selectedClient) fetchExercises(); }, [fetchExercises, selectedClient]);
+  const fetchMealPlans = useCallback(async () => {
+    setMealLoading(true);
+    try {
+      const res = await api.get(`/meal-plans`);
+      setMealPlans(res.data || []);
+    } catch { setMealPlans([]); }
+    finally { setMealLoading(false); }
+  }, []);
+
+  useEffect(() => { 
+    if (selectedClient) {
+      fetchExercises();
+      fetchMealPlans();
+    }
+  }, [fetchExercises, fetchMealPlans, selectedClient]);
   useEffect(() => { setPage(1); }, [search]);
 
-  // Fetch assigned exercises for selected client
+  // Fetch assigned exercises and meals for selected client
   const fetchAssigned = useCallback(async () => {
     if (!selectedClient) return;
     try {
-      const res = await api.get(`/pt-assignments/client/${selectedClient.memberId}/exercises?assigned_date=${assignDate}`);
-      setAssigned(res.data || []);
-    } catch { setAssigned([]); }
+      const [exRes, mealRes] = await Promise.all([
+        api.get(`/pt-assignments/client/${selectedClient.memberId}/exercises?assigned_date=${assignDate}`),
+        api.get(`/pt-assignments/client/${selectedClient.memberId}/meals?assigned_date=${assignDate}`)
+      ]);
+      setAssignedEx(exRes.data || []);
+      setAssignedMeals(mealRes.data || []);
+    } catch { 
+      setAssignedEx([]); 
+      setAssignedMeals([]);
+    }
   }, [selectedClient, assignDate]);
 
   useEffect(() => { fetchAssigned(); }, [fetchAssigned]);
 
-  const toggleCheck = (exId) => {
-    setChecked(prev => {
+  const toggleCheckEx = (exId) => {
+    setCheckedEx(prev => {
       const next = { ...prev };
       if (next[exId]) delete next[exId];
       else next[exId] = { sets: 3, reps: 12, duration: "", weight: "", note: "" };
@@ -69,16 +93,31 @@ export default function PTAssignments() {
     });
   };
 
-  const updateConfig = (exId, key, val) => {
-    setChecked(prev => ({ ...prev, [exId]: { ...prev[exId], [key]: val } }));
+  const updateConfigEx = (exId, key, val) => {
+    setCheckedEx(prev => ({ ...prev, [exId]: { ...prev[exId], [key]: val } }));
   };
 
-  const checkedCount = Object.keys(checked).length;
+  const toggleCheckMeal = (mealId) => {
+    setCheckedMeals(prev => {
+      const next = { ...prev };
+      if (next[mealId]) delete next[mealId];
+      else next[mealId] = { note: "" };
+      return next;
+    });
+  };
+
+  const updateConfigMeal = (mealId, key, val) => {
+    setCheckedMeals(prev => ({ ...prev, [mealId]: { ...prev[mealId], [key]: val } }));
+  };
+
+  const checkedExCount = Object.keys(checkedEx).length;
+  const checkedMealCount = Object.keys(checkedMeals).length;
+  const totalChecked = checkedExCount + checkedMealCount;
 
   const handleSend = async () => {
     setSending(true);
     try {
-      const exList = Object.entries(checked).map(([exId, cfg]) => ({
+      const exList = Object.entries(checkedEx).map(([exId, cfg]) => ({
         exerciseId: parseInt(exId),
         sets: parseInt(cfg.sets) || 3,
         reps: parseInt(cfg.reps) || 12,
@@ -86,25 +125,48 @@ export default function PTAssignments() {
         weight: cfg.weight ? parseFloat(cfg.weight) : null,
         note: cfg.note || "",
       }));
-      await api.post("/pt-assignments", {
-        memberId: selectedClient.memberId,
-        assignedDate: assignDate,
-        exercises: exList,
-      });
-      setChecked({});
+      const mealList = Object.entries(checkedMeals).map(([mealId, cfg]) => ({
+        mealPlanId: parseInt(mealId),
+        note: cfg.note || "",
+      }));
+
+      const promises = [];
+      if (exList.length > 0) {
+        promises.push(api.post("/pt-assignments", {
+          memberId: selectedClient.memberId,
+          assignedDate: assignDate,
+          exercises: exList,
+        }));
+      }
+      if (mealList.length > 0) {
+        promises.push(api.post("/pt-assignments/meals", {
+          memberId: selectedClient.memberId,
+          assignedDate: assignDate,
+          meals: mealList,
+        }));
+      }
+
+      await Promise.all(promises);
+
+      setCheckedEx({});
+      setCheckedMeals({});
       setConfirmOpen(false);
       fetchAssigned();
-      alert("✅ Đã gửi bài tập thành công!");
+      alert("✅ Đã gửi giáo án thành công!");
     } catch (e) {
       alert("❌ Lỗi: " + (e.response?.data?.detail || e.message));
     }
     finally { setSending(false); }
   };
 
-  const handleDeleteAssignment = async (id) => {
-    if (!window.confirm("Xóa bài tập đã phân này?")) return;
+  const handleDeleteAssignment = async (id, type) => {
+    if (!window.confirm(`Xóa ${type === 'meal' ? 'thực đơn' : 'bài tập'} đã phân này?`)) return;
     try {
-      await api.delete(`/pt-assignments/${id}`);
+      if (type === 'meal') {
+        await api.delete(`/pt-assignments/meals/${id}`);
+      } else {
+        await api.delete(`/pt-assignments/${id}`);
+      }
       fetchAssigned();
     } catch (e) { alert("Lỗi: " + (e.response?.data?.detail || e.message)); }
   };
@@ -122,10 +184,10 @@ export default function PTAssignments() {
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: "2.2rem", fontWeight: 800, color: "var(--theme-text-dark)", margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
-          <Dumbbell size={26} color="#1cc88a" /> Phân bài tập cho hội viên
+          <Dumbbell size={26} color="#1cc88a" /> Giao Giáo án (Bài tập & Bữa ăn)
         </h1>
         <p style={{ color: "var(--theme-text)", margin: "4px 0 0", fontSize: "1.4rem" }}>
-          Chọn khách hàng → tick bài tập → gửi
+          Chọn khách hàng → chọn bài tập và thực đơn → gửi
         </p>
       </div>
 
@@ -147,7 +209,7 @@ export default function PTAssignments() {
                 const active = selectedClient?.memberId === c.memberId;
                 const ec = EXP_COLORS[c.experienceLevel] || "#94a3b8";
                 return (
-                  <div key={c.memberId} onClick={() => { setSelectedClient(c); setChecked({}); }}
+                  <div key={c.memberId} onClick={() => { setSelectedClient(c); setCheckedEx({}); setCheckedMeals({}); }}
                     style={{
                       padding: "14px 16px", cursor: "pointer", borderBottom: "1px solid var(--theme-border)",
                       background: active ? "var(--theme-primary)" : "transparent", transition: "background 0.15s",
@@ -179,34 +241,73 @@ export default function PTAssignments() {
                   style={{ padding: "8px 14px", background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, color: "var(--theme-text-dark)", fontSize: "1.4rem" }} />
               </div>
 
-              {/* Assigned exercises */}
+              {/* Assigned exercises & meals */}
               <div style={{ background: "var(--theme-surface)", borderRadius: 14, border: "1px solid var(--theme-border)", padding: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-                <h3 style={{ color: "var(--theme-text-dark)", fontSize: "1.5rem", margin: "0 0 12px", fontWeight: 700 }}>📋 Bài tập đã phân cho {selectedClient.memberName}</h3>
-                {assigned.length === 0 ? (
-                  <div style={{ color: "var(--theme-text)", textAlign: "center", padding: 20, fontSize: "1.4rem" }}>Chưa có bài tập nào cho ngày này</div>
+                <h3 style={{ color: "var(--theme-text-dark)", fontSize: "1.5rem", margin: "0 0 12px", fontWeight: 700 }}>📋 Giáo án đã giao cho {selectedClient.memberName}</h3>
+                
+                {assignedEx.length === 0 && assignedMeals.length === 0 ? (
+                  <div style={{ color: "var(--theme-text)", textAlign: "center", padding: 20, fontSize: "1.4rem" }}>Chưa có giáo án nào cho ngày này</div>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {assigned.map(a => (
-                      <div key={a.assignmentId} style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "12px 14px", background: "var(--theme-bg)", borderRadius: 10, border: "1px solid var(--theme-border)",
-                      }}>
-                        <div>
-                          <span style={{ fontWeight: 700, color: a.status === "Completed" ? "#1cc88a" : "var(--theme-text-dark)", fontSize: "1.4rem" }}>
-                            {a.status === "Completed" && "✅ "}{a.exerciseName}
-                          </span>
-                          {a.assignmentName && <span style={{ color: "var(--theme-text)", marginLeft: 8, fontSize: "1.3rem" }}>({a.assignmentName})</span>}
-                          <div style={{ color: "var(--theme-text)", fontSize: "1.3rem", marginTop: 2 }}>
-                            {a.sets}×{a.reps} {a.duration ? `· ${a.duration} phút` : ""} {a.weight ? `· ${a.weight}kg` : ""}
-                            {a.note && <span style={{ color: "#f6c23e", marginLeft: 6 }}>💬 {a.note}</span>}
-                          </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    
+                    {assignedEx.length > 0 && (
+                      <div>
+                        <h4 style={{ color: "var(--theme-text-dark)", fontSize: "1.3rem", marginBottom: 8, fontWeight: 700 }}>💪 Bài tập</h4>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {assignedEx.map(a => (
+                            <div key={a.assignmentId} style={{
+                              display: "flex", alignItems: "center", justifyContent: "space-between",
+                              padding: "12px 14px", background: "var(--theme-bg)", borderRadius: 10, border: "1px solid var(--theme-border)",
+                            }}>
+                              <div>
+                                <span style={{ fontWeight: 700, color: a.status === "Completed" ? "#1cc88a" : "var(--theme-text-dark)", fontSize: "1.4rem" }}>
+                                  {a.status === "Completed" && "✅ "}{a.exerciseName}
+                                </span>
+                                {a.assignmentName && <span style={{ color: "var(--theme-text)", marginLeft: 8, fontSize: "1.3rem" }}>({a.assignmentName})</span>}
+                                <div style={{ color: "var(--theme-text)", fontSize: "1.3rem", marginTop: 2 }}>
+                                  {a.sets}×{a.reps} {a.duration ? `· ${a.duration} phút` : ""} {a.weight ? `· ${a.weight}kg` : ""}
+                                  {a.note && <span style={{ color: "#f6c23e", marginLeft: 6 }}>💬 {a.note}</span>}
+                                </div>
+                              </div>
+                              <button onClick={() => handleDeleteAssignment(a.assignmentId, 'exercise')}
+                                style={{ background: "#e74a3b22", color: "#e74a3b", border: "1px solid #e74a3b44", borderRadius: 7, padding: "6px 10px", cursor: "pointer", fontSize: "1.3rem" }}>
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                        <button onClick={() => handleDeleteAssignment(a.assignmentId)}
-                          style={{ background: "#e74a3b22", color: "#e74a3b", border: "1px solid #e74a3b44", borderRadius: 7, padding: "6px 10px", cursor: "pointer", fontSize: "1.3rem" }}>
-                          <Trash2 size={15} />
-                        </button>
                       </div>
-                    ))}
+                    )}
+
+                    {assignedMeals.length > 0 && (
+                      <div>
+                        <h4 style={{ color: "var(--theme-text-dark)", fontSize: "1.3rem", marginBottom: 8, fontWeight: 700, marginTop: 8 }}>🥗 Thực đơn</h4>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {assignedMeals.map(a => (
+                            <div key={a.assignmentId} style={{
+                              display: "flex", alignItems: "center", justifyContent: "space-between",
+                              padding: "12px 14px", background: "var(--theme-bg)", borderRadius: 10, border: "1px solid var(--theme-border)",
+                            }}>
+                              <div>
+                                <span style={{ fontWeight: 700, color: a.status === "Completed" ? "#1cc88a" : "var(--theme-text-dark)", fontSize: "1.4rem" }}>
+                                  {a.status === "Completed" && "✅ "}{a.mealPlanName}
+                                </span>
+                                {a.category && <span style={{ color: "var(--theme-text)", marginLeft: 8, fontSize: "1.3rem" }}>({a.category})</span>}
+                                <div style={{ color: "var(--theme-text)", fontSize: "1.3rem", marginTop: 2 }}>
+                                  {a.calories} Kcal
+                                  {a.note && <span style={{ color: "#f6c23e", marginLeft: 6 }}>💬 {a.note}</span>}
+                                </div>
+                              </div>
+                              <button onClick={() => handleDeleteAssignment(a.assignmentId, 'meal')}
+                                style={{ background: "#e74a3b22", color: "#e74a3b", border: "1px solid #e74a3b44", borderRadius: 7, padding: "6px 10px", cursor: "pointer", fontSize: "1.3rem" }}>
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                   </div>
                 )}
               </div>
@@ -228,12 +329,12 @@ export default function PTAssignments() {
                   <>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       {exercises.items.map(ex => {
-                        const isChecked = !!checked[ex.ExerciseID];
+                        const isChecked = !!checkedEx[ex.ExerciseID];
                         return (
                           <div key={ex.ExerciseID} style={{
                             background: isChecked ? "#1cc88a11" : "var(--theme-bg)", border: `1px solid ${isChecked ? "#1cc88a44" : "var(--theme-border)"}`,
                             borderRadius: 10, padding: "12px 14px", cursor: "pointer", transition: "all 0.15s",
-                          }} onClick={() => toggleCheck(ex.ExerciseID)}>
+                          }} onClick={() => toggleCheckEx(ex.ExerciseID)}>
                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                               {/* Checkbox */}
                               <div style={{
@@ -266,15 +367,15 @@ export default function PTAssignments() {
                                 ].map(f => (
                                   <div key={f.key} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                                     <span style={{ color: "var(--theme-text)", fontSize: "1.2rem", fontWeight: 600 }}>{f.label}</span>
-                                    <input type={f.type} value={checked[ex.ExerciseID]?.[f.key] || ""} onClick={e => e.stopPropagation()}
-                                      onChange={e => updateConfig(ex.ExerciseID, f.key, e.target.value)}
+                                    <input type={f.type} value={checkedEx[ex.ExerciseID]?.[f.key] || ""} onClick={e => e.stopPropagation()}
+                                      onChange={e => updateConfigEx(ex.ExerciseID, f.key, e.target.value)}
                                       style={{ width: f.w, padding: "6px 8px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 6, color: "var(--theme-text-dark)", fontSize: "1.4rem", outline: "none" }} />
                                   </div>
                                 ))}
                                 <div style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1, minWidth: 120 }}>
                                   <span style={{ color: "var(--theme-text)", fontSize: "1.2rem", fontWeight: 600 }}>Ghi chú</span>
-                                  <input value={checked[ex.ExerciseID]?.note || ""} onClick={e => e.stopPropagation()}
-                                    onChange={e => updateConfig(ex.ExerciseID, "note", e.target.value)} placeholder="Ghi chú cho bài tập..."
+                                  <input value={checkedEx[ex.ExerciseID]?.note || ""} onClick={e => e.stopPropagation()}
+                                    onChange={e => updateConfigEx(ex.ExerciseID, "note", e.target.value)} placeholder="Ghi chú cho bài tập..."
                                     style={{ padding: "6px 8px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 6, color: "var(--theme-text-dark)", fontSize: "1.4rem", outline: "none" }} />
                                 </div>
                               </div>
@@ -300,19 +401,71 @@ export default function PTAssignments() {
                     </div>
                   </>
                 )}
+              </div>
 
-                {/* Send button */}
-                {checkedCount > 0 && (
+              {/* Meal catalog - tick to select */}
+              <div style={{ background: "var(--theme-surface)", borderRadius: 14, border: "1px solid var(--theme-border)", padding: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                <h3 style={{ color: "var(--theme-text-dark)", fontSize: "1.5rem", margin: "0 0 12px", fontWeight: 700 }}>🥗 Danh mục thực đơn — tick để chọn</h3>
+
+                {mealLoading ? (
+                  <div style={{ textAlign: "center", padding: 20, color: "var(--theme-text)", fontSize: "1.4rem" }}>Đang tải...</div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {mealPlans.map(mp => {
+                      const isChecked = !!checkedMeals[mp.id];
+                      return (
+                        <div key={mp.id} style={{
+                          background: isChecked ? "#f6c23e11" : "var(--theme-bg)", border: `1px solid ${isChecked ? "#f6c23e44" : "var(--theme-border)"}`,
+                          borderRadius: 10, padding: "12px 14px", cursor: "pointer", transition: "all 0.15s",
+                        }} onClick={() => toggleCheckMeal(mp.id)}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div style={{
+                              width: 24, height: 24, borderRadius: 6, border: `2px solid ${isChecked ? "#f6c23e" : "var(--theme-border)"}`,
+                              background: isChecked ? "#f6c23e" : "transparent", display: "flex", alignItems: "center", justifyContent: "center",
+                              transition: "all 0.15s", flexShrink: 0,
+                            }}>
+                              {isChecked && <Check size={14} color="#fff" strokeWidth={3} />}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <span style={{ fontWeight: 700, color: "var(--theme-text-dark)", fontSize: "1.5rem" }}>{mp.name}</span>
+                              <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+                                <span style={{ background: "#f6c23e22", color: "#f6c23e", padding: "3px 10px", borderRadius: 12, fontSize: "1.2rem", fontWeight: 600 }}>{mp.category}</span>
+                                <span style={{ background: "#e74a3b22", color: "#e74a3b", padding: "3px 10px", borderRadius: 12, fontSize: "1.2rem", fontWeight: 600 }}>{mp.calories} kcal</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Config row — show when checked */}
+                          {isChecked && (
+                            <div onClick={e => e.stopPropagation()} style={{
+                              display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center",
+                            }}>
+                              <div style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1 }}>
+                                <span style={{ color: "var(--theme-text)", fontSize: "1.2rem", fontWeight: 600 }}>Ghi chú dặn dò</span>
+                                <input value={checkedMeals[mp.id]?.note || ""} onClick={e => e.stopPropagation()}
+                                  onChange={e => updateConfigMeal(mp.id, "note", e.target.value)} placeholder="VD: ăn trước tập 2 tiếng..."
+                                  style={{ padding: "6px 8px", background: "var(--theme-bg)", border: "1px solid var(--theme-border)", borderRadius: 6, color: "var(--theme-text-dark)", fontSize: "1.4rem", outline: "none" }} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Send button */}
+              {totalChecked > 0 && (
                   <button onClick={() => setConfirmOpen(true)}
                     style={{
                       marginTop: 16, width: "100%", padding: "14px", fontSize: "1.5rem", fontWeight: 800,
                       background: "linear-gradient(135deg,#1cc88a,#17a673)", color: "#fff", border: "none",
                       borderRadius: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                     }}>
-                    <Send size={18} /> Gửi {checkedCount} bài tập cho {selectedClient.memberName}
+                    <Send size={18} /> Gửi {totalChecked} hạng mục cho {selectedClient.memberName}
                   </button>
                 )}
-              </div>
             </div>
           ) : (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "var(--theme-text)", fontSize: "1.5rem", height: 300 }}>
@@ -333,7 +486,7 @@ export default function PTAssignments() {
             <div style={{ fontSize: "3.2rem", marginBottom: 12 }}>📤</div>
             <h2 style={{ color: "var(--theme-text-dark)", fontWeight: 800, marginBottom: 8, fontSize: "1.8rem" }}>Xác nhận gửi bài tập</h2>
             <p style={{ color: "var(--theme-text)", marginBottom: 20, fontSize: "1.4rem" }}>
-              Bạn có chắc muốn gửi <strong style={{ color: "#1cc88a" }}>{checkedCount} bài tập</strong> cho <strong style={{ color: "#4e73df" }}>{selectedClient?.memberName}</strong>?
+              Bạn có chắc muốn gửi <strong style={{ color: "#1cc88a" }}>{checkedExCount} bài tập</strong> và <strong style={{ color: "#f6c23e" }}>{checkedMealCount} thực đơn</strong> cho <strong style={{ color: "#4e73df" }}>{selectedClient?.memberName}</strong>?
             </p>
             <p style={{ color: "var(--theme-text)", fontSize: "1.3rem", marginBottom: 20 }}>
               Ngày: <strong style={{ color: "#f6c23e" }}>{assignDate}</strong>

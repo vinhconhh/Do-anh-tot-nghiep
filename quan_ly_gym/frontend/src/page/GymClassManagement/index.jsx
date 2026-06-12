@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../api/axiosClient";
-import { Plus, Edit, Trash2, Calendar, Users, Clock, Eye, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Users, Clock, Eye, Search, List } from "lucide-react";
 import ClassFormModal from "./ClassFormModal";
 import Modal from "../../components/Modal";
 import styles from "./GymClassManagement.module.scss";
@@ -39,6 +39,17 @@ export default function GymClassManagement() {
   const [conflictWarnings, setConflictWarnings] = useState([]);
   const [q, setQ] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+
+  const [childrenModal, setChildrenModal] = useState(null);
+  const [classChildrenData, setClassChildrenData] = useState([]);
+
+  const openChildren = async (item) => {
+    setChildrenModal(item);
+    try {
+      const res = await api.get(`/classes/${item.ClassID}/children`);
+      setClassChildrenData(Array.isArray(res.data) ? res.data : []);
+    } catch { setClassChildrenData([]); }
+  };
 
   const fetchItems = async () => {
     setLoading(true);
@@ -147,6 +158,7 @@ export default function GymClassManagement() {
       }
 
       setModalOpen(false); fetchItems();
+      if (childrenModal) openChildren(childrenModal);
     } catch (err) { 
         alert(err.response?.data?.detail || "Lưu thất bại! Kiểm tra thông tin."); 
     }
@@ -156,13 +168,19 @@ export default function GymClassManagement() {
   const handleDelete = async (item) => {
     let url = `/classes/${item.ClassID}`;
     if (item.IsRecurring || item.ParentClassID) {
-        const delAll = window.confirm("Lớp này nằm trong chuỗi lặp lại.\nBạn muốn xóa TOÀN BỘ chuỗi lớp (OK) hay chỉ xóa riêng BẢN NÀY (Cancel)?");
-        if (delAll) url += "?delete_all=true";
+        if (!window.confirm("Lớp này nằm trong chuỗi lặp lại.\nXác nhận xóa TOÀN BỘ chuỗi lớp này?")) return;
+        url += "?delete_all=true";
     } else {
         if (!window.confirm("Xác nhận xóa lớp học này?")) return;
     }
 
-    try { await api.delete(url); fetchItems(); }
+    try { 
+      await api.delete(url); 
+      fetchItems(); 
+      if (childrenModal && (item.ClassID === childrenModal.ClassID || item.ParentClassID === childrenModal.ClassID)) {
+        setChildrenModal(null);
+      }
+    }
     catch { alert("Xóa thất bại!"); }
   };
 
@@ -299,6 +317,9 @@ export default function GymClassManagement() {
                   </td>
                   <td>
                     <div className={styles.actions}>
+                      {(item.IsRecurring === 1 || item.IsRecurring === true) && (
+                        <button onClick={() => openChildren(item)} title="Xem các buổi" className={`${styles.btnIcon} ${styles.btnView}`} style={{ background: "linear-gradient(135deg,#36b9cc,#2c9faf)" }}><List size={16} /></button>
+                      )}
                       <button onClick={() => openMembers(item)} title="Xem học viên" className={`${styles.btnIcon} ${styles.btnView}`}><Eye size={16} /></button>
                       <button onClick={() => openEdit(item)} title="Sửa" className={`${styles.btnIcon} ${styles.btnEdit}`}><Edit size={16} /></button>
                       <button onClick={() => handleDelete(item)} title="Xóa" className={`${styles.btnIcon} ${styles.btnDanger}`}><Trash2 size={16} /></button>
@@ -312,15 +333,7 @@ export default function GymClassManagement() {
       </div>
 
       {}
-      {modalOpen && (
-        <ClassFormModal
-          form={form} setForm={setForm} editing={editing}
-          instructors={instructors} saving={saving}
-          conflictWarnings={conflictWarnings}
-          onSave={handleSave}
-          onClose={() => setModalOpen(false)}
-        />
-      )}
+
 
       {}
       <Modal
@@ -393,6 +406,61 @@ export default function GymClassManagement() {
             )}
           </div>
         </Modal>
+
+      {/* MODAL DANH SÁCH LỚP CON */}
+      <Modal
+        isOpen={!!childrenModal}
+        onRequestClose={() => setChildrenModal(null)}
+        title={childrenModal ? `📋 Các buổi học của lớp: ${childrenModal.Name}` : ""}
+        maxWidth="800px" width="90%"
+      >
+        <div style={{ padding: "0 10px" }}>
+          {classChildrenData.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 30, color: "var(--theme-text)", fontSize: "1.6rem" }}>Không có buổi học nào</div>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Ngày tập</th>
+                    <th>Giờ tập</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {classChildrenData.map((child, idx) => (
+                    <tr key={child.ClassID}>
+                      <td style={{ color: "var(--theme-text)" }}>{idx + 1}</td>
+                      <td style={{ color: "var(--theme-text-dark)", fontWeight: 600 }}>{child.StartTime ? child.StartTime.slice(0, 10) : "—"}</td>
+                      <td style={{ color: "var(--theme-text)" }}>
+                        {child.StartTime ? new Date(child.StartTime).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "—"} – {child.EndTime ? new Date(child.EndTime).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "—"}
+                      </td>
+                      <td>
+                        <div className={styles.actions}>
+                          <button onClick={() => openEdit(child)} title="Sửa buổi học này" className={`${styles.btnIcon} ${styles.btnEdit}`}><Edit size={16} /></button>
+                          <button onClick={() => handleDelete(child)} title="Xóa toàn chuỗi" className={`${styles.btnIcon} ${styles.btnDanger}`}><Trash2 size={16} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* MODAL FORM LỚP HỌC (Đặt dưới cùng để luôn hiển thị trên cùng) */}
+      {modalOpen && (
+        <ClassFormModal
+          form={form} setForm={setForm} editing={editing}
+          instructors={instructors} saving={saving}
+          conflictWarnings={conflictWarnings}
+          onSave={handleSave}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
       </div>
     </>
   );

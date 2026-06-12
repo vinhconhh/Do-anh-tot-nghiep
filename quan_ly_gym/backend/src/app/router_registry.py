@@ -17,13 +17,14 @@ from .routes import (
     users,
     notifications,
     exercises,
-    pt_requests,
+    managers,
     streaks,
     ai,
     facility,
     pt_assignments,
     meal_plans,
     accounts,
+    checkins,
 )
 
 ROUTERS = [
@@ -36,13 +37,14 @@ ROUTERS = [
     users.router,
     notifications.router,
     exercises.router,
-    pt_requests.router,
+    managers.router,
     streaks.router,
     ai.router,
     facility.router,
     pt_assignments.router,
     meal_plans.router,
     accounts.router,
+    checkins.router,
 ]
 
 

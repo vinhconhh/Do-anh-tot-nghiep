@@ -1,7 +1,7 @@
 /*
 ================================================================
 FILE: 01_schema.sql
-MỤC ĐÍCH: Khởi tạo toàn bộ cấu trúc Database QLGymDB (Bản hợp nhất hoàn thiện)
+MỤC ĐÍCH: Khởi tạo toàn bộ cấu trúc Database QLGymDB theo 5 vai trò mới
 ================================================================
 */
 
@@ -99,6 +99,32 @@ CREATE TABLE PTProfiles (
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
 
+CREATE TABLE MemberPTRelations (
+    RelationID INT IDENTITY(1,1) PRIMARY KEY,
+    MemberID INT NOT NULL,
+    PTID INT NOT NULL,
+    AssignedBy INT NULL,
+    Status NVARCHAR(50) DEFAULT 'Active',
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (MemberID) REFERENCES Users(UserID),
+    FOREIGN KEY (PTID) REFERENCES Users(UserID),
+    FOREIGN KEY (AssignedBy) REFERENCES Users(UserID)
+);
+
+CREATE TABLE MemberRequests (
+    RequestID INT IDENTITY(1,1) PRIMARY KEY,
+    MemberID INT NOT NULL,
+    RequestType NVARCHAR(100) NOT NULL,
+    Note NVARCHAR(1000) NULL,
+    Status NVARCHAR(50) DEFAULT 'Pending',
+    ReviewedBy INT NULL,
+    ReviewedAt DATETIME NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (MemberID) REFERENCES Users(UserID),
+    FOREIGN KEY (ReviewedBy) REFERENCES Users(UserID)
+);
+
 -- 4. FACILITY & EXERCISES
 CREATE TABLE GymEquipments (
     EquipmentID  INT IDENTITY(1,1) PRIMARY KEY,
@@ -149,7 +175,24 @@ CREATE TABLE GymClasses (
     CONSTRAINT CK_GymClasses_Enrolled CHECK (CurrentEnrolled <= MaxCapacity)
 );
 
--- 5. WORKOUTS & ASSIGNMENTS
+-- 5. WORKOUTS, DIETS & ASSIGNMENTS
+CREATE TABLE MealPlans (
+    PlanID       INT IDENTITY(1,1) PRIMARY KEY,
+    Name         NVARCHAR(255) NOT NULL,
+    Category     NVARCHAR(100) NOT NULL,        -- Bữa sáng / Bữa chính / Bữa phụ
+    Goal         NVARCHAR(255) NULL,            -- tăng cơ / giảm mỡ / duy trì
+    Calories     INT DEFAULT 0,
+    Protein      FLOAT DEFAULT 0,               -- gram
+    Carbs        FLOAT DEFAULT 0,               -- gram
+    Fat          FLOAT DEFAULT 0,               -- gram
+    Description  NVARCHAR(MAX) NULL,            -- Mô tả / hướng dẫn chế biến
+    ImageURL     NVARCHAR(500) NULL,
+    CreatedBy    INT NULL,
+    CreatedAt    DATETIME DEFAULT GETDATE(),
+    UpdatedAt    DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (CreatedBy) REFERENCES Users(UserID)
+);
+
 CREATE TABLE AssignedExercises (
     AssignmentID  INT IDENTITY(1,1) PRIMARY KEY,
     PTID          INT NOT NULL,
@@ -160,12 +203,27 @@ CREATE TABLE AssignedExercises (
     Duration      INT NULL,
     Weight        FLOAT NULL,
     Note          NVARCHAR(500) NULL,
+    MediaURL      NVARCHAR(500) NULL,
     AssignedDate  DATE NOT NULL,
     Status        NVARCHAR(50) DEFAULT 'Active',
     CreatedAt     DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (PTID) REFERENCES Users(UserID),
     FOREIGN KEY (MemberID) REFERENCES Users(UserID),
     FOREIGN KEY (ExerciseID) REFERENCES GymExercises(ExerciseID)
+);
+
+CREATE TABLE AssignedMeals (
+    AssignmentID  INT IDENTITY(1,1) PRIMARY KEY,
+    PTID          INT NOT NULL,
+    MemberID      INT NOT NULL,
+    MealPlanID    INT NOT NULL,
+    Note          NVARCHAR(500) NULL,
+    AssignedDate  DATE NOT NULL,
+    Status        NVARCHAR(50) DEFAULT 'Active',
+    CreatedAt     DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (PTID) REFERENCES Users(UserID),
+    FOREIGN KEY (MemberID) REFERENCES Users(UserID),
+    FOREIGN KEY (MealPlanID) REFERENCES MealPlans(PlanID)
 );
 
 CREATE TABLE ClassEnrollments (
@@ -180,7 +238,33 @@ CREATE TABLE ClassEnrollments (
     CONSTRAINT UQ_ClassEnroll UNIQUE (ClassID, MemberID)
 );
 
--- 6. BOOKINGS & PT REQUESTS
+-- 6. BOOKINGS, PTRelations & MEMBER REQUESTS
+CREATE TABLE MemberPTRelations (
+    RelationID INT IDENTITY PRIMARY KEY,
+    MemberID INT NOT NULL,
+    PTID INT NOT NULL,
+    AssignedBy INT NULL, -- Manager ID
+    Status NVARCHAR(50) DEFAULT 'Active', -- Active, Inactive
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (MemberID) REFERENCES Users(UserID),
+    FOREIGN KEY (PTID) REFERENCES Users(UserID),
+    FOREIGN KEY (AssignedBy) REFERENCES Users(UserID)
+);
+
+CREATE TABLE MemberRequests (
+    RequestID INT IDENTITY PRIMARY KEY,
+    MemberID INT NOT NULL,
+    RequestType NVARCHAR(100) NOT NULL, -- e.g., 'FreezeAccount', 'ChangePT'
+    Note NVARCHAR(1000),
+    Status NVARCHAR(50) DEFAULT 'Pending', -- Pending, Approved, Rejected
+    ReviewedBy INT NULL, -- Manager ID
+    ReviewedAt DATETIME NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (MemberID) REFERENCES Users(UserID),
+    FOREIGN KEY (ReviewedBy) REFERENCES Users(UserID)
+);
+
 CREATE TABLE Bookings (
     BookingID INT IDENTITY PRIMARY KEY,
     MemberID INT,
@@ -188,22 +272,6 @@ CREATE TABLE Bookings (
     StartTime DATETIME,
     EndTime DATETIME,
     Status NVARCHAR(50),
-    FOREIGN KEY (MemberID) REFERENCES Users(UserID),
-    FOREIGN KEY (PTID) REFERENCES Users(UserID)
-);
-
-CREATE TABLE PTRequests (
-    RequestID INT IDENTITY PRIMARY KEY,
-    MemberID INT NOT NULL,
-    PTID INT NOT NULL,
-    MemberGoal NVARCHAR(500),
-    ExperienceLevel NVARCHAR(50) DEFAULT 'new',
-    BodyNote NVARCHAR(1000) NULL,
-    Note NVARCHAR(1000),
-    Status NVARCHAR(50) DEFAULT 'Pending',
-    ExpiresAt DATETIME NOT NULL,
-    RespondedAt DATETIME NULL,
-    CreatedAt DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (MemberID) REFERENCES Users(UserID),
     FOREIGN KEY (PTID) REFERENCES Users(UserID)
 );
@@ -230,6 +298,7 @@ CREATE TABLE BodyMetrics (
     Muscle FLOAT,
     Height FLOAT,
     BMI FLOAT,
+    ImageURL NVARCHAR(500) NULL,
     MeasuredAt DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
@@ -267,27 +336,7 @@ CREATE TABLE Notifications (
 
 GO
 
--- 10. MEAL PLANS (Thực đơn do manager tạo, member xem)
-CREATE TABLE MealPlans (
-    PlanID       INT IDENTITY(1,1) PRIMARY KEY,
-    Name         NVARCHAR(255) NOT NULL,
-    Category     NVARCHAR(100) NOT NULL,        -- Bữa sáng / Bữa chính / Bữa phụ
-    Goal         NVARCHAR(255) NULL,            -- tăng cơ / giảm mỡ / duy trì
-    Calories     INT DEFAULT 0,
-    Protein      FLOAT DEFAULT 0,               -- gram
-    Carbs        FLOAT DEFAULT 0,               -- gram
-    Fat          FLOAT DEFAULT 0,               -- gram
-    Description  NVARCHAR(MAX) NULL,            -- Mô tả / hướng dẫn chế biến
-    ImageURL     NVARCHAR(500) NULL,
-    CreatedBy    INT NULL,
-    CreatedAt    DATETIME DEFAULT GETDATE(),
-    UpdatedAt    DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (CreatedBy) REFERENCES Users(UserID)
-);
-
-GO
-
--- 11. VIEWS
+-- 10. VIEWS
 CREATE VIEW VIEW_Attendance_PT AS
 SELECT 
     b.MemberID,

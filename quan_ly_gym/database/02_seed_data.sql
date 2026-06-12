@@ -1,7 +1,7 @@
 /*
 ================================================================
-FILE: 02_full_seed.sql
-MỤC ĐÍCH: Nạp toàn bộ dữ liệu mẫu vào QLGymDB (Giữ nguyên gốc)
+FILE: 02_seed_data.sql
+MỤC ĐÍCH: Nạp toàn bộ dữ liệu mẫu vào QLGymDB theo 5 vai trò mới
 ================================================================
 */
 
@@ -10,7 +10,7 @@ GO
 SET QUOTED_IDENTIFIER ON;
 GO
 
-PRINT '=== BẮT ĐẦU SEED DỮ LIỆU TOÀN DIỆN (RBAC + NGHIỆP VỤ) ===';
+PRINT '=== BẮT ĐẦU SEED DỮ LIỆU ===';
 
 BEGIN TRY
     BEGIN TRAN;
@@ -23,6 +23,7 @@ BEGIN TRY
     USING (VALUES 
         ('ADMIN', N'Quản trị Hệ thống'),
         ('MANAGER', N'Ban Quản lý'),
+        ('RECEPTIONIST', N'Lễ tân'),
         ('PT', N'Khối Chuyên môn'),
         ('MEMBER', N'Khách hàng')
     ) AS source (RoleCode, Department)
@@ -32,425 +33,87 @@ BEGIN TRY
 
     DECLARE @Role_Admin INT = (SELECT RoleID FROM Roles WHERE RoleCode = 'ADMIN');
     DECLARE @Role_Manager INT = (SELECT RoleID FROM Roles WHERE RoleCode = 'MANAGER');
+    DECLARE @Role_Receptionist INT = (SELECT RoleID FROM Roles WHERE RoleCode = 'RECEPTIONIST');
     DECLARE @Role_PT INT = (SELECT RoleID FROM Roles WHERE RoleCode = 'PT');
     DECLARE @Role_Member INT = (SELECT RoleID FROM Roles WHERE RoleCode = 'MEMBER');
 
     PRINT '>> B2: Đồng bộ Permissions...';
     MERGE Permissions AS target
     USING (VALUES
-        ('AI_CONFIG_ALL', N'Toàn quyền cấu hình AI'),
-        ('ADMIN_ACCOUNT_ALL', N'Quản lý tài khoản Admin'),
-        ('MANAGER_ACCOUNT_ALL', N'Quản lý tài khoản Manager'),
-        ('PT_ACCOUNT_ALL', N'Quản lý tài khoản PT'),
-        ('MEMBER_ACCOUNT_ALL', N'Quản lý tài khoản Member'),
-        ('PACKAGE_EQUIPMENT_ALL', N'Quản lý gói tập & thiết bị'),
-        ('TRANSACTION_ALL', N'Xử lý giao dịch'),
-        ('REPORT_REVENUE_ALL', N'Xem báo cáo doanh thu'),
-        ('PT_ACCOUNT_OWN_EDIT', N'Sửa tài khoản cá nhân PT'),
-        ('MEMBER_ACCOUNT_VIEW_ASSIGNED', N'Xem member được chỉ định'),
-        ('MEMBER_ACCOUNT_OWN_EDIT', N'Sửa tài khoản cá nhân Member'),
-        ('TRANSACTION_EXECUTE_OWN', N'Thực hiện giao dịch cá nhân')
+        ('ADMIN_ALL', N'Quản trị hệ thống'),
+        ('MANAGER_HR', N'Quản lý nhân sự và phân bổ PT'),
+        ('RECEPTIONIST_BASIC', N'Quản lý hội viên cơ bản'),
+        ('PT_COACHING', N'Lên giáo án và theo dõi hội viên'),
+        ('MEMBER_ACCESS', N'Xem lộ trình và đặt lịch')
     ) AS source (Code, Description)
     ON target.Code = source.Code
     WHEN NOT MATCHED THEN
         INSERT (Code, Description) VALUES (source.Code, source.Description);
 
-    PRINT '>> B3: Gán quyền cho Roles...';
-    -- Admin: tất cả quyền
-    INSERT INTO RolePermissions (RoleID, PermissionID)
-    SELECT @Role_Admin, PermissionID FROM Permissions 
-    WHERE NOT EXISTS (SELECT 1 FROM RolePermissions rp WHERE rp.RoleID = @Role_Admin AND rp.PermissionID = Permissions.PermissionID);
-
-    -- Manager
-    INSERT INTO RolePermissions (RoleID, PermissionID)
-    SELECT @Role_Manager, PermissionID FROM Permissions 
-    WHERE Code IN ('PT_ACCOUNT_ALL','MEMBER_ACCOUNT_ALL','PACKAGE_EQUIPMENT_ALL','TRANSACTION_ALL','REPORT_REVENUE_ALL')
-    AND NOT EXISTS (SELECT 1 FROM RolePermissions rp WHERE rp.RoleID = @Role_Manager AND rp.PermissionID = Permissions.PermissionID);
-
-    -- PT
-    INSERT INTO RolePermissions (RoleID, PermissionID)
-    SELECT @Role_PT, PermissionID FROM Permissions 
-    WHERE Code IN ('PT_ACCOUNT_OWN_EDIT','MEMBER_ACCOUNT_VIEW_ASSIGNED')
-    AND NOT EXISTS (SELECT 1 FROM RolePermissions rp WHERE rp.RoleID = @Role_PT AND rp.PermissionID = Permissions.PermissionID);
-
-    -- Member
-    INSERT INTO RolePermissions (RoleID, PermissionID)
-    SELECT @Role_Member, PermissionID FROM Permissions 
-    WHERE Code IN ('MEMBER_ACCOUNT_OWN_EDIT','TRANSACTION_EXECUTE_OWN')
-    AND NOT EXISTS (SELECT 1 FROM RolePermissions rp WHERE rp.RoleID = @Role_Member AND rp.PermissionID = Permissions.PermissionID);
-
     -- =====================================================
-    -- PHẦN 2: DỮ LIỆU NGHIỆP VỤ (USERS, WORKOUT, DIET, FINANCE, AI,...)
+    -- PHẦN 2: DỮ LIỆU NGHIỆP VỤ
     -- =====================================================
     PRINT '>> B4: Tạo Users mẫu...';
 
-    DECLARE @AdminID INT, @ManagerID INT, @PT_JohnID INT, @PT_AnnaID INT, @Member_AliceID INT, @Member_BobID INT;
+    DECLARE @AdminID INT, @ManagerID INT, @ReceptID INT, @PT_JohnID INT, @PT_AnnaID INT, @Member_AliceID INT, @Member_BobID INT;
 
-    -- Admin
-    MERGE Users AS target
-    USING (VALUES (N'Admin Tối Cao', 'admin@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_Admin, 1))
-    AS source (FullName, Email, PasswordHash, RoleID, IsActive)
-    ON target.Email = source.Email
-    WHEN NOT MATCHED THEN
-        INSERT (FullName, Email, PasswordHash, RoleID, IsActive)
-        VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
+    MERGE Users AS target USING (VALUES (N'Admin Tối Cao', 'admin@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_Admin, 1)) AS source (FullName, Email, PasswordHash, RoleID, IsActive) ON target.Email = source.Email WHEN NOT MATCHED THEN INSERT (FullName, Email, PasswordHash, RoleID, IsActive) VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
     SET @AdminID = (SELECT UserID FROM Users WHERE Email = 'admin@gym.vn');
 
-    -- Manager
-    MERGE Users AS target
-    USING (VALUES (N'Quản lý Hoàng', 'manager@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_Manager, 1))
-    AS source (FullName, Email, PasswordHash, RoleID, IsActive)
-    ON target.Email = source.Email
-    WHEN NOT MATCHED THEN
-        INSERT (FullName, Email, PasswordHash, RoleID, IsActive)
-        VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
+    MERGE Users AS target USING (VALUES (N'Quản lý Hoàng', 'manager@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_Manager, 1)) AS source (FullName, Email, PasswordHash, RoleID, IsActive) ON target.Email = source.Email WHEN NOT MATCHED THEN INSERT (FullName, Email, PasswordHash, RoleID, IsActive) VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
     SET @ManagerID = (SELECT UserID FROM Users WHERE Email = 'manager@gym.vn');
 
-    -- PT John
-    MERGE Users AS target
-    USING (VALUES (N'PT John Cena', 'pt.john@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_PT, 1))
-    AS source (FullName, Email, PasswordHash, RoleID, IsActive)
-    ON target.Email = source.Email
-    WHEN NOT MATCHED THEN
-        INSERT (FullName, Email, PasswordHash, RoleID, IsActive)
-        VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
+    MERGE Users AS target USING (VALUES (N'Lễ tân Mai', 'receptionist@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_Receptionist, 1)) AS source (FullName, Email, PasswordHash, RoleID, IsActive) ON target.Email = source.Email WHEN NOT MATCHED THEN INSERT (FullName, Email, PasswordHash, RoleID, IsActive) VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
+    SET @ReceptID = (SELECT UserID FROM Users WHERE Email = 'receptionist@gym.vn');
+
+    MERGE Users AS target USING (VALUES (N'PT John Cena', 'pt.john@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_PT, 1)) AS source (FullName, Email, PasswordHash, RoleID, IsActive) ON target.Email = source.Email WHEN NOT MATCHED THEN INSERT (FullName, Email, PasswordHash, RoleID, IsActive) VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
     SET @PT_JohnID = (SELECT UserID FROM Users WHERE Email = 'pt.john@gym.vn');
 
-    -- PT Anna
-    MERGE Users AS target
-    USING (VALUES (N'PT Anna Fitness', 'pt.anna@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_PT, 1))
-    AS source (FullName, Email, PasswordHash, RoleID, IsActive)
-    ON target.Email = source.Email
-    WHEN NOT MATCHED THEN
-        INSERT (FullName, Email, PasswordHash, RoleID, IsActive)
-        VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
+    MERGE Users AS target USING (VALUES (N'PT Anna Fitness', 'pt.anna@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_PT, 1)) AS source (FullName, Email, PasswordHash, RoleID, IsActive) ON target.Email = source.Email WHEN NOT MATCHED THEN INSERT (FullName, Email, PasswordHash, RoleID, IsActive) VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
     SET @PT_AnnaID = (SELECT UserID FROM Users WHERE Email = 'pt.anna@gym.vn');
 
-    -- Member Alice
-    MERGE Users AS target
-    USING (VALUES (N'Alice Nguyễn', 'alice.member@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_Member, 1))
-    AS source (FullName, Email, PasswordHash, RoleID, IsActive)
-    ON target.Email = source.Email
-    WHEN NOT MATCHED THEN
-        INSERT (FullName, Email, PasswordHash, RoleID, IsActive)
-        VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
+    MERGE Users AS target USING (VALUES (N'Alice Nguyễn', 'alice.member@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_Member, 1)) AS source (FullName, Email, PasswordHash, RoleID, IsActive) ON target.Email = source.Email WHEN NOT MATCHED THEN INSERT (FullName, Email, PasswordHash, RoleID, IsActive) VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
     SET @Member_AliceID = (SELECT UserID FROM Users WHERE Email = 'alice.member@gym.vn');
 
-    -- Member Bob
-    MERGE Users AS target
-    USING (VALUES (N'Bob Trần', 'bob.member@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_Member, 1))
-    AS source (FullName, Email, PasswordHash, RoleID, IsActive)
-    ON target.Email = source.Email
-    WHEN NOT MATCHED THEN
-        INSERT (FullName, Email, PasswordHash, RoleID, IsActive)
-        VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
+    MERGE Users AS target USING (VALUES (N'Bob Trần', 'bob.member@gym.vn', '$2b$12$ja8z4xjaj6fl70DHzReid.A0ufaGXNqXNpOQRci425XXqXcTMtZ4i', @Role_Member, 1)) AS source (FullName, Email, PasswordHash, RoleID, IsActive) ON target.Email = source.Email WHEN NOT MATCHED THEN INSERT (FullName, Email, PasswordHash, RoleID, IsActive) VALUES (source.FullName, source.Email, source.PasswordHash, source.RoleID, source.IsActive);
     SET @Member_BobID = (SELECT UserID FROM Users WHERE Email = 'bob.member@gym.vn');
 
-    -- Profiles
-    PRINT '   -> Tạo MemberProfiles và PTProfiles...';
-    
-    INSERT INTO MemberProfiles (UserID, Goal, Height, Weight, AIQuota)
-    SELECT @Member_AliceID, N'Giảm mỡ, tăng cơ', 160, 55, 10
-    WHERE NOT EXISTS (SELECT 1 FROM MemberProfiles WHERE UserID = @Member_AliceID);
+    PRINT '   -> Tạo Profiles...';
+    INSERT INTO MemberProfiles (UserID, Goal, Height, Weight) SELECT @Member_AliceID, N'Giảm mỡ, tăng cơ', 160, 55 WHERE NOT EXISTS (SELECT 1 FROM MemberProfiles WHERE UserID = @Member_AliceID);
+    INSERT INTO MemberProfiles (UserID, Goal, Height, Weight) SELECT @Member_BobID, N'Tăng sức mạnh', 175, 80 WHERE NOT EXISTS (SELECT 1 FROM MemberProfiles WHERE UserID = @Member_BobID);
+    INSERT INTO PTProfiles (UserID, ExperienceYears, Certifications, Specialty) SELECT @PT_JohnID, 8, N'NASM, CrossFit L2', N'Powerlifting' WHERE NOT EXISTS (SELECT 1 FROM PTProfiles WHERE UserID = @PT_JohnID);
+    INSERT INTO PTProfiles (UserID, ExperienceYears, Certifications, Specialty) SELECT @PT_AnnaID, 5, N'ACE, Yoga 200H', N'Pilates, Yoga' WHERE NOT EXISTS (SELECT 1 FROM PTProfiles WHERE UserID = @PT_AnnaID);
 
-    INSERT INTO MemberProfiles (UserID, Goal, Height, Weight, AIQuota)
-    SELECT @Member_BobID, N'Tăng sức mạnh', 175, 80, 5
-    WHERE NOT EXISTS (SELECT 1 FROM MemberProfiles WHERE UserID = @Member_BobID);
+    PRINT '>> B5: Gán PT cho Hội viên...';
+    INSERT INTO MemberPTRelations (MemberID, PTID, AssignedBy, Status)
+    SELECT @Member_AliceID, @PT_AnnaID, @ManagerID, 'Active'
+    WHERE NOT EXISTS (SELECT 1 FROM MemberPTRelations WHERE MemberID = @Member_AliceID AND PTID = @PT_AnnaID);
 
-    INSERT INTO PTProfiles (UserID, ExperienceYears, Certifications, Specialty)
-    SELECT @PT_JohnID, 8, N'NASM, CrossFit L2', N'Powerlifting'
-    WHERE NOT EXISTS (SELECT 1 FROM PTProfiles WHERE UserID = @PT_JohnID);
+    INSERT INTO MemberPTRelations (MemberID, PTID, AssignedBy, Status)
+    SELECT @Member_BobID, @PT_JohnID, @ManagerID, 'Active'
+    WHERE NOT EXISTS (SELECT 1 FROM MemberPTRelations WHERE MemberID = @Member_BobID AND PTID = @PT_JohnID);
 
-    INSERT INTO PTProfiles (UserID, ExperienceYears, Certifications, Specialty)
-    SELECT @PT_AnnaID, 5, N'ACE, Yoga 200H', N'Pilates, Yoga'
-    WHERE NOT EXISTS (SELECT 1 FROM PTProfiles WHERE UserID = @PT_AnnaID);
+    PRINT '>> B6: Thiết bị & Bài tập mẫu...';
+    IF NOT EXISTS (SELECT 1 FROM GymEquipments)
+    BEGIN
+        INSERT INTO GymEquipments (Name, Category, Zone, Quantity, Status) VALUES
+        (N'Máy chạy bộ (Treadmill)',  N'Cardio',    N'Khu Cardio',    12, N'Hoạt động'),
+        (N'Tạ tay (Dumbbell set)',    N'Tạ tự do',  N'Khu Free Weight',1, N'Hoạt động');
+    END
 
-    -- Master Data
-    PRINT '>> B5: Tạo danh mục Master Data...';
-
-    DECLARE @Muscle_Chest INT, @Muscle_Legs INT, @Equip_Barbell INT, @Equip_Dumbbell INT;
-
-    MERGE MuscleGroups AS target
-    USING (VALUES (N'Ngực'), (N'Chân'), (N'Lưng'), (N'Tay trước'), (N'Vai'))
-    AS source (Name) ON target.Name = source.Name
-    WHEN NOT MATCHED THEN INSERT (Name) VALUES (source.Name);
-    SET @Muscle_Chest = (SELECT MuscleGroupID FROM MuscleGroups WHERE Name = N'Ngực');
-    SET @Muscle_Legs = (SELECT MuscleGroupID FROM MuscleGroups WHERE Name = N'Chân');
-
-    MERGE Equipments AS target
-    USING (VALUES ('Barbell'), ('Dumbbell'), ('Machine'), ('Bodyweight'))
-    AS source (Name) ON target.Name = source.Name
-    WHEN NOT MATCHED THEN INSERT (Name) VALUES (source.Name);
-    SET @Equip_Barbell = (SELECT EquipmentID FROM Equipments WHERE Name = 'Barbell');
-    SET @Equip_Dumbbell = (SELECT EquipmentID FROM Equipments WHERE Name = 'Dumbbell');
-
-    DECLARE @Ex_BenchPress INT, @Ex_Squat INT;
-    MERGE Exercises AS target
-    USING (VALUES 
-        ('Bench Press', @Muscle_Chest, @Equip_Barbell),
-        ('Squat', @Muscle_Legs, @Equip_Barbell),
-        ('Dumbbell Fly', @Muscle_Chest, @Equip_Dumbbell)
-    ) AS source (Name, MuscleGroupID, EquipmentID)
-    ON target.Name = source.Name
-    WHEN NOT MATCHED THEN
-        INSERT (Name, MuscleGroupID, EquipmentID)
-        VALUES (source.Name, source.MuscleGroupID, source.EquipmentID);
-    SET @Ex_BenchPress = (SELECT ExerciseID FROM Exercises WHERE Name = 'Bench Press');
-    SET @Ex_Squat = (SELECT ExerciseID FROM Exercises WHERE Name = 'Squat');
-
-    -- Workout Routines
-    PRINT '>> B6: Tạo Workout Routines...';
-    DECLARE @Routine_FullBody INT;
-
-    MERGE WorkoutRoutines AS target
-    USING (VALUES (N'Full Body Beginner', @PT_JohnID))
-    AS source (Name, CreatedBy)
-    ON target.Name = source.Name
-    WHEN NOT MATCHED THEN
-        INSERT (Name, CreatedBy) VALUES (source.Name, source.CreatedBy);
-    SET @Routine_FullBody = (SELECT RoutineID FROM WorkoutRoutines WHERE Name = N'Full Body Beginner');
-
-    INSERT INTO WorkoutRoutineDetails (RoutineID, ExerciseID, Sets, Reps)
-    SELECT @Routine_FullBody, @Ex_BenchPress, 3, 10
-    WHERE NOT EXISTS (SELECT 1 FROM WorkoutRoutineDetails WHERE RoutineID = @Routine_FullBody AND ExerciseID = @Ex_BenchPress);
-
-    INSERT INTO WorkoutRoutineDetails (RoutineID, ExerciseID, Sets, Reps)
-    SELECT @Routine_FullBody, @Ex_Squat, 3, 12
-    WHERE NOT EXISTS (SELECT 1 FROM WorkoutRoutineDetails WHERE RoutineID = @Routine_FullBody AND ExerciseID = @Ex_Squat);
-
-    -- Schedules & Bookings
-    PRINT '>> B7: Tạo Schedules và Bookings...';
-    DECLARE @Schedule_Alice1 INT, @Booking_Bob1 INT;
-
-    INSERT INTO Schedules (UserID, RoutineID, WorkoutDate)
-    SELECT @Member_AliceID, @Routine_FullBody, '2026-04-20'
-    WHERE NOT EXISTS (SELECT 1 FROM Schedules WHERE UserID = @Member_AliceID AND WorkoutDate = '2026-04-20');
-    SET @Schedule_Alice1 = (SELECT ScheduleID FROM Schedules WHERE UserID = @Member_AliceID AND WorkoutDate = '2026-04-20');
-
-    INSERT INTO Bookings (MemberID, PTID, StartTime, EndTime, Status)
-    SELECT @Member_BobID, @PT_AnnaID, '2026-04-21 09:00', '2026-04-21 10:00', 'Confirmed'
-    WHERE NOT EXISTS (SELECT 1 FROM Bookings WHERE MemberID = @Member_BobID AND StartTime = '2026-04-21 09:00');
-    SET @Booking_Bob1 = (SELECT BookingID FROM Bookings WHERE MemberID = @Member_BobID AND StartTime = '2026-04-21 09:00');
-
-    -- Check-ins
-    PRINT '>> B8: Tạo Check-ins...';
-    INSERT INTO CheckIns (UserID, ScheduleID)
-    SELECT @Member_AliceID, @Schedule_Alice1
-    WHERE NOT EXISTS (SELECT 1 FROM CheckIns WHERE UserID = @Member_AliceID AND ScheduleID = @Schedule_Alice1);
-
-    INSERT INTO CheckIns (UserID, BookingID)
-    SELECT @Member_BobID, @Booking_Bob1
-    WHERE NOT EXISTS (SELECT 1 FROM CheckIns WHERE UserID = @Member_BobID AND BookingID = @Booking_Bob1);
-
-    -- Workout Logs
-    PRINT '>> B9: Tạo Log Workouts...';
-    DECLARE @Log_Alice1 INT;
-    
-    INSERT INTO LogWorkouts (UserID, WorkoutDate)
-    SELECT @Member_AliceID, '2026-04-20'
-    WHERE NOT EXISTS (SELECT 1 FROM LogWorkouts WHERE UserID = @Member_AliceID AND CAST(WorkoutDate AS DATE) = '2026-04-20');
-    
-    SET @Log_Alice1 = (SELECT TOP 1 LogID FROM LogWorkouts WHERE UserID = @Member_AliceID AND CAST(WorkoutDate AS DATE) = '2026-04-20');
-
-    INSERT INTO LogWorkoutDetails (LogID, ExerciseID, SetNumber, Reps, Weight)
-    SELECT @Log_Alice1, @Ex_BenchPress, 1, 10, 20
-    WHERE NOT EXISTS (SELECT 1 FROM LogWorkoutDetails WHERE LogID = @Log_Alice1 AND ExerciseID = @Ex_BenchPress AND SetNumber = 1);
-
-    -- Diet Plans & Meals
-    PRINT '>> B10: Tạo Diet Plans...';
-    DECLARE @Diet_Alice INT;
-    MERGE DietPlans AS target
-    USING (VALUES (N'Giảm cân 1500 cal', @PT_AnnaID))
-    AS source (Name, UserID) ON target.Name = source.Name
-    WHEN NOT MATCHED THEN INSERT (Name, UserID) VALUES (source.Name, source.UserID);
-    SET @Diet_Alice = (SELECT DietID FROM DietPlans WHERE Name = N'Giảm cân 1500 cal');
-
-    DECLARE @Meal_Breakfast INT;
-    INSERT INTO Meals (DietID, MealType)
-    SELECT @Diet_Alice, N'Breakfast'
-    WHERE NOT EXISTS (SELECT 1 FROM Meals WHERE DietID = @Diet_Alice AND MealType = N'Breakfast');
-    
-    SET @Meal_Breakfast = (SELECT MealID FROM Meals WHERE DietID = @Diet_Alice AND MealType = N'Breakfast');
-
-    INSERT INTO MealItems (MealID, FoodName, Calories, Protein, Carbs, Fat)
-    SELECT @Meal_Breakfast, N'Yến mạch + Sữa chua', 350, 15, 45, 8
-    WHERE NOT EXISTS (SELECT 1 FROM MealItems WHERE MealID = @Meal_Breakfast AND FoodName = N'Yến mạch + Sữa chua');
-
-    -- Body Metrics & Photos
-    PRINT '>> B11: Tạo Body Metrics...';
-    INSERT INTO BodyMetrics (UserID, Weight, BodyFat, BMI)
-    SELECT @Member_AliceID, 54.5, 22.5, 21.3
-    WHERE NOT EXISTS (SELECT 1 FROM BodyMetrics WHERE UserID = @Member_AliceID AND Weight = 54.5 AND BodyFat = 22.5);
-
-    INSERT INTO ProgressPhotos (UserID, ImageURL)
-    SELECT @Member_AliceID, '/uploads/progress/alice_20260418.jpg'
-    WHERE NOT EXISTS (SELECT 1 FROM ProgressPhotos WHERE UserID = @Member_AliceID AND ImageURL = '/uploads/progress/alice_20260418.jpg');
-
-    -- Finance
-    PRINT '>> B12: Tạo dữ liệu Tài chính...';
-    DECLARE @Invoice_Alice INT;
-
-    INSERT INTO Invoices (UserID, TotalAmount, Status)
-    SELECT @Member_AliceID, 1500000, 'Paid'
-    WHERE NOT EXISTS (SELECT 1 FROM Invoices WHERE UserID = @Member_AliceID AND TotalAmount = 1500000 AND Status = 'Paid');
-    SET @Invoice_Alice = (SELECT InvoiceID FROM Invoices WHERE UserID = @Member_AliceID AND TotalAmount = 1500000);
-
-    INSERT INTO Transactions (UserID, InvoiceID, Amount, Status)
-    SELECT @Member_AliceID, @Invoice_Alice, 1500000, 'Paid'
-    WHERE NOT EXISTS (SELECT 1 FROM Transactions WHERE InvoiceID = @Invoice_Alice);
-
-    DECLARE @Invoice_Bob INT;
-    INSERT INTO Invoices (UserID, TotalAmount, Status)
-    SELECT @Member_BobID, 2500000, 'Paid'
-    WHERE NOT EXISTS (SELECT 1 FROM Invoices WHERE UserID = @Member_BobID AND TotalAmount = 2500000);
-    
-    SET @Invoice_Bob = (SELECT InvoiceID FROM Invoices WHERE UserID = @Member_BobID AND TotalAmount = 2500000);
-
-    INSERT INTO Transactions (UserID, InvoiceID, Amount, Status)
-    SELECT @Member_BobID, @Invoice_Bob, 2500000, 'Paid'
-    WHERE NOT EXISTS (SELECT 1 FROM Transactions WHERE InvoiceID = @Invoice_Bob);
-
-    -- AI Requests & Responses
-    PRINT '>> B13: Tạo dữ liệu AI...';
-    DECLARE @AIReq1 INT;
-    
-    INSERT INTO AIRequests (UserID, Prompt, Model)
-    SELECT @Member_AliceID, N'Tạo lịch tập giảm mỡ 4 buổi/tuần', 'gemini-1.5-pro'
-    WHERE NOT EXISTS (SELECT 1 FROM AIRequests WHERE UserID = @Member_AliceID AND Prompt LIKE N'Tạo lịch tập giảm mỡ%');
-    
-    SET @AIReq1 = (SELECT RequestID FROM AIRequests WHERE UserID = @Member_AliceID AND Prompt LIKE N'Tạo lịch tập giảm mỡ%');
-
-    INSERT INTO AIResponses (RequestID, ResponseData, TokensUsed, Cost, Status)
-    SELECT @AIReq1, N'{"plan": "Day1: Upper...", "calories": 1800}', 1250, 0.0045, 'Success'
-    WHERE NOT EXISTS (SELECT 1 FROM AIResponses WHERE RequestID = @AIReq1);
-
-    -- Notifications & Audit Logs
-    PRINT '>> B14: Tạo Notifications và Audit Logs...';
-    INSERT INTO Notifications (UserID, Message, Type)
-    SELECT @Member_AliceID, N'Chào mừng bạn đến với QLGym!', 'System'
-    WHERE NOT EXISTS (SELECT 1 FROM Notifications WHERE UserID = @Member_AliceID AND Message = N'Chào mừng bạn đến với QLGym!');
-
-    INSERT INTO AuditLogs (UserID, Action, TableName, RecordID, NewData)
-    SELECT @AdminID, 'CREATE', 'Users', @Member_AliceID, N'{"Email":"alice.member@gym.vn"}'
-    WHERE NOT EXISTS (SELECT 1 FROM AuditLogs WHERE TableName = 'Users' AND RecordID = @Member_AliceID AND Action = 'CREATE');
+    IF NOT EXISTS (SELECT 1 FROM GymExercises)
+    BEGIN
+        INSERT INTO GymExercises (Name, AssignmentName, Type, TargetMuscle, MetValue) VALUES
+        (N'Bench Press',    N'Đẩy ngực nằm',    N'Free Weights', N'Ngực',  5.0),
+        (N'Squat',          N'Squat',            N'Free Weights', N'Đùi',   6.0);
+    END
 
     COMMIT TRAN;
-    PRINT '=== HOÀN TẤT SEED DỮ LIỆU TOÀN DIỆN (COMMIT) ===';
+    PRINT '=== HOÀN TẤT SEED DỮ LIỆU ===';
 END TRY
 BEGIN CATCH
     ROLLBACK TRAN;
     PRINT '--- LỖI XẢY RA, ĐÃ ROLLBACK ---';
     PRINT ERROR_MESSAGE();
-    PRINT 'Dòng: ' + CAST(ERROR_LINE() AS VARCHAR);
-    THROW;
 END CATCH;
-GO
-
--- ================================================================
--- SEED BỔ SUNG: GÓI TẬP, AI & KHUYẾN MÃI (Từ Migration)
--- ================================================================
-USE QLGymDB;
-GO
-
-IF NOT EXISTS (SELECT 1 FROM MembershipPackages)
-BEGIN
-    INSERT INTO MembershipPackages (Name, Price, DurationMonths, Description, Benefits, IsVisible, IsFeatured)
-    VALUES 
-    (N'GÓI TIÊU CHUẨN', 299000, 1, N'Lựa chọn tiết kiệm nhất, dành cho hội viên có nhu cầu tập luyện cố định.', 
-     N'["Tập không giới hạn 24/7", "Sử dụng toàn bộ thiết bị hiện đại", "Ứng dụng The Pro Gym"]', 1, 0),
-    (N'GÓI CAO CẤP', 399000, 1, N'Tập luyện không giới hạn cùng AI, kèm theo nhiều đặc quyền bổ sung.', 
-     N'["Kiểm tra sức khỏe & tư thế miễn phí", "Sử dụng toàn bộ thiết bị hiện đại", "Sử dụng AI không giới hạn", "Ứng dụng The Pro Gym đầy đủ tính năng"]', 1, 1);
-    PRINT '> Da them du lieu mau cho MembershipPackages.';
-END
-
-IF NOT EXISTS (SELECT 1 FROM AIPackages)
-BEGIN
-    INSERT INTO AIPackages (Name, Price, Credits, Description, IsVisible)
-    VALUES
-    (N'Gói Khởi Động', 50000, 50, N'Gói dùng thử để trải nghiệm AI.', 1),
-    (N'Gói Tiêu Chuẩn', 100000, 150, N'Phù hợp cho nhu cầu hỏi đáp cơ bản hàng ngày.', 1),
-    (N'Gói Vô Cực', 200000, 500, N'Dành cho hội viên muốn lên lịch tập cá nhân hóa sâu.', 1);
-    PRINT '> Da them du lieu mau cho AIPackages.';
-END
-
--- Tạo mã giới thiệu mặc định cho các User hiện tại (cập nhật nếu NULL)
-EXEC('UPDATE Users SET ReferralCode = LEFT(CAST(NEWID() AS VARCHAR(36)), 8) WHERE ReferralCode IS NULL;');
-GO
-
--- ================================================================
--- SEED BỔ SUNG: MODULE THIẾT BỊ, BÀI TẬP VÀ LỚP HỌC (Từ Migration)
--- ================================================================
-USE QLGymDB;
-GO
-
-IF NOT EXISTS (SELECT 1 FROM GymEquipments)
-BEGIN
-    INSERT INTO GymEquipments (Name, Category, Zone, Quantity, Status) VALUES
-    (N'Xe đạp tập (Spin Bike)',   N'Cardio',    N'Khu Cardio',    10, N'Hoạt động'),
-    (N'Máy chạy bộ (Treadmill)',  N'Cardio',    N'Khu Cardio',    12, N'Hoạt động'),
-    (N'Máy rowing (Rowing Machine)', N'Cardio', N'Khu Cardio',     4, N'Hoạt động'),
-    (N'Máy ép ngực (Chest Press)',N'Tạ máy',   N'Khu Tạ máy',     6, N'Hoạt động'),
-    (N'Máy kéo cáp (Cable Machine)', N'Tạ máy',N'Khu Tạ máy',     4, N'Đang bảo trì'),
-    (N'Tạ tay (Dumbbell set)',    N'Tạ tự do',  N'Khu Free Weight',1, N'Hoạt động'),
-    (N'Xà đơn (Pull-up bar)',     N'Thể lực',   N'Khu Thể lực',   4, N'Hoạt động'),
-    (N'Thảm tập yoga',            N'Yoga',      N'Studio 1',      30, N'Hoạt động');
-    PRINT N'> Đã thêm dữ liệu mẫu GymEquipments';
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM GymExercises)
-BEGIN
-    INSERT INTO GymExercises (Name, AssignmentName, Type, TargetMuscle, MetValue) VALUES
-    (N'Bench Press',    N'Đẩy ngực nằm',    N'Free Weights', N'Ngực',  5.0),
-    (N'Squat',          N'Squat',            N'Free Weights', N'Đùi',   6.0),
-    (N'Deadlift',       N'Kéo đất',          N'Free Weights', N'Lưng',  6.0),
-    (N'Pull Up',        N'Kéo xà',           N'Bodyweight',   N'Lưng',  8.0),
-    (N'Plank',          N'Plank',            N'Bodyweight',   N'Bụng',  3.5),
-    (N'Treadmill Run',  N'Chạy bộ',          N'Cardio',       N'Toàn thân', 9.8),
-    (N'Cycling',        N'Đạp xe',           N'Cardio',       N'Đùi',   7.5),
-    (N'Shoulder Press', N'Đẩy vai',          N'Machine',      N'Vai',   5.0),
-    (N'Leg Press',      N'Đẩy chân',         N'Machine',      N'Đùi',   6.5);
-    PRINT N'> Đã thêm dữ liệu mẫu GymExercises';
-END
-GO
-
--- ================================================================
--- SEED BỔ SUNG: LIÊN KẾT USER, GÓI TẬP VÀ SUBSCRIPTIONS
--- ================================================================
-USE QLGymDB;
-GO
-
-DECLARE @AliceID INT = (SELECT UserID FROM Users WHERE Email = 'alice.member@gym.vn');
-DECLARE @BobID INT = (SELECT UserID FROM Users WHERE Email = 'bob.member@gym.vn');
-DECLARE @PackageGold INT = (SELECT PackageID FROM MembershipPackages WHERE Name = N'GÓI CAO CẤP');
-DECLARE @PackageSilver INT = (SELECT PackageID FROM MembershipPackages WHERE Name = N'GÓI TIÊU CHUẨN');
-DECLARE @AIPackageStd INT = (SELECT PackageID FROM AIPackages WHERE Name = N'Gói Tiêu Chuẩn');
-
-IF @AliceID IS NOT NULL AND @PackageGold IS NOT NULL
-BEGIN
-    UPDATE MemberProfiles SET PackageID = @PackageGold, AIPackageID = @AIPackageStd WHERE UserID = @AliceID;
-    
-    IF NOT EXISTS (SELECT 1 FROM UserSubscriptions WHERE UserID = @AliceID AND PackageID = @PackageGold AND PackageType = 'GYM')
-    BEGIN
-        INSERT INTO UserSubscriptions (UserID, PackageType, PackageID, StartDate, EndDate, Status)
-        VALUES (@AliceID, 'GYM', @PackageGold, GETDATE(), DATEADD(month, 1, GETDATE()), 'Active');
-    END
-
-    IF NOT EXISTS (SELECT 1 FROM UserSubscriptions WHERE UserID = @AliceID AND PackageID = @AIPackageStd AND PackageType = 'AI')
-    BEGIN
-        INSERT INTO UserSubscriptions (UserID, PackageType, PackageID, StartDate, EndDate, Status)
-        VALUES (@AliceID, 'AI', @AIPackageStd, GETDATE(), DATEADD(month, 1, GETDATE()), 'Active');
-    END
-END
-
-IF @BobID IS NOT NULL AND @PackageSilver IS NOT NULL
-BEGIN
-    UPDATE MemberProfiles SET PackageID = @PackageSilver WHERE UserID = @BobID;
-    
-    IF NOT EXISTS (SELECT 1 FROM UserSubscriptions WHERE UserID = @BobID AND PackageID = @PackageSilver AND PackageType = 'GYM')
-    BEGIN
-        INSERT INTO UserSubscriptions (UserID, PackageType, PackageID, StartDate, EndDate, Status)
-        VALUES (@BobID, 'GYM', @PackageSilver, GETDATE(), DATEADD(month, 1, GETDATE()), 'Active');
-    END
-END
 GO

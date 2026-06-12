@@ -180,7 +180,7 @@ export default function Dashboard() {
               <thead>
                 <tr>
                   <th>Hội viên</th>
-                  <th>Gói thẻ</th>
+                  <th>Nhu cầu tập</th>
                   <th>PT phụ trách</th>
                   <th>Trạng thái</th>
                   <th></th>

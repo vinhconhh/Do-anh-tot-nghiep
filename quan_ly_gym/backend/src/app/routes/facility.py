@@ -1,16 +1,9 @@
-"""
-Routes / Controller cho 3 module:
-  - Equipment        → /api/equipment
-  - Exercise         → /api/gym-exercises
-  - GymClass         → /api/classes  (with enrollment, PT sync, recurring & conflict check)
-"""
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, func, and_
 from typing import Optional, List
 from datetime import datetime, date, timedelta, time as dt_time
 import math
-
 from ..database import get_db
 from ..models.facility import GymEquipment, GymExercise, GymClass, ClassEnrollment, INTENSITY_MIN_GAP
 from ..models.user import User, Role
@@ -23,7 +16,7 @@ router = APIRouter(prefix="/api", tags=["Facility"])
 
 def require_admin(current_user: User = Depends(get_current_user)):
     role = current_user.role.RoleCode.upper()
-    if role not in ["MANAGER"]:
+    if role not in ["MANAGER", "RECEPTIONIST"]:
         raise HTTPException(status_code=403, detail="Không có quyền thực hiện thao tác này.")
     return current_user
 
@@ -124,7 +117,6 @@ def _class_dict(c: GymClass, current_user_id: int = None, enrollment_map: dict =
 
 
 def _parse_time(t_str: str) -> dt_time:
-    """Parse 'HH:MM' string to time object."""
     parts = t_str.strip().split(":")
     return dt_time(int(parts[0]), int(parts[1]))
 
@@ -136,10 +128,6 @@ def _check_instructor_conflicts(
     intensity: str,
     exclude_class_id: int = None,
 ) -> list:
-    """
-    Check if an instructor has schedule conflicts or insufficient rest gaps.
-    Returns list of conflict dicts: {"type": "overlap"|"gap", "session": ..., "existing": ..., "detail": ...}
-    """
     if not instructor_id or not sessions:
         return []
 
@@ -510,7 +498,6 @@ def check_conflicts_preview(
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
-    """Preview conflict check without creating anything."""
     if not payload.InstructorID:
         return {"conflicts": [], "sessions_count": 0}
 
@@ -543,6 +530,12 @@ def get_class(class_id: int, db: Session = Depends(get_db), current_user: User =
     enrollment_map = _get_enrollment_map(db, current_user.UserID)
     return _class_dict(obj, current_user.UserID, enrollment_map)
 
+
+@router.get("/classes/{class_id}/children")
+def get_class_children(class_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    children = db.query(GymClass).filter(GymClass.ParentClassID == class_id, GymClass.IsDeleted == 0).order_by(GymClass.StartTime).all()
+    enrollment_map = _get_enrollment_map(db, current_user.UserID)
+    return [_class_dict(c, current_user.UserID, enrollment_map) for c in children]
 
 @router.get("/classes/{class_id}/members")
 def get_class_members(class_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
@@ -845,7 +838,6 @@ def unenroll_class(class_id: int, db: Session = Depends(get_db), current_user: U
 
 @router.get("/classes/{class_id}/pending-enrollments")
 def list_pending_enrollments(class_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """HLV/Manager: danh sách yêu cầu đăng ký chờ duyệt."""
     obj = db.query(GymClass).filter(GymClass.ClassID == class_id, GymClass.IsDeleted == 0).first()
     if not obj: raise HTTPException(status_code=404, detail="Không tìm thấy lớp học.")
     if current_user.role.RoleCode.upper() not in ("MANAGER",) and obj.InstructorID != current_user.UserID:

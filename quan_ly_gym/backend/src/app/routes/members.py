@@ -7,7 +7,8 @@ from ..models.profile import MemberProfile
 from ..middleware.auth import get_current_user, require_roles
 from ..schemas.member import MemberCreate, MemberUpdate
 from ..utils.security import hash_password
-from ..models.pt_request import PTRequest
+from ..models.member_pt_relation import MemberPTRelation, MemberRequest
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/members", tags=["Members"])
 
@@ -16,10 +17,10 @@ def _member_to_dict(user: User, db: Session) -> dict:
     profile = user.member_profile
 
     pt_name = None
-    pt_req = db.query(PTRequest).filter(
-        PTRequest.MemberID == user.UserID,
-        PTRequest.Status == "Approved"
-    ).order_by(PTRequest.CreatedAt.desc()).first()
+    pt_req = db.query(MemberPTRelation).filter(
+        MemberPTRelation.MemberID == user.UserID,
+        MemberPTRelation.Status == "Active"
+    ).order_by(MemberPTRelation.CreatedAt.desc()).first()
     
     if pt_req:
         pt_user = db.query(User).filter(User.UserID == pt_req.PTID).first()
@@ -206,3 +207,59 @@ def delete_member(
     user.IsDeleted = 1
     db.commit()
     return {"message": "Đã xóa hội viên"}
+
+
+class PTRequestPayload(BaseModel):
+    note: str
+
+@router.post("/pt-requests")
+def create_pt_request(
+    payload: PTRequestPayload,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("MEMBER")),
+):
+    existing = db.query(MemberRequest).filter(
+        MemberRequest.MemberID == current_user.UserID,
+        MemberRequest.Status == "Pending"
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Bạn đã có một yêu cầu đang chờ duyệt")
+
+    req = MemberRequest(
+        MemberID=current_user.UserID,
+        RequestType="PT_REQUEST",
+        Note=payload.note,
+        Status="Pending"
+    )
+    db.add(req)
+    db.commit()
+    db.refresh(req)
+    return {"message": "Đã gửi yêu cầu thành công", "RequestID": req.RequestID}
+
+@router.get("/pt-requests/my")
+def get_my_pt_requests(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("MEMBER")),
+):
+    reqs = db.query(MemberRequest).filter(
+        MemberRequest.MemberID == current_user.UserID
+    ).order_by(MemberRequest.CreatedAt.desc()).all()
+    
+    active_relation = db.query(MemberPTRelation).filter(
+        MemberPTRelation.MemberID == current_user.UserID,
+        MemberPTRelation.Status == "Active"
+    ).first()
+    
+    pt_name = active_relation.pt.FullName if active_relation and active_relation.pt else None
+    
+    return [
+        {
+            "RequestID": r.RequestID,
+            "RequestType": r.RequestType,
+            "Note": r.Note,
+            "Status": r.Status,
+            "CreatedAt": r.CreatedAt.isoformat() if r.CreatedAt else None,
+            "ReviewedAt": r.ReviewedAt.isoformat() if r.ReviewedAt else None,
+            "AssignedPT": pt_name if r.Status == "Approved" else None
+        } for r in reqs
+    ]
