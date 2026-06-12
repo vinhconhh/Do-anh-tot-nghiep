@@ -3,8 +3,8 @@ from typing import Optional
 
 
 class LoginRequest(BaseModel):
-    tenDangNhap: str  # maps to Email
-    matKhau: str      # maps to PasswordHash (plaintext to verify)
+    tenDangNhap: str
+    matKhau: str
 
 
 class RegisterRequest(BaseModel):

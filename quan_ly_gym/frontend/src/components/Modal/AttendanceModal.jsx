@@ -8,7 +8,6 @@ export default function AttendanceModal({ classId, classTitle, onClose }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Local state for attendance: { MemberID: "Present" | "Absent" }
   const [attendance, setAttendance] = useState({});
 
   useEffect(() => {
@@ -17,7 +16,6 @@ export default function AttendanceModal({ classId, classTitle, onClose }) {
         setSubmitted(!!res.data.AttendanceSubmitted);
         setMembers(res.data.Members || []);
         
-        // Initialize attendance map
         const initial = {};
         (res.data.Members || []).forEach(m => {
           if (m.AttendanceStatus) {

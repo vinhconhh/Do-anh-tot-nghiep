@@ -1,4 +1,3 @@
-// Vite proxy handles /api/* → backend, so base URL is empty for dev/docker
 export const API_BASE_URL = "";
 
 async function readJsonSafe(res) {
@@ -19,7 +18,6 @@ export async function requestJson(path, options = {}) {
 }
 
 export async function authedRequestJson(path, token, options = {}) {
-  // Ensure token is a non-empty string and not "null" or "undefined"
   const isValidToken = token && typeof token === "string" && token !== "null" && token !== "undefined";
   
   const headers = {

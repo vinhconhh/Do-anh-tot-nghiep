@@ -24,7 +24,6 @@ export default function EnrollmentApproval() {
   const [loading, setLoading] = useState(true);
   const [pendingLoading, setPendingLoading] = useState(false);
 
-  // Fetch classes based on role
   useEffect(() => {
     const fetchClasses = async () => {
       setLoading(true);
@@ -42,7 +41,6 @@ export default function EnrollmentApproval() {
     fetchClasses();
   }, [isPT]);
 
-  // Fetch pending for selected class
   const fetchPending = async (classId) => {
     setPendingLoading(true);
     try {
@@ -84,7 +82,7 @@ export default function EnrollmentApproval() {
 
   return (
     <div style={{ padding: "24px", minHeight: "100vh", background: "var(--theme-bg)", color: "var(--theme-text-dark)" }}>
-      {/* Header */}
+      {}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: "2rem", fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
           <Users size={24} /> Duyệt đăng ký lớp học
@@ -95,7 +93,7 @@ export default function EnrollmentApproval() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 20, alignItems: "start" }}>
-        {/* Left: Class list */}
+        {}
         <div style={cardSt}>
           <div style={{ fontWeight: 700, fontSize: "1.4rem", marginBottom: 12, color: "var(--theme-text-dark)" }}>
             📋 Chọn lớp học ({classes.length})
@@ -134,7 +132,7 @@ export default function EnrollmentApproval() {
           )}
         </div>
 
-        {/* Right: Pending enrollments */}
+        {}
         <div style={cardSt}>
           {!selectedClass ? (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--theme-text)" }}>

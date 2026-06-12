@@ -29,7 +29,7 @@ export default function GymClassManagement() {
   const [instructors, setInstructors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [membersModal, setMembersModal] = useState(null); // { class }
+  const [membersModal, setMembersModal] = useState(null);
   const [classMembersData, setClassMembersData] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -79,7 +79,7 @@ export default function GymClassManagement() {
       StartTime: toInputLocal(item.StartTime),
       EndTime: toInputLocal(item.EndTime),
       Intensity: item.Intensity || "medium",
-      IsRecurring: 0, // Cannot edit recurring rules for existing instances
+      IsRecurring: 0,
     });
     setModalOpen(true);
   };
@@ -133,7 +133,6 @@ export default function GymClassManagement() {
     try {
       let res;
       if (editing) {
-          // Edit does not support changing recurring rules, only single instance or simple fields
           res = await api.put(`/classes/${editing.ClassID}`, payload);
       } else {
           res = await api.post("/classes", payload);
@@ -141,8 +140,6 @@ export default function GymClassManagement() {
 
       if (res.data?.conflicts && res.data.conflicts.length > 0) {
           setConflictWarnings(res.data.conflicts);
-          // If we receive conflicts but created > 0, it means it's a soft warning from the backend? 
-          // Wait, backend returns created=0 if conflict
           if (res.data.created === 0 || res.data.updated === false) {
              setSaving(false);
              return;
@@ -183,7 +180,7 @@ export default function GymClassManagement() {
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-      {/* Header */}
+      {}
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>
@@ -198,7 +195,7 @@ export default function GymClassManagement() {
         </button>
       </div>
 
-      {/* Summary Cards */}
+      {}
       <div className={styles.statGrid}>
         {[
           { label: "Lớp hiển thị", val: items.length, color: "#f6c23e", icon: <Calendar size={26} /> },
@@ -215,7 +212,7 @@ export default function GymClassManagement() {
         ))}
       </div>
 
-      {/* Filter & Search */}
+      {}
       <div className={styles.tools}>
         <div className={styles.searchBox}>
           <Search className={styles.searchIcon} size={16} />
@@ -240,7 +237,7 @@ export default function GymClassManagement() {
         </div>
       </div>
 
-      {/* Table */}
+      {}
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
@@ -314,7 +311,7 @@ export default function GymClassManagement() {
         </table>
       </div>
 
-      {/* Create/Edit Modal */}
+      {}
       {modalOpen && (
         <ClassFormModal
           form={form} setForm={setForm} editing={editing}
@@ -325,14 +322,14 @@ export default function GymClassManagement() {
         />
       )}
 
-      {/* Members Modal */}
+      {}
       <Modal
         isOpen={!!membersModal}
         onRequestClose={() => setMembersModal(null)}
         title={membersModal ? `👥 Học viên lớp: ${membersModal.Name}` : ""}
       >
         <div style={{ padding: "0 10px" }}>
-            {/* Pending enrollments */}
+            {}
             {pendingEnrollments.length > 0 && (
               <div className={styles.pendingBox}>
                 <div className={styles.pendingTitle}>
@@ -359,7 +356,7 @@ export default function GymClassManagement() {
               </div>
             )}
 
-            {/* Active members */}
+            {}
             {classMembersData.length === 0 && pendingEnrollments.length === 0 ? (
               <div style={{ textAlign: "center", padding: 30, color: "var(--theme-text)", fontSize: "1.6rem" }}>Chưa có học viên nào đăng ký</div>
             ) : classMembersData.length > 0 && (

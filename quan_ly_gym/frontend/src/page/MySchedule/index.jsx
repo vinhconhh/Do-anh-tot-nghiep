@@ -53,7 +53,7 @@ export default function MySchedule() {
           classTitle={selectedClassTitle} 
           onClose={() => {
             setSelectedClassId(null);
-            fetchSchedule(); // Refresh schedule meta data after potential attendance changes
+            fetchSchedule();
           }} 
         />
       )}

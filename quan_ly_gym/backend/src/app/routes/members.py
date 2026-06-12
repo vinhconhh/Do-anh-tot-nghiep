@@ -15,7 +15,6 @@ router = APIRouter(prefix="/api/members", tags=["Members"])
 def _member_to_dict(user: User, db: Session) -> dict:
     profile = user.member_profile
 
-    # Lấy PT phụ trách
     pt_name = None
     pt_req = db.query(PTRequest).filter(
         PTRequest.MemberID == user.UserID,
@@ -37,14 +36,11 @@ def _member_to_dict(user: User, db: Session) -> dict:
         "goal": profile.Goal if profile else None,
         "height": profile.Height if profile else None,
         "weight": profile.Weight if profile else None,
-        "aiQuota": profile.AIQuota if profile else 0,
         "sdt": user.PhoneNumber,
         "tuoi": user.Age,
         "gioiTinh": user.Gender,
         "ngaySinh": user.Birthday.isoformat() if user.Birthday else None,
         "hetHan": user.ExpiryDate.isoformat() if user.ExpiryDate else None,
-        "gymPackageName": profile.gym_package.Name if profile and profile.gym_package else None,
-        "aiPackageName": profile.ai_package.Name if profile and profile.ai_package else None,
         "pt": pt_name,
     }
 
@@ -60,8 +56,7 @@ def list_members(
     members = (
         db.query(User)
         .options(
-            joinedload(User.member_profile).joinedload(MemberProfile.gym_package),
-            joinedload(User.member_profile).joinedload(MemberProfile.ai_package),
+            joinedload(User.member_profile),
             joinedload(User.role)
         )
         .filter(User.RoleID == role.RoleID, User.IsDeleted == 0)
@@ -83,8 +78,7 @@ def search_members(
     query = (
         db.query(User)
         .options(
-            joinedload(User.member_profile).joinedload(MemberProfile.gym_package),
-            joinedload(User.member_profile).joinedload(MemberProfile.ai_package),
+            joinedload(User.member_profile),
             joinedload(User.role)
         )
         .filter(User.RoleID == role.RoleID, User.IsDeleted == 0)
@@ -106,8 +100,7 @@ def get_member(
     user = (
         db.query(User)
         .options(
-            joinedload(User.member_profile).joinedload(MemberProfile.gym_package),
-            joinedload(User.member_profile).joinedload(MemberProfile.ai_package),
+            joinedload(User.member_profile),
             joinedload(User.role)
         )
         .filter(User.UserID == member_id, User.IsDeleted == 0)
@@ -122,7 +115,7 @@ def get_member(
 def create_member(
     req: MemberCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     if db.query(User).filter(User.Email == req.email).first():
         raise HTTPException(status_code=400, detail="Email đã tồn tại")
@@ -152,7 +145,6 @@ def create_member(
         Goal=req.goal,
         Height=req.height,
         Weight=req.weight,
-        AIQuota=10,
     )
     db.add(profile)
     db.commit()
@@ -165,7 +157,7 @@ def update_member(
     member_id: int,
     req: MemberUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     user = db.query(User).filter(User.UserID == member_id, User.IsDeleted == 0).first()
     if not user:
@@ -206,7 +198,7 @@ def update_member(
 def delete_member(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     user = db.query(User).filter(User.UserID == member_id, User.IsDeleted == 0).first()
     if not user:

@@ -10,12 +10,10 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
   const nav = useNavigate();
   const [view, setView] = useState(initialView);
 
-  // Login State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
 
-  // Register State
   const [regForm, setRegForm] = useState({
     hoTen: "",
     email: "",
@@ -42,7 +40,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
       const data = await loginApi(email, password);
       login(data);
       onClose();
-      // Redirect based on role from backend
       const role = data.user?.vaiTro?.toUpperCase();
       const target = role === "MEMBER" ? "/my-dashboard" : "/dashboard";
       nav(target);

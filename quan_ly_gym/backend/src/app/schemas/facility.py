@@ -2,16 +2,13 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 
-# ══════════════════════════════════════════
-# EQUIPMENT SCHEMAS
-# ══════════════════════════════════════════
 
 class EquipmentBase(BaseModel):
     Name:     str
-    Category: Optional[str] = None          # Cardio, Tạ máy, Tạ tự do, ...
+    Category: Optional[str] = None
     Zone:     Optional[str] = None
     Quantity: Optional[int] = Field(default=1, ge=0)
-    Status:   Optional[str] = "Hoạt động"  # Hoạt động | Đang bảo trì | Hỏng
+    Status:   Optional[str] = "Hoạt động"
 
 class EquipmentCreate(EquipmentBase):
     pass
@@ -32,14 +29,11 @@ class EquipmentResponse(EquipmentBase):
         from_attributes = True
 
 
-# ══════════════════════════════════════════
-# EXERCISE SCHEMAS
-# ══════════════════════════════════════════
 
 class ExerciseBase(BaseModel):
     Name:         str
     AssignmentName: Optional[str] = None
-    Type:         Optional[str] = None          # Cardio, Free Weights, Machine, ...
+    Type:         Optional[str] = None
     TargetMuscle: Optional[str] = None
     MetValue:     Optional[float] = Field(default=0.0, ge=0)
     EquipmentID:  Optional[int] = None
@@ -60,7 +54,7 @@ class ExerciseResponse(ExerciseBase):
     IsDeleted:     Optional[int] = 0
     CreatedAt:     Optional[datetime] = None
     UpdatedAt:     Optional[datetime] = None
-    EquipmentName: Optional[str] = None         # join từ GymEquipment
+    EquipmentName: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -73,9 +67,6 @@ class PaginatedExerciseResponse(BaseModel):
     items:   List[ExerciseResponse]
 
 
-# ══════════════════════════════════════════
-# GYM CLASS SCHEMAS
-# ══════════════════════════════════════════
 
 class GymClassBase(BaseModel):
     Name:           str
@@ -102,7 +93,7 @@ class GymClassResponse(GymClassBase):
     IsDeleted:       int = 0
     CreatedAt:       Optional[datetime] = None
     UpdatedAt:       Optional[datetime] = None
-    AvailableSlots:  Optional[int] = None       # Tính = MaxCapacity - CurrentEnrolled
+    AvailableSlots:  Optional[int] = None
 
     class Config:
         from_attributes = True

@@ -7,13 +7,11 @@ import { AuthContext } from "../../context/AuthContext";
 import styles from "./DashboardMember.module.scss";
 import { useDashboardApi } from "../../api/dashboardApi";
 
-// Placeholder data – sẽ được thay bằng API sau
 const WEEK = [];
 const PR_LIST = [];
 
 
 
-// Helper: format ngày giờ theo vùng Việt Nam (UTC+7)
 const formatVNDate = (dateStr) => {
   if (!dateStr) return "—";
   try {
@@ -175,7 +173,6 @@ export default function DashboardMember() {
       setExercises(allExercises.filter(ex => (ex.name || "").toLowerCase().includes(n) || (ex.muscleGroup || "").toLowerCase().includes(n) || (ex.assignmentName || "").toLowerCase().includes(n)));
     }
 
-    // Lọc thực đơn từ dữ liệu API theo goal và category
     const filteredMeals = allMeals.filter(meal =>
       (meal.goal || "").toLowerCase().includes(n) ||
       (meal.name || "").toLowerCase().includes(n) ||
@@ -191,7 +188,6 @@ export default function DashboardMember() {
     fetchAllExercises();
     fetchAttendanceFrequency();
     fetchMealPlans();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSaveMetrics = async () => {
@@ -214,7 +210,6 @@ export default function DashboardMember() {
   const handleAiSubmit = async () => {
     if (!aiRequest.trim() || aiLoading) return;
 
-    // Calculate Age from memberStats.birthday
     let age = "Không rõ";
     if (memberStats.birthday) {
       const birthYear = new Date(memberStats.birthday).getFullYear();
@@ -222,7 +217,6 @@ export default function DashboardMember() {
       age = currentYear - birthYear;
     }
 
-    // Calculate BMI
     let bmi = "Không rõ";
     const h = metrics.height || memberStats.height;
     const w = metrics.weight || memberStats.weight;
@@ -316,7 +310,7 @@ YÊU CẦU NỘI DUNG:
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-        {/* Welcome */}
+        {}
         <div className={styles.welcome}>
           <div>
             <h2 className={styles.title}>Xin chào, {displayName}! 💪</h2>
@@ -343,7 +337,7 @@ YÊU CẦU NỘI DUNG:
           </div>
         </div>
 
-        {/* Stat Cards */}
+        {}
         <div className={styles.statGrid}>
           {[
             { label: "Streak hiện tại", val: memberStats.streak === -1 ? "Đăng ký lớp học để mở khóa streak" : `${memberStats.streak} buổi`, border: "#10b981", iconBg: "rgba(16,185,129,0.13)", icon: <Flame size={24} color="#10b981" />, isMessage: memberStats.streak === -1 },
@@ -370,7 +364,7 @@ YÊU CẦU NỘI DUNG:
         </div>
 
 
-        {/* Bài tập tham khảo — full width */}
+        {}
         <div className={styles.card} style={{ marginTop: 20 }}>
           <div className={styles.cardHeader}>
             <h6 className={styles.cardTitle}>
@@ -378,7 +372,7 @@ YÊU CẦU NỘI DUNG:
             </h6>
           </div>
           <div className={styles.cardBody}>
-            {/* Box nhu cầu */}
+            {}
             <div style={{ marginBottom: 20, display: "flex", gap: 10, background: "#f8fafc", padding: "6px 6px 6px 16px", borderRadius: 14, border: "1.5px solid #e2e8f0" }}>
               <input
                 type="text"
@@ -470,7 +464,7 @@ YÊU CẦU NỘI DUNG:
         </div>
 
         <div className={styles.mainGrid}>
-          {/* Thực đơn cá nhân */}
+          {}
           <div className={styles.card} style={{ marginTop: 20 }}>
             <div className={styles.cardHeader}>
               <h6 className={styles.cardTitle}>
@@ -668,7 +662,7 @@ YÊU CẦU NỘI DUNG:
             </div>
           </div>
 
-          {/* Chỉ số cơ thể — bên phải */}
+          {}
           <div className={styles.card} style={{ marginTop: 20 }}>
             <div className={styles.cardHeader}>
               <h6 className={styles.cardTitle}>⚖️ Chỉ số cơ thể</h6>
@@ -729,9 +723,9 @@ YÊU CẦU NỘI DUNG:
 
         </div>
 
-        {/* Nhật ký tập luyện + Chỉ số cơ thể — 2 cột cạnh nhau */}
+        {}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 20, marginTop: 20, alignItems: "start" }}>
-          {/* Nhật ký tập luyện — bên trái */}
+          {}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h6 className={styles.cardTitle}>📋 Nhật ký tập luyện — Chi tiết bài tập đã hoàn thành</h6>
@@ -791,7 +785,7 @@ YÊU CẦU NỘI DUNG:
             </div>
           </div>
 
-          {/* Weight chart */}
+          {}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h6 className={styles.cardTitle}>📈 Tiến độ cân nặng</h6>
@@ -834,7 +828,7 @@ YÊU CẦU NỘI DUNG:
 
       </div>
 
-      {/* Attendance Frequency Table */}
+      {}
       <div className={styles.card} style={{ marginTop: 20 }}>
         <div className={styles.cardHeader}>
           <h6 className={styles.cardTitle}>📅 Thống kê tần suất đến lớp</h6>
@@ -904,7 +898,7 @@ YÊU CẦU NỘI DUNG:
         </div>
       </div>
 
-      {/* Update Metrics Modal */}
+      {}
       <Modal isOpen={metricsOpen} onRequestClose={() => setMetricsOpen(false)} title="Cập nhật chỉ số cơ thể">
         <div className={styles.metricsForm}>
           <div className={styles.metricsFormGrid}>
@@ -932,7 +926,7 @@ YÊU CẦU NỘI DUNG:
         </div>
       </Modal>
 
-      {/* AI Consult Modal */}
+      {}
       {showAiModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>

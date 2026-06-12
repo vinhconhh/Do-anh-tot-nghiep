@@ -82,7 +82,7 @@ export default function TrainerDetail() {
         </div>
 
         <div className={styles.mainGrid}>
-          {/* Profile Card */}
+          {}
           <div className={styles.profileCard}>
             <div className={styles.avatarWrap}>
               <img src={avatarUrl} alt={trainer.hoTen} className={styles.avatar} />
@@ -119,9 +119,9 @@ export default function TrainerDetail() {
             </div>
           </div>
 
-          {/* Stats & Activity */}
+          {}
           <div className={styles.rightCol}>
-            {/* Mini stats */}
+            {}
             <div className={styles.miniStats}>
               <div className={`${styles.miniCard} ${styles.blue}`}>
                 <div className={styles.miniLabel}>Tỷ lệ phản hồi</div>
@@ -140,7 +140,7 @@ export default function TrainerDetail() {
               </div>
             </div>
 
-            {/* Activity */}
+            {}
             <div className={styles.activityCard}>
               <div className={styles.activityHeader}>
                 <h6 className={styles.activityTitle}>Lịch sử hoạt động gần đây</h6>

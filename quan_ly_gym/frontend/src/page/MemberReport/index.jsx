@@ -26,7 +26,6 @@ export default function MemberReport() {
     [token, logout]
   );
 
-  // Fetch member list
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -38,7 +37,6 @@ export default function MemberReport() {
     })();
   }, [aj]);
 
-  // Fetch detail when member selected
   useEffect(() => {
     if (!selectedId) { setDetail(null); return; }
     (async () => {
@@ -80,7 +78,7 @@ export default function MemberReport() {
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-        {/* Heading */}
+        {}
         <div className={styles.header}>
           <h2 className={styles.title}>
             <TrendingUp size={20} /> Báo cáo theo hội viên
@@ -107,7 +105,7 @@ export default function MemberReport() {
           </div>
         ) : (
           <>
-            {/* Stat cards */}
+            {}
             <div className={styles.statGrid}>
               {[
                 { label: "Lượt AI đã dùng", val: `${member.aiUsed}${member.aiTotal ? "/" + member.aiTotal : "/∞"}`, bar: aiPct, border: "#4e73df", icon: <Bot size={28} color="#d1d3e2" /> },
@@ -130,7 +128,7 @@ export default function MemberReport() {
               ))}
             </div>
 
-            {/* Member Info Summary */}
+            {}
             <div className={styles.memberSummary}>
               <div><strong>Mục tiêu:</strong> {member.goal || "Chưa cập nhật"}</div>
               <div><strong>Cân nặng:</strong> {member.weight ? `${member.weight} kg` : "—"}</div>
@@ -139,7 +137,7 @@ export default function MemberReport() {
               <div><strong>Điểm tích lũy:</strong> {member.totalPoints || 0}</div>
             </div>
 
-            {/* Charts */}
+            {}
             <div className={styles.chartGrid}>
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
@@ -183,7 +181,7 @@ export default function MemberReport() {
               </div>
             </div>
 
-            {/* Activity Table */}
+            {}
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <h6 className={styles.cardTitle}>Báo cáo hoạt động gần nhất</h6>

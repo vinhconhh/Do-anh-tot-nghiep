@@ -39,12 +39,10 @@ class UserMeUpdate(BaseModel):
     Gender: Optional[str] = None
     Birthday: Optional[datetime] = None
     
-    # Member specific
     Height: Optional[float] = None
     Weight: Optional[float] = None
     Goal: Optional[str] = None
     
-    # PT specific
     ExperienceYears: Optional[int] = None
     Certifications: Optional[str] = None
     Specialty: Optional[str] = None

@@ -40,8 +40,8 @@ class User(Base):
     Email = Column(String(255), unique=True)
     PasswordHash = Column(String(255))
     RoleID = Column(Integer, ForeignKey("Roles.RoleID"))
-    IsActive = Column(Integer, default=1)  # BIT
-    IsDeleted = Column(Integer, default=0)  # BIT
+    IsActive = Column(Integer, default=1)
+    IsDeleted = Column(Integer, default=0)
     PhoneNumber = Column(String(20), nullable=True)
     Age = Column(Integer, nullable=True)
     Gender = Column(String(20), nullable=True)
@@ -56,7 +56,6 @@ class User(Base):
     pt_profile = relationship("PTProfile", uselist=False, back_populates="user")
     refresh_tokens = relationship("RefreshToken", back_populates="user")
     sessions = relationship("UserSession", back_populates="user")
-    subscriptions = relationship("UserSubscription", back_populates="user")
 
 
 class RefreshToken(Base):

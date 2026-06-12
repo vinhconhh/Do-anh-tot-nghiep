@@ -10,7 +10,7 @@ class LogWorkout(Base):
     LogID = Column(Integer, primary_key=True, autoincrement=True)
     UserID = Column(Integer, ForeignKey("Users.UserID"))
     WorkoutDate = Column(DateTime, default=datetime.utcnow)
-    RPE = Column(Integer, nullable=True)  # Rate of Perceived Exertion 1-10
+    RPE = Column(Integer, nullable=True)
 
     user = relationship("User")
     details = relationship("LogWorkoutDetail", back_populates="log")

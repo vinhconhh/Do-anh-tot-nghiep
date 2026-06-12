@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useContext, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Bot, Send, Loader2, Dumbbell, Trash2 } from "lucide-react";
+import { Bot, Send, Loader2, Dumbbell } from "lucide-react";
 import styles from "./AiChat.module.scss";
 import { AuthContext } from "../../context/AuthContext";
 import { useAiApi } from "../../api/aiApi";
@@ -11,23 +11,17 @@ export default function AiChat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [remaining, setRemaining] = useState(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const bottomRef = useRef(null);
   
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Load history + quota on mount
   useEffect(() => {
     (async () => {
       try {
-        const [hist, quota] = await Promise.all([
-          aiApi.getChatHistory(),
-          aiApi.getQuota(),
-        ]);
+        const hist = await aiApi.getChatHistory();
         setMessages(hist);
-        setRemaining(quota.remaining);
       } catch (e) {
         console.error("AiChat Load Error:", e);
       } finally {
@@ -36,7 +30,6 @@ export default function AiChat() {
     })();
   }, [aiApi]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -45,7 +38,6 @@ export default function AiChat() {
     const text = input.trim();
     if (!text || sending) return;
 
-    // Add user message immediately
     setMessages(prev => [...prev, { role: "user", content: text, time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) }]);
     setInput("");
     setSending(true);
@@ -57,7 +49,6 @@ export default function AiChat() {
         content: res.response,
         time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
       }]);
-      setRemaining(res.remainingQuota);
     } catch (e) {
       const errMsg = e.data?.detail || e.message || "Lỗi không xác định";
       setMessages(prev => [...prev, {
@@ -83,7 +74,6 @@ export default function AiChat() {
         content: res.response,
         time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
       }]);
-      setRemaining(res.remainingQuota);
     } catch (e) {
       const errMsg = e.data?.detail || e.message || "Lỗi không xác định";
       setMessages(prev => [...prev, {
@@ -96,14 +86,10 @@ export default function AiChat() {
     }
   }, [aiApi, sending]);
 
-  // Handle initialPrompt from settings page
   useEffect(() => {
     if (location.state?.initialPrompt && historyLoaded) {
-      // If we already loaded history and an initial prompt is pending
       const promptToSync = location.state.initialPrompt;
-      // Clear the state so it doesn't trigger again on reload
       navigate(location.pathname, { replace: true, state: {} });
-      
       handleAutoSend(promptToSync);
     }
   }, [location.state, historyLoaded, handleAutoSend, navigate, location.pathname]);
@@ -119,7 +105,6 @@ export default function AiChat() {
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-        {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <div className={styles.botIcon}><Dumbbell size={22} /></div>
@@ -128,12 +113,8 @@ export default function AiChat() {
               <p className={styles.subtitle}>Chuyên gia tư vấn tập gym & tập tại nhà</p>
             </div>
           </div>
-          <div className={styles.quotaBadge}>
-            <Bot size={14} /> {remaining !== null ? `${remaining} lượt còn lại` : "..."}
-          </div>
         </div>
 
-        {/* Chat area */}
         <div className={styles.chatArea}>
           {messages.length === 0 && (
             <div className={styles.welcome}>
@@ -182,7 +163,6 @@ export default function AiChat() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Input bar */}
         <div className={styles.inputBar}>
           <textarea
             className={styles.inputField}

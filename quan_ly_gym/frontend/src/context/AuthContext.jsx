@@ -1,6 +1,5 @@
 import { createContext, useState, useCallback, useMemo } from "react";
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -26,7 +25,6 @@ export function AuthProvider({ children }) {
     setToken(null);
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    // Force reload to clear all states and stop pending requests
     window.location.href = "/";
   }, []);
 

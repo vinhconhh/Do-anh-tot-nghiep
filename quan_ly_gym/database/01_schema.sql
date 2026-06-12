@@ -77,52 +77,16 @@ CREATE TABLE UserSessions (
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
 
--- 3. PACKAGES & PROMOTIONS (Defined early for references)
-CREATE TABLE MembershipPackages (
-    PackageID INT IDENTITY(1,1) PRIMARY KEY,
-    Name NVARCHAR(100) NOT NULL,
-    Price DECIMAL(18,2) NOT NULL,
-    DurationMonths INT NOT NULL,
-    Description NVARCHAR(500),
-    Benefits NVARCHAR(MAX),
-    IsVisible BIT DEFAULT 1,
-    IsFeatured BIT DEFAULT 0,
-    CreatedAt DATETIME DEFAULT GETDATE()
-);
-
-CREATE TABLE AIPackages (
-    PackageID INT IDENTITY(1,1) PRIMARY KEY,
-    Name NVARCHAR(100) NOT NULL,
-    Price DECIMAL(18,2) NOT NULL,
-    Credits INT NOT NULL,
-    Description NVARCHAR(500),
-    IsVisible BIT DEFAULT 1,
-    CreatedAt DATETIME DEFAULT GETDATE()
-);
-
-CREATE TABLE Promotions (
-    PromotionID INT IDENTITY(1,1) PRIMARY KEY,
-    PromoCode VARCHAR(50) NOT NULL UNIQUE,
-    DiscountType VARCHAR(20) NOT NULL CHECK (DiscountType IN ('PERCENT', 'AMOUNT')),
-    DiscountValue DECIMAL(18,2) NOT NULL,
-    ExpiryDate DATETIME NULL,
-    IsActive BIT DEFAULT 1,
-    Description NVARCHAR(255),
-    CreatedAt DATETIME DEFAULT GETDATE()
-);
-
--- 4. PROFILES
+-- 3. PROFILES
 CREATE TABLE MemberProfiles (
     UserID INT PRIMARY KEY,
     Goal NVARCHAR(255),
     Height FLOAT,
     Weight FLOAT,
-    AIQuota INT DEFAULT 0,
-    PackageID INT NULL,
-    AIPackageID INT NULL,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID),
-    FOREIGN KEY (PackageID) REFERENCES MembershipPackages(PackageID),
-    FOREIGN KEY (AIPackageID) REFERENCES AIPackages(PackageID)
+    CurrentStreak INT DEFAULT 0,
+    LongestStreak INT DEFAULT 0,
+    LastAttendanceDate DATE NULL,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
 
 CREATE TABLE PTProfiles (
@@ -135,7 +99,7 @@ CREATE TABLE PTProfiles (
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
 
--- 5. FACILITY & EXERCISES
+-- 4. FACILITY & EXERCISES
 CREATE TABLE GymEquipments (
     EquipmentID  INT IDENTITY(1,1) PRIMARY KEY,
     Name         NVARCHAR(200) NOT NULL,
@@ -185,7 +149,7 @@ CREATE TABLE GymClasses (
     CONSTRAINT CK_GymClasses_Enrolled CHECK (CurrentEnrolled <= MaxCapacity)
 );
 
--- 6. WORKOUTS & ASSIGNMENTS
+-- 5. WORKOUTS & ASSIGNMENTS
 CREATE TABLE AssignedExercises (
     AssignmentID  INT IDENTITY(1,1) PRIMARY KEY,
     PTID          INT NOT NULL,
@@ -216,7 +180,7 @@ CREATE TABLE ClassEnrollments (
     CONSTRAINT UQ_ClassEnroll UNIQUE (ClassID, MemberID)
 );
 
--- 7. BOOKINGS & PT REQUESTS
+-- 6. BOOKINGS & PT REQUESTS
 CREATE TABLE Bookings (
     BookingID INT IDENTITY PRIMARY KEY,
     MemberID INT,
@@ -244,7 +208,7 @@ CREATE TABLE PTRequests (
     FOREIGN KEY (PTID) REFERENCES Users(UserID)
 );
 
--- 8. CHECK-INS & TRACKING
+-- 7. CHECK-INS & TRACKING
 CREATE TABLE CheckIns (
     CheckInID INT IDENTITY PRIMARY KEY,
     UserID INT,
@@ -256,32 +220,8 @@ CREATE TABLE CheckIns (
     CONSTRAINT CK_CheckIns_Source CHECK (CheckInTime IS NOT NULL)
 );
 
-CREATE TABLE CheckInLog (
-    LogID INT IDENTITY PRIMARY KEY,
-    UserID INT NOT NULL,
-    CheckInDate DATE NOT NULL,
-    Points INT DEFAULT 0,
-    StreakDay INT DEFAULT 1,
-    ExercisesCompleted INT DEFAULT 0,
-    TotalSets INT DEFAULT 0,
-    RPE INT NULL,
-    PTID INT NULL,
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID),
-    FOREIGN KEY (PTID) REFERENCES Users(UserID)
-);
 
-CREATE TABLE MemberStreak (
-    StreakID INT IDENTITY PRIMARY KEY,
-    UserID INT NOT NULL UNIQUE,
-    CurrentStreak INT DEFAULT 0,
-    LongestStreak INT DEFAULT 0,
-    TotalPoints INT DEFAULT 0,
-    LastCheckInDate DATE NULL,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
-);
-
--- 9. BODY METRICS
+-- 8. BODY METRICS
 CREATE TABLE BodyMetrics (
     MetricID INT IDENTITY PRIMARY KEY,
     UserID INT,
@@ -294,40 +234,7 @@ CREATE TABLE BodyMetrics (
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
 
--- 10. FINANCE & SUBSCRIPTIONS
-CREATE TABLE Invoices (
-    InvoiceID INT IDENTITY PRIMARY KEY,
-    UserID INT,
-    TotalAmount DECIMAL(18,2),
-    Status NVARCHAR(50) DEFAULT 'Pending',
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
-);
-
-CREATE TABLE Transactions (
-    TransactionID INT IDENTITY PRIMARY KEY,
-    UserID INT,
-    InvoiceID INT,
-    Amount DECIMAL(18,2) CHECK (Amount >= 0),
-    Status NVARCHAR(50),
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID),
-    FOREIGN KEY (InvoiceID) REFERENCES Invoices(InvoiceID)
-);
-
-CREATE TABLE UserSubscriptions (
-    SubscriptionID INT IDENTITY PRIMARY KEY,
-    UserID INT NOT NULL,
-    PackageType NVARCHAR(50) NOT NULL, -- 'GYM' or 'AI'
-    PackageID INT NOT NULL,
-    StartDate DATETIME DEFAULT GETDATE(),
-    EndDate DATETIME NULL,
-    Status NVARCHAR(50) DEFAULT 'Active',
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
-);
-
--- 11. AI & SYSTEM
+-- 9. AI & SYSTEM
 CREATE TABLE AIRequests (
     RequestID INT IDENTITY PRIMARY KEY,
     UserID INT,
@@ -360,7 +267,7 @@ CREATE TABLE Notifications (
 
 GO
 
--- 12. MEAL PLANS (Thực đơn do manager tạo, member xem)
+-- 10. MEAL PLANS (Thực đơn do manager tạo, member xem)
 CREATE TABLE MealPlans (
     PlanID       INT IDENTITY(1,1) PRIMARY KEY,
     Name         NVARCHAR(255) NOT NULL,
@@ -380,7 +287,7 @@ CREATE TABLE MealPlans (
 
 GO
 
--- 13. VIEWS
+-- 11. VIEWS
 CREATE VIEW VIEW_Attendance_PT AS
 SELECT 
     b.MemberID,
@@ -391,14 +298,3 @@ FROM Bookings b
 LEFT JOIN CheckIns c ON b.BookingID = c.BookingID
 GROUP BY b.MemberID;
 GO
-
-CREATE VIEW VIEW_RevenueReport AS
-SELECT 
-    u.UserID,
-    u.FullName,
-    SUM(t.Amount) AS TotalRevenue
-FROM Transactions t
-JOIN Users u ON t.UserID = u.UserID
-WHERE t.Status = 'Paid'
-GROUP BY u.UserID, u.FullName;
-GO

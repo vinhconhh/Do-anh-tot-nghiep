@@ -1,1 +1,18 @@
-# routes package
+from . import (
+    auth,
+    members,
+    trainers,
+    dashboard,
+    schedules,
+    bookings,
+    users,
+    notifications,
+    exercises,
+    pt_requests,
+    streaks,
+    ai,
+    facility,
+    pt_assignments,
+    meal_plans,
+    accounts,
+)

@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import api from "../../api/axiosClient";
 import AuthModal from "../../components/AuthModal";
 import styles from "./LandingPage.module.scss";
 
@@ -51,30 +50,36 @@ const TICKER_ITEMS = [
   "TỪ 299.000Đ/THÁNG",
 ];
 
-/* ── Component ── */
+const STATIC_PACKAGES = [
+  {
+    id: 1,
+    name: "Gói Tháng",
+    price: 299000,
+    duration: 1,
+    isFeatured: false,
+    description: "Trải nghiệm phòng tập linh hoạt theo tháng.",
+    features: ["Tập không giới hạn 24/7", "Sử dụng toàn bộ thiết bị", "Tư vấn AI"],
+  },
+  {
+    id: 2,
+    name: "Gói Năm",
+    price: 2490000,
+    duration: 12,
+    isFeatured: true,
+    description: "Gói hội viên toàn năm — tiết kiệm nhất.",
+    features: ["Tập không giới hạn 24/7", "Sử dụng toàn bộ thiết bị", "Tư vấn AI nâng cao", "Ưu tiên đặt lịch PT"],
+  },
+];
+
 function LandingPage() {
   const { token, user } = useContext(AuthContext) ?? {};
-  const [authModalView, setAuthModalView] = useState(null); // 'login' | 'register' | null
-  const [packages, setPackages] = useState([]);
+  const [authModalView, setAuthModalView] = useState(null);
 
-  useEffect(() => {
-    const fetchPackages = async () => {
-      try {
-        const res = await api.get("/packages/membership");
-        setPackages(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchPackages();
-  }, []);
-
-  // Xác định link dashboard dựa trên role
   const dashboardLink = user?.vaiTro?.toUpperCase() === "MEMBER" ? "/my-dashboard" : "/dashboard";
 
   return (
     <div className={styles.landing}>
-      {/* NAVBAR */}
+      {}
       <nav className={styles.navbar}>
         <Link to="/" className={styles.logo} style={{ userSelect: 'none', cursor: 'pointer' }}>
           THE <span>PRO</span> GYM
@@ -101,7 +106,7 @@ function LandingPage() {
         </div>
       </nav>
 
-      {/* HERO */}
+      {}
       <section className={styles.hero}>
         <div className={styles.heroBg} />
 
@@ -147,7 +152,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* TICKER */}
+      {}
       <div className={styles.ticker}>
         <div className={styles.tickerInner}>
           {TICKER_ITEMS.map((item, i) => (
@@ -158,7 +163,7 @@ function LandingPage() {
         </div>
       </div>
 
-      {/* PRICING */}
+      {}
       <section id="pricing" className={styles.pricing}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionLabel}>Hội Viên The Pro Gym</div>
@@ -170,42 +175,32 @@ function LandingPage() {
         </div>
 
         <div className={styles.pricingGrid}>
-          {packages.length > 0 ? packages.map((pkg) => {
-            let features = [];
-            try {
-              features = JSON.parse(pkg.Benefits || "[]");
-            } catch (e) {
-              features = [];
-            }
-            return (
-              <div key={pkg.PackageID} className={`${styles.pricingCard} ${pkg.IsFeatured ? styles.featured : ""}`}>
-                {pkg.IsFeatured && <div className={styles.featuredBadge}>PHỔ BIẾN NHẤT</div>}
-                <div className={styles.planDuration}>{pkg.DurationMonths} Tháng</div>
-                <div className={styles.planName}>{pkg.Name.toUpperCase()}</div>
-                <div className={styles.planPrice}>
-                  <span className={styles.amount}>{pkg.Price.toLocaleString()}</span>
-                  <span className={styles.currency}>VNĐ</span>
-                </div>
-                <div className={styles.planPeriod}>/ Tháng</div>
-                <div className={styles.planDivider} />
-                <p className={styles.planDesc}>{pkg.Description}</p>
-                <ul className={styles.planFeatures}>
-                  {features.map((feat, idx) => (
-                    <li key={idx}>{feat}</li>
-                  ))}
-                </ul>
-                <button onClick={() => setAuthModalView('register')} className={styles.planCta}>
-                  Tham gia gói này
-                </button>
+          {STATIC_PACKAGES.map((pkg) => (
+            <div key={pkg.id} className={`${styles.pricingCard} ${pkg.isFeatured ? styles.featured : ""}`}>
+              {pkg.isFeatured && <div className={styles.featuredBadge}>PHỔ BIẾN NHẤT</div>}
+              <div className={styles.planDuration}>{pkg.duration} Tháng</div>
+              <div className={styles.planName}>{pkg.name.toUpperCase()}</div>
+              <div className={styles.planPrice}>
+                <span className={styles.amount}>{pkg.price.toLocaleString()}</span>
+                <span className={styles.currency}>VNĐ</span>
               </div>
-            );
-          }) : (
-            <p className="text-white text-center w-full col-span-2 py-8">Đang tải danh sách gói tập...</p>
-          )}
+              <div className={styles.planPeriod}>/ Gói</div>
+              <div className={styles.planDivider} />
+              <p className={styles.planDesc}>{pkg.description}</p>
+              <ul className={styles.planFeatures}>
+                {pkg.features.map((feat, idx) => (
+                  <li key={idx}>{feat}</li>
+                ))}
+              </ul>
+              <button onClick={() => setAuthModalView('register')} className={styles.planCta}>
+                Tham gia ngay
+              </button>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* FEATURES */}
+      {}
       <section id="features" className={styles.features}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionLabel}>Tiện Ích</div>
@@ -227,7 +222,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* VALUES */}
+      {}
       <section className={styles.values}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionLabel}>Tại Sao Chọn Chúng Tôi</div>
@@ -253,7 +248,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER */}
+      {}
       <footer className={styles.footer}>
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>

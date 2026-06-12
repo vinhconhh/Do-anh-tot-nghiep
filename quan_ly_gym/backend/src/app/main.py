@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
-# Import all models so SQLAlchemy knows about them
 from .models import (
     User,
     Role,
@@ -28,8 +27,6 @@ from .models import (
     LogWorkoutDetail,
     BodyMetric,
     ProgressPhoto,
-    Invoice,
-    Transaction,
     DietPlan,
     Meal,
     MealItem,
@@ -39,11 +36,6 @@ from .models import (
     AuditLog,
     PTRequest,
     PTScoreLog,
-    MemberStreak,
-    CheckInLog,
-    MembershipPackage,
-    AIPackage,
-    Promotion,
 )
 
 from .routes.auth import router as auth_router
@@ -58,7 +50,6 @@ from .routes.exercises import router as exercises_router
 from .routes.pt_requests import router as pt_requests_router
 from .routes.streaks import router as streaks_router
 from .routes.ai import router as ai_router
-from .routes.packages import router as packages_router
 from .routes.facility import router as facility_router
 
 import os
@@ -67,7 +58,6 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from .router_registry import register_routes
 
-# Configure basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -77,7 +67,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS – configurable origins via ALLOWED_ORIGINS env var (comma‑separated)
 allowed_origins = os.getenv("ALLOWED_ORIGINS", "*")
 if allowed_origins.strip() == "*":
     origins = ["*"]
@@ -92,7 +81,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register all routers via centralized registry
 register_routes(app)
 
 
@@ -105,7 +93,6 @@ def root():
 def health():
     return {"status": "ok"}
 
-# Global exception handler – returns JSON error and logs traceback
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled error: {exc}", exc_info=True)

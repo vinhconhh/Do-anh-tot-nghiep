@@ -28,7 +28,7 @@ class Settings(BaseSettings):
             f"mssql+pyodbc://{self.DB_USER}:{pwd}"
             f"@{self.DB_SERVER},{self.DB_PORT}/{self.DB_NAME}"
             f"?driver={driver}&TrustServerCertificate=yes"
-            f"&unicode_results=yes"  # Ensure Unicode (NVARCHAR) data is returned correctly
+            f"&unicode_results=yes"
         )
 
     class Config:

@@ -11,14 +11,13 @@ export default function Schedules() {
   const schedulesApi = useSchedulesApi();
 
   const [weekStart, setWeekStart] = useState(() => startOfWeekMonday(new Date()));
-  const [kind, setKind] = useState("member"); // member | trainer
+  const [kind, setKind] = useState("member");
   const [memberId, setMemberId] = useState("");
   const [trainerId, setTrainerId] = useState("");
   const [memberOptions, setMemberOptions] = useState([]);
   const [trainerOptions, setTrainerOptions] = useState([]);
   const [events, setEvents] = useState([]);
 
-  // Load member and trainer lists
   useEffect(() => {
     membersApi.list()
       .then((data) => setMemberOptions(data.map((m) => ({ id: String(m.UserID), label: m.hoTen }))))
@@ -26,10 +25,8 @@ export default function Schedules() {
     trainersApi.list()
       .then((data) => setTrainerOptions(data.map((t) => ({ id: String(t.UserID), label: t.hoTen }))))
       .catch(console.error);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load schedules when selection changes
   useEffect(() => {
     setEvents([]);
     if (kind === "member" && memberId) {
@@ -37,7 +34,6 @@ export default function Schedules() {
     } else if (kind === "trainer" && trainerId) {
       schedulesApi.listByTrainer(trainerId).then(setEvents).catch(console.error);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind, memberId, trainerId, weekStart]);
 
   const selectedLabel = kind === "member"
