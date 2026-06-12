@@ -36,9 +36,6 @@ from .models import (
     MemberPTRelation,
     MemberRequest,
 )
-
-
-
 import os
 import logging
 from fastapi import Request
