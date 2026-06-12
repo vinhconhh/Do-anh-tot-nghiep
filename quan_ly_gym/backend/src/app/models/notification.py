@@ -8,7 +8,7 @@ class Notification(Base):
 
     NotificationID = Column(Integer, primary_key=True, autoincrement=True)
     UserID = Column(Integer, ForeignKey("Users.UserID"))
-    Message = Column(String)  # NVARCHAR(MAX)
+    Message = Column(String)
     Type = Column(String(50))
     IsRead = Column(Integer, default=0)
     CreatedAt = Column(DateTime, default=datetime.utcnow)

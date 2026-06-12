@@ -1,0 +1,314 @@
+import { Link } from "react-router-dom";
+import { useContext, useState } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import AuthModal from "../../components/AuthModal";
+import styles from "./LandingPage.module.scss";
+
+const FEATURES = [
+  {
+    icon: "🏋️",
+    title: "Trang Thiết Bị Hiện Đại",
+    desc: "Máy tập cardio và tạ hiện đại, không gian sạch sẽ giúp bạn bứt phá mọi giới hạn.",
+  },
+  {
+    icon: "⏰",
+    title: "Mở Cửa 24/7",
+    desc: "Tập luyện bất kỳ lúc nào bạn muốn — sáng sớm, trưa hay khuya. The Pro Gym luôn mở cửa.",
+  },
+  {
+    icon: "🧘",
+    title: "Lớp Tập Nhóm Miễn Phí",
+    desc: "Yoga, Zumba, và nhiều lớp nhóm miễn phí cho hội viên đăng ký.",
+  },
+  {
+    icon: "🤝",
+    title: "Môi Trường Không Phán Xét",
+    desc: "Không gian thân thiện, chào đón mọi người ở mọi trình độ — bạn luôn thuộc về nơi đây.",
+  },
+  {
+    icon: "💪",
+    title: "Hướng Dẫn Tập Miễn Phí",
+    desc: "Huấn luyện viên sẵn sàng hỗ trợ bạn sử dụng thiết bị và xây dựng kế hoạch tập.",
+  },
+  {
+    icon: "📱",
+    title: "Ứng Dụng Thông Minh",
+    desc: "Quản lý gói tập, điểm danh, đặt lịch lớp học và theo dõi tiến độ trên App.",
+  },
+];
+
+const TICKER_ITEMS = [
+  "GYM CHO MỌI NGƯỜI",
+  "NO JUDGMENT ZONE",
+  "OPEN 24/7",
+  "AI HỖ TRỢ",
+  "TỪ 299.000Đ/THÁNG",
+  "GYM CHO MỌI NGƯỜI",
+  "NO JUDGMENT ZONE",
+  "OPEN 24/7",
+  "AI HỖ TRỢ",
+  "TỪ 299.000Đ/THÁNG",
+];
+
+const STATIC_PACKAGES = [
+  {
+    id: 1,
+    name: "Gói Tháng",
+    price: 299000,
+    duration: 1,
+    isFeatured: false,
+    description: "Trải nghiệm phòng tập linh hoạt theo tháng.",
+    features: ["Tập không giới hạn 24/7", "Sử dụng toàn bộ thiết bị", "Tư vấn AI"],
+  },
+  {
+    id: 2,
+    name: "Gói Năm",
+    price: 2490000,
+    duration: 12,
+    isFeatured: true,
+    description: "Gói hội viên toàn năm — tiết kiệm nhất.",
+    features: ["Tập không giới hạn 24/7", "Sử dụng toàn bộ thiết bị", "Tư vấn AI nâng cao", "Ưu tiên đặt lịch PT"],
+  },
+];
+
+function LandingPage() {
+  const { token, user } = useContext(AuthContext) ?? {};
+  const [authModalView, setAuthModalView] = useState(null);
+
+  const dashboardLink = user?.vaiTro?.toUpperCase() === "MEMBER" ? "/my-dashboard" : "/dashboard";
+
+  return (
+    <div className={styles.landing}>
+      {}
+      <nav className={styles.navbar}>
+        <Link to="/" className={styles.logo} style={{ userSelect: 'none', cursor: 'pointer' }}>
+          THE <span>PRO</span> GYM
+        </Link>
+
+        <ul className={styles.navLinks}>
+          <li><a href="#pricing">Giá Hội Viên</a></li>
+          <li><a href="#features">Tiện Ích</a></li>
+        </ul>
+
+        <div className={styles.navActions}>
+          {token ? (
+            <Link to={dashboardLink} className={styles.btnJoin}>Vào Dashboard</Link>
+          ) : (
+            <>
+              <button onClick={() => setAuthModalView('login')} className={styles.btnLogin}>Đăng nhập</button>
+              <button onClick={() => setAuthModalView('register')} className={styles.btnJoin}>Tham gia</button>
+            </>
+          )}
+        </div>
+
+        <div className={styles.menuToggle}>
+          <span /><span /><span />
+        </div>
+      </nav>
+
+      {}
+      <section className={styles.hero}>
+        <div className={styles.heroBg} />
+
+        <div className={styles.heroSlider}>
+          <div className={styles.heroContent}>
+            <div className={styles.heroTag}>Gym cho mọi người</div>
+            <h1>
+              KHÔNG PHÁN XÉT.
+              <span>KHÔNG GIỚI HẠN.</span>
+            </h1>
+            <p>
+              The Pro Gym được xây dựng trên triết lý &quot;Gym cho mọi người&quot;
+              trong một môi trường không phán xét. Bắt đầu hành trình sức khỏe
+              ngay hôm nay với mức giá tối ưu nhất.
+            </p>
+            <div className={styles.heroButtons}>
+              <a href="#pricing" className={styles.btnSecondary}>
+                Xem bảng giá
+              </a>
+            </div>
+          </div>
+
+          <div className={styles.heroVisual}>
+            <div className={styles.heroStats}>
+              {[
+                { num: "AI", label: "Hỗ Trợ" },
+                { num: "24/7", label: "Mở Cửa" },
+                { num: "299K", label: "Từ / Tháng" },
+                { num: "100%", label: "No Judgment" },
+              ].map((s) => (
+                <div key={s.label} className={styles.statCard}>
+                  <div className={styles.statNum}>{s.num}</div>
+                  <div className={styles.statLabel}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.scrollIndicator}>
+          <div className={styles.scrollLine} />
+          scroll
+        </div>
+      </section>
+
+      {}
+      <div className={styles.ticker}>
+        <div className={styles.tickerInner}>
+          {TICKER_ITEMS.map((item, i) => (
+            <span key={i} className={styles.tickerItem}>
+              <span>✦</span> {item}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {}
+      <section id="pricing" className={styles.pricing}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionLabel}>Hội Viên The Pro Gym</div>
+          <h2 className={styles.sectionTitle}>Chọn Gói Phù Hợp Với Bạn</h2>
+          <p className={styles.sectionDesc}>
+            Hai gói tập linh hoạt, phù hợp với mọi nhu cầu và lịch trình.
+            Tất cả đều bao gồm quyền truy cập không giới hạn vào tiện ích phòng tập.
+          </p>
+        </div>
+
+        <div className={styles.pricingGrid}>
+          {STATIC_PACKAGES.map((pkg) => (
+            <div key={pkg.id} className={`${styles.pricingCard} ${pkg.isFeatured ? styles.featured : ""}`}>
+              {pkg.isFeatured && <div className={styles.featuredBadge}>PHỔ BIẾN NHẤT</div>}
+              <div className={styles.planDuration}>{pkg.duration} Tháng</div>
+              <div className={styles.planName}>{pkg.name.toUpperCase()}</div>
+              <div className={styles.planPrice}>
+                <span className={styles.amount}>{pkg.price.toLocaleString()}</span>
+                <span className={styles.currency}>VNĐ</span>
+              </div>
+              <div className={styles.planPeriod}>/ Gói</div>
+              <div className={styles.planDivider} />
+              <p className={styles.planDesc}>{pkg.description}</p>
+              <ul className={styles.planFeatures}>
+                {pkg.features.map((feat, idx) => (
+                  <li key={idx}>{feat}</li>
+                ))}
+              </ul>
+              <button onClick={() => setAuthModalView('register')} className={styles.planCta}>
+                Tham gia ngay
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {}
+      <section id="features" className={styles.features}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionLabel}>Tiện Ích</div>
+          <h2 className={styles.sectionTitle}>Nơi Bạn Cảm Thấy Thuộc Về</h2>
+          <p className={styles.sectionDesc}>
+            The Pro Gym cung cấp đầy đủ mọi thứ bạn cần để bắt đầu và
+            duy trì hành trình sức khỏe của mình.
+          </p>
+        </div>
+
+        <div className={styles.featuresGrid}>
+          {FEATURES.map((f) => (
+            <div key={f.title} className={styles.featureCard}>
+              <div className={styles.featureIcon}>{f.icon}</div>
+              <h3>{f.title}</h3>
+              <p>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {}
+      <section className={styles.values}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionLabel}>Tại Sao Chọn Chúng Tôi</div>
+          <h2 className={styles.sectionTitle}>Chi Phí Tối Ưu, Giá Trị Vượt Trội</h2>
+        </div>
+
+        <div className={styles.valuesGrid}>
+          <div className={styles.valueItem}>
+            <span className={styles.valueIcon}>🏷️</span>
+            <h3>Giá Tốt Nhất</h3>
+            <p>Trải nghiệm gym chất lượng cao với mức chi phí hợp lý nhất cho người Việt.</p>
+          </div>
+          <div className={styles.valueItem}>
+            <span className={styles.valueIcon}>🛡️</span>
+            <h3>Không Phán Xét</h3>
+            <p>Môi trường thân thiện, chào đón mọi trình độ. Bạn luôn thuộc về nơi đây.</p>
+          </div>
+          <div className={styles.valueItem}>
+            <span className={styles.valueIcon}>⚡</span>
+            <h3>Tiện Lợi Tối Đa</h3>
+            <p>Mở 24/7, app quản lý thông minh và AI hỗ trợ — tập luyện theo lịch của bạn.</p>
+          </div>
+        </div>
+      </section>
+
+      {}
+      <footer className={styles.footer}>
+        <div className={styles.footerTop}>
+          <div className={styles.footerBrand}>
+            <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className={styles.footerLogo} style={{ userSelect: 'none', cursor: 'pointer', display: 'block' }}>
+              THE <span>PRO</span> GYM
+            </Link>
+            <p>
+              Hệ thống phòng tập chuyên nghiệp với môi trường không phán xét,
+              mở cửa 24/7 trên toàn quốc.
+            </p>
+            <div className={styles.socialLinks}>
+              <a title="Facebook">📘</a>
+              <a title="Instagram">📸</a>
+              <a title="TikTok">🎵</a>
+              <a title="YouTube">▶️</a>
+            </div>
+          </div>
+
+          <div className={styles.footerCol}>
+            <h4>Thông Tin</h4>
+            <ul>
+              <li><a href="#features">Về Chúng Tôi</a></li>
+            </ul>
+          </div>
+
+          <div className={styles.footerCol}>
+            <h4>Phòng Tập</h4>
+            <ul>
+              <li><a href="#pricing">Giá Hội Viên</a></li>
+              <li><a href="#features">Tiện Ích</a></li>
+            </ul>
+          </div>
+
+          <div className={styles.footerCol}>
+            <h4>Liên Hệ</h4>
+            <ul>
+              <li><a >📞 1900 69 69 69</a></li>
+              <li><a>✉️ cskh@theprogym.vn</a></li>
+              <li><a>💬 Zalo</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className={styles.footerDivider} />
+
+        <div className={styles.footerBottom}>
+          <p>© 2026 The Pro Gym. Hệ thống tập cho mọi người.</p>
+          <div className={styles.hotline}>
+            Hotline: <span>1900 69 69 69</span>
+          </div>
+        </div>
+      </footer>
+
+      <AuthModal
+        isOpen={!!authModalView}
+        onClose={() => setAuthModalView(null)}
+        initialView={authModalView || 'login'}
+      />
+    </div>
+  );
+}
+
+export default LandingPage;

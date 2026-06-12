@@ -1,13 +1,21 @@
-CREATE DATABASE QLGymDB;
+/*
+================================================================
+FILE: 01_schema.sql
+MỤC ĐÍCH: Khởi tạo toàn bộ cấu trúc Database QLGymDB (Bản hợp nhất hoàn thiện)
+================================================================
+*/
+
+IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = 'QLGymDB')
+BEGIN
+    CREATE DATABASE QLGymDB;
+END
 GO
 USE QLGymDB;
 GO
 SET QUOTED_IDENTIFIER ON;
 GO
 
--- ======================
--- ROLES & RBAC
--- ======================
+-- 1. ROLES & PERMISSIONS
 CREATE TABLE Roles (
     RoleID INT IDENTITY PRIMARY KEY,
     RoleCode NVARCHAR(50) UNIQUE,
@@ -27,29 +35,30 @@ CREATE TABLE RolePermissions (
     FOREIGN KEY (RoleID) REFERENCES Roles(RoleID),
     FOREIGN KEY (PermissionID) REFERENCES Permissions(PermissionID)
 );
-GO
 
--- ======================
--- USERS
--- ======================
+-- 2. USERS & AUTH
 CREATE TABLE Users (
     UserID INT IDENTITY PRIMARY KEY,
     FullName NVARCHAR(255),
     Email NVARCHAR(255) UNIQUE,
     PasswordHash NVARCHAR(255),
+    PhoneNumber NVARCHAR(20) NULL,
+    Birthday DATE NULL,
+    Age INT NULL,
+    Gender NVARCHAR(20) NULL,
     RoleID INT,
+    ReferralCode VARCHAR(20) NULL,
+    ReferredBy INT NULL,
+    ExpiryDate DATE NULL,
     IsActive BIT DEFAULT 1,
     IsDeleted BIT DEFAULT 0,
     CreatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (RoleID) REFERENCES Roles(RoleID)
+    FOREIGN KEY (RoleID) REFERENCES Roles(RoleID),
+    FOREIGN KEY (ReferredBy) REFERENCES Users(UserID)
 );
 
 CREATE INDEX IX_Users_Email ON Users(Email);
-GO
 
--- ======================
--- AUTH
--- ======================
 CREATE TABLE RefreshTokens (
     TokenID INT IDENTITY PRIMARY KEY,
     UserID INT,
@@ -67,17 +76,16 @@ CREATE TABLE UserSessions (
     CreatedAt DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
-GO
 
--- ======================
--- PROFILE
--- ======================
+-- 3. PROFILES
 CREATE TABLE MemberProfiles (
     UserID INT PRIMARY KEY,
     Goal NVARCHAR(255),
     Height FLOAT,
     Weight FLOAT,
-    AIQuota INT DEFAULT 0,
+    CurrentStreak INT DEFAULT 0,
+    LongestStreak INT DEFAULT 0,
+    LastAttendanceDate DATE NULL,
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
 
@@ -90,68 +98,89 @@ CREATE TABLE PTProfiles (
     ResponseRate DECIMAL(5,2) DEFAULT 100.00,
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
-GO
 
--- ======================
--- MASTER DATA
--- ======================
-CREATE TABLE MuscleGroups (
-    MuscleGroupID INT IDENTITY PRIMARY KEY,
-    Name NVARCHAR(100) UNIQUE
+-- 4. FACILITY & EXERCISES
+CREATE TABLE GymEquipments (
+    EquipmentID  INT IDENTITY(1,1) PRIMARY KEY,
+    Name         NVARCHAR(200) NOT NULL,
+    Category     NVARCHAR(100),
+    Zone         NVARCHAR(100),
+    Quantity     INT DEFAULT 1 CHECK (Quantity >= 0),
+    Status       NVARCHAR(50) DEFAULT N'Hoạt động' CHECK (Status IN (N'Hoạt động', N'Đang bảo trì', N'Hỏng')),
+    CreatedAt    DATETIME DEFAULT GETDATE(),
+    UpdatedAt    DATETIME DEFAULT GETDATE()
 );
 
-CREATE TABLE Equipments (
-    EquipmentID INT IDENTITY PRIMARY KEY,
-    Name NVARCHAR(100) UNIQUE
+CREATE TABLE GymExercises (
+    ExerciseID    INT IDENTITY(1,1) PRIMARY KEY,
+    Name          NVARCHAR(255) NOT NULL,
+    AssignmentName NVARCHAR(255),
+    Type          NVARCHAR(100),
+    TargetMuscle  NVARCHAR(200),
+    MetValue      FLOAT DEFAULT 0,
+    EquipmentID   INT REFERENCES GymEquipments(EquipmentID) ON DELETE SET NULL,
+    VideoURL      NVARCHAR(500) NULL,
+    IsDeleted     TINYINT DEFAULT 0,
+    CreatedAt     DATETIME DEFAULT GETDATE(),
+    UpdatedAt     DATETIME DEFAULT GETDATE()
 );
 
-CREATE TABLE Exercises (
-    ExerciseID INT IDENTITY PRIMARY KEY,
-    Name NVARCHAR(255),
-    MuscleGroupID INT,
-    EquipmentID INT,
-    IsDeleted BIT DEFAULT 0,
-    FOREIGN KEY (MuscleGroupID) REFERENCES MuscleGroups(MuscleGroupID),
-    FOREIGN KEY (EquipmentID) REFERENCES Equipments(EquipmentID)
-);
-GO
-
--- ======================
--- WORKOUT
--- ======================
-CREATE TABLE WorkoutRoutines (
-    RoutineID INT IDENTITY PRIMARY KEY,
-    Name NVARCHAR(255),
-    CreatedBy INT,
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (CreatedBy) REFERENCES Users(UserID)
-);
-
-CREATE TABLE WorkoutRoutineDetails (
-    DetailID INT IDENTITY PRIMARY KEY,
-    RoutineID INT,
-    ExerciseID INT,
-    Sets INT,
-    Reps INT,
-    FOREIGN KEY (RoutineID) REFERENCES WorkoutRoutines(RoutineID),
-    FOREIGN KEY (ExerciseID) REFERENCES Exercises(ExerciseID)
+CREATE TABLE GymClasses (
+    ClassID          INT IDENTITY(1,1) PRIMARY KEY,
+    Name             NVARCHAR(200) NOT NULL,
+    InstructorName   NVARCHAR(200),
+    InstructorID     INT NULL FOREIGN KEY REFERENCES Users(UserID),
+    StudioRoom       NVARCHAR(100),
+    MaxCapacity      INT DEFAULT 20 CHECK (MaxCapacity >= 1),
+    CurrentEnrolled  INT DEFAULT 0 CHECK (CurrentEnrolled >= 0),
+    StartTime        DATETIME NOT NULL,
+    EndTime          DATETIME NOT NULL,
+    Intensity        NVARCHAR(20) NULL DEFAULT 'medium',
+    IsRecurring      BIT NULL DEFAULT 0,
+    RecurringDays    NVARCHAR(50) NULL,
+    RecurringStartDate DATE NULL,
+    RecurringEndDate   DATE NULL,
+    ParentClassID    INT NULL,
+    AttendanceSubmitted INT DEFAULT 0,
+    IsDeleted        TINYINT DEFAULT 0,
+    CreatedAt        DATETIME DEFAULT GETDATE(),
+    UpdatedAt        DATETIME DEFAULT GETDATE(),
+    CONSTRAINT CK_GymClasses_Times CHECK (EndTime > StartTime),
+    CONSTRAINT CK_GymClasses_Enrolled CHECK (CurrentEnrolled <= MaxCapacity)
 );
 
-CREATE TABLE Schedules (
-    ScheduleID INT IDENTITY PRIMARY KEY,
-    UserID INT,
-    RoutineID INT,
-    WorkoutDate DATE,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID),
-    FOREIGN KEY (RoutineID) REFERENCES WorkoutRoutines(RoutineID)
+-- 5. WORKOUTS & ASSIGNMENTS
+CREATE TABLE AssignedExercises (
+    AssignmentID  INT IDENTITY(1,1) PRIMARY KEY,
+    PTID          INT NOT NULL,
+    MemberID      INT NOT NULL,
+    ExerciseID    INT NOT NULL,
+    Sets          INT DEFAULT 3,
+    Reps          INT DEFAULT 12,
+    Duration      INT NULL,
+    Weight        FLOAT NULL,
+    Note          NVARCHAR(500) NULL,
+    AssignedDate  DATE NOT NULL,
+    Status        NVARCHAR(50) DEFAULT 'Active',
+    CreatedAt     DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (PTID) REFERENCES Users(UserID),
+    FOREIGN KEY (MemberID) REFERENCES Users(UserID),
+    FOREIGN KEY (ExerciseID) REFERENCES GymExercises(ExerciseID)
 );
 
-CREATE INDEX IX_Schedules_UserID_Date ON Schedules(UserID, WorkoutDate);
-GO
+CREATE TABLE ClassEnrollments (
+    EnrollID   INT IDENTITY(1,1) PRIMARY KEY,
+    ClassID    INT NOT NULL,
+    MemberID   INT NOT NULL,
+    EnrolledAt DATETIME DEFAULT GETDATE(),
+    Status     NVARCHAR(50) DEFAULT 'Active',
+    AttendanceStatus VARCHAR(20) NULL,
+    FOREIGN KEY (ClassID) REFERENCES GymClasses(ClassID),
+    FOREIGN KEY (MemberID) REFERENCES Users(UserID),
+    CONSTRAINT UQ_ClassEnroll UNIQUE (ClassID, MemberID)
+);
 
--- ======================
--- BOOKING (PT)
--- ======================
+-- 6. BOOKINGS & PT REQUESTS
 CREATE TABLE Bookings (
     BookingID INT IDENTITY PRIMARY KEY,
     MemberID INT,
@@ -162,11 +191,24 @@ CREATE TABLE Bookings (
     FOREIGN KEY (MemberID) REFERENCES Users(UserID),
     FOREIGN KEY (PTID) REFERENCES Users(UserID)
 );
-GO
 
--- ======================
--- CHECK-IN (UPGRADED)
--- ======================
+CREATE TABLE PTRequests (
+    RequestID INT IDENTITY PRIMARY KEY,
+    MemberID INT NOT NULL,
+    PTID INT NOT NULL,
+    MemberGoal NVARCHAR(500),
+    ExperienceLevel NVARCHAR(50) DEFAULT 'new',
+    BodyNote NVARCHAR(1000) NULL,
+    Note NVARCHAR(1000),
+    Status NVARCHAR(50) DEFAULT 'Pending',
+    ExpiresAt DATETIME NOT NULL,
+    RespondedAt DATETIME NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (MemberID) REFERENCES Users(UserID),
+    FOREIGN KEY (PTID) REFERENCES Users(UserID)
+);
+
+-- 7. CHECK-INS & TRACKING
 CREATE TABLE CheckIns (
     CheckInID INT IDENTITY PRIMARY KEY,
     UserID INT,
@@ -174,55 +216,12 @@ CREATE TABLE CheckIns (
     BookingID INT NULL,
     CheckInTime DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (UserID) REFERENCES Users(UserID),
-    FOREIGN KEY (ScheduleID) REFERENCES Schedules(ScheduleID),
     FOREIGN KEY (BookingID) REFERENCES Bookings(BookingID),
-
-    CONSTRAINT CK_CheckIns_OnlyOne
-    CHECK (
-        (ScheduleID IS NOT NULL AND BookingID IS NULL)
-        OR
-        (ScheduleID IS NULL AND BookingID IS NOT NULL)
-    )
-);
-GO
-
-CREATE UNIQUE INDEX UX_CheckIn_Schedule ON CheckIns(UserID, ScheduleID) WHERE ScheduleID IS NOT NULL;
-CREATE UNIQUE INDEX UX_CheckIn_Booking ON CheckIns(UserID, BookingID) WHERE BookingID IS NOT NULL;
-GO
-
--- ======================
--- WORKOUT LOGGING
--- ======================
-CREATE TABLE LogWorkouts (
-    LogID INT IDENTITY PRIMARY KEY,
-    UserID INT,
-    WorkoutDate DATETIME DEFAULT GETDATE(),
-    CheckInTime DATETIME NULL,
-    CheckOutTime DATETIME NULL,
-    DurationMin INT NULL,
-    RPE INT NULL,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+    CONSTRAINT CK_CheckIns_Source CHECK (CheckInTime IS NOT NULL)
 );
 
-CREATE INDEX IX_LogWorkouts_UserID ON LogWorkouts(UserID);
 
-CREATE TABLE LogWorkoutDetails (
-    DetailID INT IDENTITY PRIMARY KEY,
-    LogID INT,
-    ExerciseID INT NULL,
-    ExerciseName NVARCHAR(255) NULL,
-    SetNumber INT,
-    Reps INT,
-    Weight FLOAT,
-    Done INT DEFAULT 0,
-    FOREIGN KEY (LogID) REFERENCES LogWorkouts(LogID),
-    FOREIGN KEY (ExerciseID) REFERENCES Exercises(ExerciseID)
-);
-GO
-
--- ======================
--- BODY TRACKING
--- ======================
+-- 8. BODY METRICS
 CREATE TABLE BodyMetrics (
     MetricID INT IDENTITY PRIMARY KEY,
     UserID INT,
@@ -235,74 +234,7 @@ CREATE TABLE BodyMetrics (
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
 
-CREATE TABLE ProgressPhotos (
-    PhotoID INT IDENTITY PRIMARY KEY,
-    UserID INT,
-    ImageURL NVARCHAR(500),
-    UploadedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
-);
-GO
-
--- ======================
--- DIET
--- ======================
-CREATE TABLE DietPlans (
-    DietID INT IDENTITY PRIMARY KEY,
-    UserID INT,
-    Name NVARCHAR(255),
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
-);
-
-CREATE TABLE Meals (
-    MealID INT IDENTITY PRIMARY KEY,
-    DietID INT,
-    MealType NVARCHAR(50),
-    FOREIGN KEY (DietID) REFERENCES DietPlans(DietID)
-);
-
-CREATE TABLE MealItems (
-    ItemID INT IDENTITY PRIMARY KEY,
-    MealID INT,
-    FoodName NVARCHAR(255),
-    Calories INT,
-    Protein FLOAT,
-    Carbs FLOAT,
-    Fat FLOAT,
-    FOREIGN KEY (MealID) REFERENCES Meals(MealID)
-);
-GO
-
--- ======================
--- FINANCE
--- ======================
-CREATE TABLE Invoices (
-    InvoiceID INT IDENTITY PRIMARY KEY,
-    UserID INT,
-    TotalAmount DECIMAL(10,2),
-    Status NVARCHAR(50) DEFAULT 'Pending',
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
-);
-
-CREATE TABLE Transactions (
-    TransactionID INT IDENTITY PRIMARY KEY,
-    UserID INT,
-    InvoiceID INT,
-    Amount DECIMAL(10,2) CHECK (Amount > 0),
-    Status NVARCHAR(50),
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID),
-    FOREIGN KEY (InvoiceID) REFERENCES Invoices(InvoiceID)
-);
-
-CREATE INDEX IX_Transactions_UserID ON Transactions(UserID);
-GO
-
--- ======================
--- AI
--- ======================
+-- 9. AI & SYSTEM
 CREATE TABLE AIRequests (
     RequestID INT IDENTITY PRIMARY KEY,
     UserID INT,
@@ -322,11 +254,7 @@ CREATE TABLE AIResponses (
     CreatedAt DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (RequestID) REFERENCES AIRequests(RequestID)
 );
-GO
 
--- ======================
--- NOTIFICATIONS
--- ======================
 CREATE TABLE Notifications (
     NotificationID INT IDENTITY PRIMARY KEY,
     UserID INT,
@@ -336,37 +264,30 @@ CREATE TABLE Notifications (
     CreatedAt DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
+
 GO
 
--- ======================
--- AUDIT LOG
--- ======================
-CREATE TABLE AuditLogs (
-    AuditID INT IDENTITY PRIMARY KEY,
-    UserID INT,
-    Action NVARCHAR(255),
-    TableName NVARCHAR(100),
-    RecordID INT,
-    OldData NVARCHAR(MAX),
-    NewData NVARCHAR(MAX),
-    CreatedAt DATETIME DEFAULT GETDATE()
+-- 10. MEAL PLANS (Thực đơn do manager tạo, member xem)
+CREATE TABLE MealPlans (
+    PlanID       INT IDENTITY(1,1) PRIMARY KEY,
+    Name         NVARCHAR(255) NOT NULL,
+    Category     NVARCHAR(100) NOT NULL,        -- Bữa sáng / Bữa chính / Bữa phụ
+    Goal         NVARCHAR(255) NULL,            -- tăng cơ / giảm mỡ / duy trì
+    Calories     INT DEFAULT 0,
+    Protein      FLOAT DEFAULT 0,               -- gram
+    Carbs        FLOAT DEFAULT 0,               -- gram
+    Fat          FLOAT DEFAULT 0,               -- gram
+    Description  NVARCHAR(MAX) NULL,            -- Mô tả / hướng dẫn chế biến
+    ImageURL     NVARCHAR(500) NULL,
+    CreatedBy    INT NULL,
+    CreatedAt    DATETIME DEFAULT GETDATE(),
+    UpdatedAt    DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (CreatedBy) REFERENCES Users(UserID)
 );
+
 GO
 
--- ======================
--- ANALYTICS VIEWS
--- ======================
-CREATE VIEW VIEW_Attendance_Schedule AS
-SELECT 
-    s.UserID,
-    COUNT(c.CheckInID) AS Attended,
-    COUNT(s.ScheduleID) AS Total,
-    CAST(COUNT(c.CheckInID) * 1.0 / NULLIF(COUNT(s.ScheduleID), 0) AS DECIMAL(5,2)) AS AttendanceRate
-FROM Schedules s
-LEFT JOIN CheckIns c ON s.ScheduleID = c.ScheduleID
-GROUP BY s.UserID;
-GO
-
+-- 11. VIEWS
 CREATE VIEW VIEW_Attendance_PT AS
 SELECT 
     b.MemberID,
@@ -376,14 +297,4 @@ SELECT
 FROM Bookings b
 LEFT JOIN CheckIns c ON b.BookingID = c.BookingID
 GROUP BY b.MemberID;
-GO
-
-CREATE VIEW VIEW_RevenueReport AS
-SELECT 
-    u.FullName,
-    SUM(t.Amount) AS TotalRevenue
-FROM Transactions t
-JOIN Users u ON t.UserID = u.UserID
-WHERE t.Status = 'Paid'
-GROUP BY u.FullName;
 GO

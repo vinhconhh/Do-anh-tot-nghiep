@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useContext } from "react";
 import { Bot, Coins, Receipt, Download, ShoppingCart, Loader2 } from "lucide-react";
 import styles from "./AiPurchase.module.scss";
 import { AuthContext } from "../../context/AuthContext";
-import { authedRequestJson } from "../../api/client";
+import { useAiApi } from "../../api/aiApi";
 
 const STATUS_META = {
   success: { label: "Thành công", color: "#1cc88a" },
@@ -11,43 +11,33 @@ const STATUS_META = {
   failed:  { label: "Thất bại",  color: "#e74a3b" },
 };
 
-const PACKAGES_UI = [
-  { id: 1, label: "Gói nhỏ",    qty: 20,  price: 240000,  savings: "12,000đ/lượt",  desc: "30 ngày hỗ trợ",       color: "#4e73df" },
-  { id: 2, label: "Gói phổ biến", qty: 50, price: 600000, savings: "Ưu đãi 5%",    desc: "60 ngày hỗ trợ",       color: "#1cc88a", popular: true },
-];
-
 export default function AiPurchase() {
-  const { token, logout } = useContext(AuthContext) ?? {};
+  const { user } = useContext(AuthContext) ?? {};
+  const aiApi = useAiApi();
   const [quota, setQuota] = useState({ quota: 0, used: 0, remaining: 0 });
   const [history, setHistory] = useState([]);
+  const [packages, setPackages] = useState([]);
   const [q, setQ] = useState("");
   const [buying, setBuying] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const aj = useCallback(
-    async (path, opt = {}) => {
-      try {
-        return await authedRequestJson(path, token, opt);
-      } catch (e) {
-        if (e?.status === 401) logout?.();
-        throw e;
-      }
-    },
-    [token, logout]
-  );
-
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [q, h] = await Promise.all([
-        aj("/api/ai/quota"),
-        aj("/api/ai/purchase-history"),
+      const [qData, hData, pkgsData] = await Promise.all([
+        aiApi.getQuota(),
+        aiApi.getPurchaseHistory(),
+        aiApi.getAIPackages()
       ]);
-      setQuota(q);
-      setHistory(h);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, [aj]);
+      setQuota(qData);
+      setHistory(hData);
+      setPackages(pkgsData);
+    } catch (e) {
+      console.error("AiPurchase Load Error:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [aiApi]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -60,13 +50,9 @@ export default function AiPurchase() {
     if (!window.confirm(`Xác nhận mua ${pkg.label} (${pkg.qty} lượt) với giá ${pkg.price.toLocaleString("vi-VN")}đ?`)) return;
     setBuying(pkg.id);
     try {
-      const result = await aj("/api/ai/buy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId: pkg.id }),
-      });
+      const result = await aiApi.buyPackage(pkg.id);
       alert(`✅ ${result.message}\nSố lượt mới: ${result.newQuota}`);
-      fetchData(); // Refresh data
+      fetchData();
     } catch (e) {
       alert("❌ Mua thất bại: " + (e.data?.detail || e.message));
     } finally {
@@ -80,7 +66,7 @@ export default function AiPurchase() {
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-        {/* Heading */}
+        {}
         <div className={styles.header}>
           <h2 className={styles.title}>
             <ShoppingCart size={20} /> Mua thêm lượt AI
@@ -96,7 +82,7 @@ export default function AiPurchase() {
           </div>
         ) : (
           <>
-            {/* Summary cards */}
+            {}
             <div className={styles.statGrid}>
               {[
                 { label: "Lượt AI còn lại", val: String(quota.remaining), icon: <Bot size={28} color="#d1d3e2" />, border: "#4e73df" },
@@ -113,41 +99,44 @@ export default function AiPurchase() {
               ))}
             </div>
 
-            {/* Packages */}
+            {}
             <div className={styles.packagesGrid}>
-              {PACKAGES_UI.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className={`${styles.packageCard} ${pkg.popular ? styles.popular : ""}`}
-                  style={{ borderColor: pkg.popular ? pkg.color : undefined }}
-                >
-                  {pkg.popular && (
-                    <div className={styles.popularBadge} style={{ background: pkg.color }}>
-                      ⭐ Phổ biến nhất
-                    </div>
-                  )}
-                  <div className={styles.pkgLabel} style={{ color: pkg.color }}>{pkg.label}</div>
-                  <div className={styles.pkgQty}>{pkg.qty} lượt</div>
-                  <div className={styles.pkgPrice}>{pkg.price.toLocaleString("vi-VN")}đ</div>
-                  <ul className={styles.pkgFeatures}>
-                    <li>✅ Thêm {pkg.qty} lượt AI</li>
-                    <li>✅ {pkg.desc}</li>
-                    <li>✅ {pkg.savings}</li>
-                    <li>✅ Lượt không bao giờ hết hạn</li>
-                  </ul>
-                  <button
-                    className={styles.buyBtn}
-                    style={{ background: pkg.color }}
-                    onClick={() => handleBuy(pkg)}
-                    disabled={buying === pkg.id}
+              {packages.map((pkg, idx) => {
+                const popular = idx === 1;
+                const color = popular ? "#1cc88a" : "#4e73df";
+                return (
+                  <div
+                    key={pkg.PackageID}
+                    className={`${styles.packageCard} ${popular ? styles.popular : ""}`}
+                    style={{ borderColor: popular ? color : undefined }}
                   >
-                    {buying === pkg.id ? "Đang xử lý..." : "Chọn gói này"}
-                  </button>
-                </div>
-              ))}
+                    {popular && (
+                      <div className={styles.popularBadge} style={{ background: color }}>
+                        ⭐ Phổ biến nhất
+                      </div>
+                    )}
+                    <div className={styles.pkgLabel} style={{ color: color }}>{pkg.Name}</div>
+                    <div className={styles.pkgQty}>{pkg.Credits} lượt</div>
+                    <div className={styles.pkgPrice}>{pkg.Price.toLocaleString("vi-VN")}đ</div>
+                    <ul className={styles.pkgFeatures}>
+                      <li>✅ Thêm {pkg.Credits} lượt AI</li>
+                      <li>✅ {pkg.Description}</li>
+                      <li>✅ Lượt không bao giờ hết hạn</li>
+                    </ul>
+                    <button
+                      className={styles.buyBtn}
+                      style={{ background: color }}
+                      onClick={() => handleBuy({ id: pkg.PackageID, label: pkg.Name, qty: pkg.Credits, price: pkg.Price })}
+                      disabled={buying === pkg.PackageID}
+                    >
+                      {buying === pkg.PackageID ? "Đang xử lý..." : "Chọn gói này"}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* History table */}
+            {}
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <h6 className={styles.cardTitle}>Lịch sử mua lượt AI</h6>

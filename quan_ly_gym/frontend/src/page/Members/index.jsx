@@ -13,7 +13,7 @@ const STATUS_META = {
   expired:  { label: "Hết hạn",      color: "#858796" },
 };
 
-const EMPTY_FORM = { hoTen: "", tuoi: 0, gioiTinh: "Nam", nhuCauTap: "", email: "", sdt: "", tier: "Silver", pt: "" };
+const EMPTY_FORM = { hoTen: "", ngaySinh: "", gioiTinh: "Nam", nhuCauTap: "", email: "", sdt: "", tier: "Silver", pt: "" };
 
 export default function Members() {
   const nav = useNavigate();
@@ -28,7 +28,6 @@ export default function Members() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load members from API
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -37,7 +36,6 @@ export default function Members() {
       .catch((err) => { if (alive) setError(err.message); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const stats = useMemo(() => ({
@@ -59,14 +57,14 @@ export default function Members() {
   const openCreate = () => { setForm(EMPTY_FORM); setEditing({}); };
   const openEdit = (row) => {
     setForm({
-      hoTen: row.hoTen,
-      tuoi: row.tuoi ?? 0,
+      hoTen: row.hoTen || "",
+      ngaySinh: row.birthday ? row.birthday.split("T")[0] : "",
       gioiTinh: row.gioiTinh || "Nam",
       nhuCauTap: row.nhuCauTap || "",
-      email: row.email,
-      sdt: row.sdt,
-      tier: row.tier,
-      pt: row.pt,
+      email: row.email || "",
+      sdt: row.sdt || "",
+      tier: row.tier || "Silver",
+      pt: row.pt || "",
     });
     setEditing(row);
   };
@@ -76,11 +74,16 @@ export default function Members() {
     if (!form.hoTen) return alert("Vui lòng nhập họ tên");
     setSaving(true);
     try {
+      const calcAge = form.ngaySinh ? new Date().getFullYear() - new Date(form.ngaySinh).getFullYear() : null;
       if (editing?.UserID) {
         const updated = await api.update(editing.UserID, {
           hoTen: form.hoTen,
           email: form.email,
           goal: form.nhuCauTap,
+          birthday: form.ngaySinh || null,
+          age: calcAge,
+          gender: form.gioiTinh,
+          phoneNumber: form.sdt,
         });
         setRows((prev) => prev.map((r) => r.UserID === editing.UserID ? { ...r, ...updated } : r));
       } else {
@@ -89,6 +92,10 @@ export default function Members() {
           email: form.email,
           matKhau: "Gym@1234",
           goal: form.nhuCauTap,
+          birthday: form.ngaySinh || null,
+          age: calcAge,
+          gender: form.gioiTinh,
+          phoneNumber: form.sdt,
         });
         const initials = form.hoTen.split(" ").map((w) => w[0]).slice(-2).join("").toUpperCase();
         setRows((prev) => [...prev, { ...created, initials, status: "active" }]);
@@ -115,7 +122,7 @@ export default function Members() {
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-        {/* Heading */}
+        {}
         <div className={styles.header}>
           <h2 className={styles.title}>Quản lý Hội viên</h2>
           <button className={styles.btnPrimary} onClick={openCreate}>
@@ -123,7 +130,7 @@ export default function Members() {
           </button>
         </div>
 
-        {/* Stat Cards */}
+        {}
         <div className={styles.statGrid}>
           {[
             { label: "Tổng hội viên",    val: stats.total,    color: "#4e73df" },
@@ -138,7 +145,7 @@ export default function Members() {
           ))}
         </div>
 
-        {/* Filter & Search */}
+        {}
         <div className={styles.tools}>
           <div className={styles.searchBox}>
             <Search className={styles.searchIcon} size={16} />
@@ -175,7 +182,7 @@ export default function Members() {
           </div>
         </div>
 
-        {/* Table */}
+        {}
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
@@ -217,10 +224,10 @@ export default function Members() {
                       </div>
                     </td>
                     <td><span className={styles.dateText}>{m.goal || "—"}</span></td>
-                    <td><span className={styles.tierBadge}>Active</span></td>
+                    <td><span className={styles.tierBadge}>{m.gymPackageName || "Chưa ĐK"}</span></td>
                     <td><span className={styles.dateText}>{m.createdAt ? new Date(m.createdAt).toLocaleDateString("vi-VN") : "—"}</span></td>
                     <td><span className={styles.dateText}>—</span></td>
-                    <td><span className={styles.ptName}>—</span></td>
+                    <td><span className={styles.ptName}>{m.pt || "—"}</span></td>
                     <td><span className={styles.aiUsed}>{m.aiQuota ?? 0}</span></td>
                     <td>
                       <span className={styles.statusBadge} style={{ background: sm.color + "22", color: sm.color }}>
@@ -254,7 +261,7 @@ export default function Members() {
         </div>
       </div>
 
-      {/* Add / Edit Modal */}
+      {}
       <Modal
         isOpen={!!editing}
         onRequestClose={() => setEditing(null)}
@@ -264,15 +271,15 @@ export default function Members() {
           <div className={styles.grid2}>
             <div className={styles.formGroup}>
               <label>Họ và tên *</label>
-              <input value={form.hoTen} onChange={(e) => setForm((f) => ({ ...f, hoTen: e.target.value }))} placeholder="Nguyễn Văn A" required />
+              <input value={form.hoTen || ""} onChange={(e) => setForm((f) => ({ ...f, hoTen: e.target.value }))} placeholder="Nguyễn Văn A" required />
             </div>
             <div className={styles.formGroup}>
-              <label>Tuổi</label>
-              <input type="number" min={0} value={form.tuoi} onChange={(e) => setForm((f) => ({ ...f, tuoi: e.target.value }))} />
+              <label>Ngày sinh</label>
+              <input type="date" value={form.ngaySinh || ""} onChange={(e) => setForm((f) => ({ ...f, ngaySinh: e.target.value }))} />
             </div>
             <div className={styles.formGroup}>
               <label>Giới tính</label>
-              <select value={form.gioiTinh} onChange={(e) => setForm((f) => ({ ...f, gioiTinh: e.target.value }))}>
+              <select value={form.gioiTinh || "Nam"} onChange={(e) => setForm((f) => ({ ...f, gioiTinh: e.target.value }))}>
                 <option>Nam</option>
                 <option>Nữ</option>
                 <option>Khác</option>
@@ -280,19 +287,19 @@ export default function Members() {
             </div>
             <div className={styles.formGroup}>
               <label>Email *</label>
-              <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="email@gmail.com" required />
+              <input type="email" value={form.email || ""} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="email@gmail.com" required />
             </div>
             <div className={styles.formGroup}>
               <label>Số điện thoại</label>
-              <input value={form.sdt} onChange={(e) => setForm((f) => ({ ...f, sdt: e.target.value }))} placeholder="0912345678" />
+              <input value={form.sdt || ""} onChange={(e) => setForm((f) => ({ ...f, sdt: e.target.value }))} placeholder="0912345678" />
             </div>
             <div className={`${styles.formGroup} ${styles.spanFull}`}>
               <label>Nhu cầu tập</label>
-              <input value={form.nhuCauTap} onChange={(e) => setForm((f) => ({ ...f, nhuCauTap: e.target.value }))} placeholder="VD: Giảm mỡ, Tăng cơ, Yoga..." />
+              <input value={form.nhuCauTap || ""} onChange={(e) => setForm((f) => ({ ...f, nhuCauTap: e.target.value }))} placeholder="VD: Giảm mỡ, Tăng cơ, Yoga..." />
             </div>
             <div className={styles.formGroup}>
               <label>Gói thẻ *</label>
-              <select value={form.tier} onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value }))}>
+              <select value={form.tier || "Silver"} onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value }))}>
                 <option>Silver</option>
                 <option>Gold</option>
                 <option>Platinum</option>
@@ -300,15 +307,14 @@ export default function Members() {
             </div>
             <div className={`${styles.formGroup} ${styles.spanFull}`}>
               <label>Phân công PT</label>
-              <select value={form.pt} onChange={(e) => setForm((f) => ({ ...f, pt: e.target.value }))}>
+              <select value={form.pt || ""} onChange={(e) => setForm((f) => ({ ...f, pt: e.target.value }))}>
                 <option value="">— Chưa phân công —</option>
               </select>
             </div>
           </div>
           <div className={styles.formActions}>
             <button type="button" className={styles.btnGhost} onClick={() => setEditing(null)}>Hủy</button>
-            <button type="submit" className={styles.btnPrimary} disabled={saving}>
-              {saving ? "Đang lưu..." : "Lưu"}
+            <button type="submit" className={styles.btnSave} disabled={saving}>{saving ? "Đang lưu..." : "💾 Lưu"}
             </button>
           </div>
         </form>

@@ -10,10 +10,14 @@ class TrainerOut(BaseModel):
     IsActive: Optional[int] = 1
     RoleCode: Optional[str] = None
     CreatedAt: Optional[datetime] = None
-    # PTProfile fields
     ExperienceYears: Optional[int] = 0
     Certifications: Optional[str] = None
     Specialty: Optional[str] = None
+    PhoneNumber: Optional[str] = None
+    Age: Optional[int] = None
+    Gender: Optional[str] = None
+    Birthday: Optional[datetime] = None
+    ExpiryDate: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -26,6 +30,11 @@ class TrainerCreate(BaseModel):
     experienceYears: Optional[int] = 0
     certifications: Optional[str] = None
     specialty: Optional[str] = None
+    phoneNumber: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    birthday: Optional[datetime] = None
+    expiryDate: Optional[datetime] = None
 
 
 class TrainerUpdate(BaseModel):
@@ -35,3 +44,8 @@ class TrainerUpdate(BaseModel):
     certifications: Optional[str] = None
     specialty: Optional[str] = None
     isActive: Optional[int] = None
+    phoneNumber: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    birthday: Optional[datetime] = None
+    expiryDate: Optional[datetime] = None

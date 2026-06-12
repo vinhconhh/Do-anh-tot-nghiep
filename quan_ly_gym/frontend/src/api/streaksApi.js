@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { authedRequestJson } from "./client";
 
@@ -24,5 +24,8 @@ export function useStreaksApi() {
   const getMy = useCallback(() => aj("/api/streaks/my"), [aj]);
   const getLeaderboard = useCallback(() => aj("/api/streaks/leaderboard"), [aj]);
 
-  return { checkIn, getMy, getLeaderboard };
+  return useMemo(
+    () => ({ checkIn, getMy, getLeaderboard }),
+    [checkIn, getMy, getLeaderboard]
+  );
 }

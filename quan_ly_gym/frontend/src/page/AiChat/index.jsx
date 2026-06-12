@@ -1,44 +1,35 @@
 import { useState, useEffect, useCallback, useContext, useRef } from "react";
-import { Bot, Send, Loader2, Dumbbell, Trash2 } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Bot, Send, Loader2, Dumbbell } from "lucide-react";
 import styles from "./AiChat.module.scss";
 import { AuthContext } from "../../context/AuthContext";
-import { authedRequestJson } from "../../api/client";
+import { useAiApi } from "../../api/aiApi";
 
 export default function AiChat() {
-  const { token, logout } = useContext(AuthContext) ?? {};
+  const { user } = useContext(AuthContext) ?? {};
+  const aiApi = useAiApi();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [remaining, setRemaining] = useState(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const bottomRef = useRef(null);
+  
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const aj = useCallback(
-    async (path, opt = {}) => {
-      try {
-        return await authedRequestJson(path, token, opt);
-      } catch (e) {
-        if (e?.status === 401) logout?.();
-        throw e;
-      }
-    },
-    [token, logout]
-  );
-
-  // Load history + quota on mount
   useEffect(() => {
     (async () => {
       try {
-        const [hist, quota] = await Promise.all([
-          aj("/api/ai/chat-history"),
-          aj("/api/ai/quota"),
-        ]);
+        const hist = await aiApi.getChatHistory();
         setMessages(hist);
-        setRemaining(quota.remaining);
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error("AiChat Load Error:", e);
+      } finally {
+        setHistoryLoaded(true);
+      }
     })();
-  }, [aj]);
+  }, [aiApi]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -47,23 +38,17 @@ export default function AiChat() {
     const text = input.trim();
     if (!text || sending) return;
 
-    // Add user message immediately
     setMessages(prev => [...prev, { role: "user", content: text, time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) }]);
     setInput("");
     setSending(true);
 
     try {
-      const res = await aj("/api/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: text }),
-      });
+      const res = await aiApi.chat(text);
       setMessages(prev => [...prev, {
         role: "assistant",
         content: res.response,
         time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
       }]);
-      setRemaining(res.remainingQuota);
     } catch (e) {
       const errMsg = e.data?.detail || e.message || "Lỗi không xác định";
       setMessages(prev => [...prev, {
@@ -76,6 +61,39 @@ export default function AiChat() {
     }
   };
 
+  const handleAutoSend = useCallback(async (promptText) => {
+    if (!promptText || sending) return;
+
+    setMessages(prev => [...prev, { role: "user", content: promptText, time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) }]);
+    setSending(true);
+
+    try {
+      const res = await aiApi.chat(promptText);
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: res.response,
+        time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+      }]);
+    } catch (e) {
+      const errMsg = e.data?.detail || e.message || "Lỗi không xác định";
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: `❌ ${errMsg}`,
+        time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+      }]);
+    } finally {
+      setSending(false);
+    }
+  }, [aiApi, sending]);
+
+  useEffect(() => {
+    if (location.state?.initialPrompt && historyLoaded) {
+      const promptToSync = location.state.initialPrompt;
+      navigate(location.pathname, { replace: true, state: {} });
+      handleAutoSend(promptToSync);
+    }
+  }, [location.state, historyLoaded, handleAutoSend, navigate, location.pathname]);
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -87,7 +105,6 @@ export default function AiChat() {
     <>
       <div className={styles.tab} />
       <div className={styles.page}>
-        {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <div className={styles.botIcon}><Dumbbell size={22} /></div>
@@ -96,12 +113,8 @@ export default function AiChat() {
               <p className={styles.subtitle}>Chuyên gia tư vấn tập gym & tập tại nhà</p>
             </div>
           </div>
-          <div className={styles.quotaBadge}>
-            <Bot size={14} /> {remaining !== null ? `${remaining} lượt còn lại` : "..."}
-          </div>
         </div>
 
-        {/* Chat area */}
         <div className={styles.chatArea}>
           {messages.length === 0 && (
             <div className={styles.welcome}>
@@ -130,7 +143,7 @@ export default function AiChat() {
                 <div className={styles.avatar}><Dumbbell size={16} /></div>
               )}
               <div className={styles.bubble}>
-                <div className={styles.bubbleContent}>{msg.content}</div>
+                <pre className={styles.bubbleContent}>{msg.content}</pre>
                 <div className={styles.bubbleTime}>{msg.time}</div>
               </div>
             </div>
@@ -150,7 +163,6 @@ export default function AiChat() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Input bar */}
         <div className={styles.inputBar}>
           <textarea
             className={styles.inputField}

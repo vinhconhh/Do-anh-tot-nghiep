@@ -7,12 +7,25 @@ from ..models.profile import MemberProfile
 from ..middleware.auth import get_current_user, require_roles
 from ..schemas.member import MemberCreate, MemberUpdate
 from ..utils.security import hash_password
+from ..models.pt_request import PTRequest
 
 router = APIRouter(prefix="/api/members", tags=["Members"])
 
 
-def _member_to_dict(user: User) -> dict:
+def _member_to_dict(user: User, db: Session) -> dict:
     profile = user.member_profile
+
+    pt_name = None
+    pt_req = db.query(PTRequest).filter(
+        PTRequest.MemberID == user.UserID,
+        PTRequest.Status == "Approved"
+    ).order_by(PTRequest.CreatedAt.desc()).first()
+    
+    if pt_req:
+        pt_user = db.query(User).filter(User.UserID == pt_req.PTID).first()
+        if pt_user:
+            pt_name = pt_user.FullName
+
     return {
         "UserID": user.UserID,
         "hoTen": user.FullName,
@@ -23,7 +36,12 @@ def _member_to_dict(user: User) -> dict:
         "goal": profile.Goal if profile else None,
         "height": profile.Height if profile else None,
         "weight": profile.Weight if profile else None,
-        "aiQuota": profile.AIQuota if profile else 0,
+        "sdt": user.PhoneNumber,
+        "tuoi": user.Age,
+        "gioiTinh": user.Gender,
+        "ngaySinh": user.Birthday.isoformat() if user.Birthday else None,
+        "hetHan": user.ExpiryDate.isoformat() if user.ExpiryDate else None,
+        "pt": pt_name,
     }
 
 
@@ -37,12 +55,15 @@ def list_members(
         return []
     members = (
         db.query(User)
-        .options(joinedload(User.member_profile), joinedload(User.role))
+        .options(
+            joinedload(User.member_profile),
+            joinedload(User.role)
+        )
         .filter(User.RoleID == role.RoleID, User.IsDeleted == 0)
         .order_by(User.CreatedAt.desc())
         .all()
     )
-    return [_member_to_dict(m) for m in members]
+    return [_member_to_dict(m, db) for m in members]
 
 
 @router.get("/search")
@@ -56,14 +77,18 @@ def search_members(
         return []
     query = (
         db.query(User)
-        .options(joinedload(User.member_profile), joinedload(User.role))
+        .options(
+            joinedload(User.member_profile),
+            joinedload(User.role)
+        )
         .filter(User.RoleID == role.RoleID, User.IsDeleted == 0)
     )
     if q:
+        pattern = f"%{q}%"
         query = query.filter(
-            (User.FullName.ilike(f"%{q}%")) | (User.Email.ilike(f"%{q}%"))
+            (User.FullName.ilike(pattern)) | (User.Email.ilike(pattern))
         )
-    return [_member_to_dict(m) for m in query.all()]
+    return [_member_to_dict(m, db) for m in query.all()]
 
 
 @router.get("/{member_id}")
@@ -74,20 +99,23 @@ def get_member(
 ):
     user = (
         db.query(User)
-        .options(joinedload(User.member_profile), joinedload(User.role))
+        .options(
+            joinedload(User.member_profile),
+            joinedload(User.role)
+        )
         .filter(User.UserID == member_id, User.IsDeleted == 0)
         .first()
     )
     if not user:
         raise HTTPException(status_code=404, detail="Hội viên không tồn tại")
-    return _member_to_dict(user)
+    return _member_to_dict(user, db)
 
 
 @router.post("")
 def create_member(
     req: MemberCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     if db.query(User).filter(User.Email == req.email).first():
         raise HTTPException(status_code=400, detail="Email đã tồn tại")
@@ -103,6 +131,11 @@ def create_member(
         RoleID=role.RoleID,
         IsActive=1,
         IsDeleted=0,
+        PhoneNumber=req.phoneNumber,
+        Age=req.age,
+        Gender=req.gender,
+        Birthday=req.birthday,
+        ExpiryDate=req.expiryDate,
     )
     db.add(user)
     db.flush()
@@ -112,12 +145,11 @@ def create_member(
         Goal=req.goal,
         Height=req.height,
         Weight=req.weight,
-        AIQuota=10,
     )
     db.add(profile)
     db.commit()
     db.refresh(user)
-    return _member_to_dict(user)
+    return _member_to_dict(user, db)
 
 
 @router.put("/{member_id}")
@@ -125,7 +157,7 @@ def update_member(
     member_id: int,
     req: MemberUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     user = db.query(User).filter(User.UserID == member_id, User.IsDeleted == 0).first()
     if not user:
@@ -137,6 +169,16 @@ def update_member(
         user.Email = req.email
     if req.isActive is not None:
         user.IsActive = req.isActive
+    if req.phoneNumber is not None:
+        user.PhoneNumber = req.phoneNumber
+    if req.age is not None:
+        user.Age = req.age
+    if req.gender is not None:
+        user.Gender = req.gender
+    if req.birthday is not None:
+        user.Birthday = req.birthday
+    if req.expiryDate is not None:
+        user.ExpiryDate = req.expiryDate
 
     profile = db.query(MemberProfile).filter(MemberProfile.UserID == member_id).first()
     if profile:
@@ -149,14 +191,14 @@ def update_member(
 
     db.commit()
     db.refresh(user)
-    return _member_to_dict(user)
+    return _member_to_dict(user, db)
 
 
 @router.delete("/{member_id}")
 def delete_member(
     member_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("ADMIN", "MANAGER")),
+    current_user: User = Depends(require_roles("MANAGER")),
 ):
     user = db.query(User).filter(User.UserID == member_id, User.IsDeleted == 0).first()
     if not user:

@@ -26,11 +26,11 @@ export function usePtRequestsApi() {
     getAll: () => aj("/api/pt-requests"),
     getMyRequests: () => aj("/api/pt-requests/my-requests"),
     getIncoming: () => aj("/api/pt-requests/incoming"),
-    create: (ptId, goal, note) =>
+    create: (ptId, goal, note, experienceLevel, bodyNote) =>
       aj("/api/pt-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ptId, goal, note }),
+        body: JSON.stringify({ ptId, goal, note, experienceLevel, bodyNote }),
       }),
     respond: (id, status) =>
       aj(`/api/pt-requests/${id}/respond`, {
@@ -44,5 +44,7 @@ export function usePtRequestsApi() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ptId }),
       }),
+    getMyClients: () => aj("/api/pt-assignments/my-clients"),
+    getClientProfile: (memberId) => aj(`/api/pt-assignments/client/${memberId}/profile`),
   }), [aj]);
 }

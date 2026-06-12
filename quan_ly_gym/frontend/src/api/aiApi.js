@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { authedRequestJson } from "./client";
 
@@ -20,30 +20,13 @@ export function useAiApi() {
     [token, logout]
   );
 
-  const getQuota = useCallback(
-    async () => aj(`/api/ai/quota`),
-    [aj]
-  );
-
-  const getPackages = useCallback(
-    async () => aj(`/api/ai/packages`),
-    [aj]
-  );
-
-  const getHistory = useCallback(
-    async () => aj(`/api/ai/purchase-history`),
-    [aj]
-  );
-
-  const buyPackage = useCallback(
-    async (packageId) =>
-      aj(`/api/ai/buy`, {
+  return useMemo(() => ({
+    getChatHistory: () => aj("/api/ai/chat-history"),
+    chat: (prompt, hidden = false) =>
+      aj("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId }),
+        body: JSON.stringify({ prompt, hidden }),
       }),
-    [aj]
-  );
-
-  return { getQuota, getPackages, getHistory, buyPackage };
+  }), [aj]);
 }

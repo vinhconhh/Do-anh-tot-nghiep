@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
+    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
 
     @property
     def DATABASE_URL(self) -> str:
@@ -27,6 +28,7 @@ class Settings(BaseSettings):
             f"mssql+pyodbc://{self.DB_USER}:{pwd}"
             f"@{self.DB_SERVER},{self.DB_PORT}/{self.DB_NAME}"
             f"?driver={driver}&TrustServerCertificate=yes"
+            f"&unicode_results=yes"
         )
 
     class Config:

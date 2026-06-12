@@ -13,7 +13,6 @@ def list_bookings(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Join with member and PT profiles to get more detail
     bookings = (
         db.query(Booking)
         .options(
@@ -35,8 +34,8 @@ def list_bookings(
             "memberId": b.MemberID,
             "memberName": m.FullName if m else "Unknown",
             "memberEmail": m.Email if m else "",
-            "memberAge": 25, # Placeholder or calculate from DOB if available
-            "memberGender": "Nam", # Placeholder
+            "memberAge": 25,
+            "memberGender": "Nam",
             "memberGoal": m_profile.Goal if m_profile else "",
             "ptId": b.PTID,
             "ptName": p.FullName if p else "Đề xuất",
@@ -52,7 +51,6 @@ def my_bookings(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Return bookings where user is either the member or the PT
     bookings = (
         db.query(Booking)
         .filter((Booking.MemberID == current_user.UserID) | (Booking.PTID == current_user.UserID))

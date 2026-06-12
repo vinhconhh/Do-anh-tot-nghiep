@@ -31,3 +31,18 @@ class UserUpdate(BaseModel):
     Email: Optional[str] = None
     IsActive: Optional[int] = None
     RoleID: Optional[int] = None
+
+
+class UserMeUpdate(BaseModel):
+    FullName: Optional[str] = None
+    PhoneNumber: Optional[str] = None
+    Gender: Optional[str] = None
+    Birthday: Optional[datetime] = None
+    
+    Height: Optional[float] = None
+    Weight: Optional[float] = None
+    Goal: Optional[str] = None
+    
+    ExperienceYears: Optional[int] = None
+    Certifications: Optional[str] = None
+    Specialty: Optional[str] = None

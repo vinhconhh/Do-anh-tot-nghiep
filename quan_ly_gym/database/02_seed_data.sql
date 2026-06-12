@@ -1,3 +1,10 @@
+/*
+================================================================
+FILE: 02_full_seed.sql
+MỤC ĐÍCH: Nạp toàn bộ dữ liệu mẫu vào QLGymDB (Giữ nguyên gốc)
+================================================================
+*/
+
 USE QLGymDB;
 GO
 SET QUOTED_IDENTIFIER ON;
@@ -240,10 +247,10 @@ BEGIN TRY
     DECLARE @Log_Alice1 INT;
     
     INSERT INTO LogWorkouts (UserID, WorkoutDate)
-    SELECT @Member_AliceID, GETDATE()
-    WHERE NOT EXISTS (SELECT 1 FROM LogWorkouts WHERE UserID = @Member_AliceID AND CAST(WorkoutDate AS DATE) = CAST(GETDATE() AS DATE));
+    SELECT @Member_AliceID, '2026-04-20'
+    WHERE NOT EXISTS (SELECT 1 FROM LogWorkouts WHERE UserID = @Member_AliceID AND CAST(WorkoutDate AS DATE) = '2026-04-20');
     
-    SET @Log_Alice1 = (SELECT LogID FROM LogWorkouts WHERE UserID = @Member_AliceID AND CAST(WorkoutDate AS DATE) = CAST(GETDATE() AS DATE));
+    SET @Log_Alice1 = (SELECT TOP 1 LogID FROM LogWorkouts WHERE UserID = @Member_AliceID AND CAST(WorkoutDate AS DATE) = '2026-04-20');
 
     INSERT INTO LogWorkoutDetails (LogID, ExerciseID, SetNumber, Reps, Weight)
     SELECT @Log_Alice1, @Ex_BenchPress, 1, 10, 20
@@ -273,7 +280,7 @@ BEGIN TRY
     PRINT '>> B11: Tạo Body Metrics...';
     INSERT INTO BodyMetrics (UserID, Weight, BodyFat, BMI)
     SELECT @Member_AliceID, 54.5, 22.5, 21.3
-    WHERE NOT EXISTS (SELECT 1 FROM BodyMetrics WHERE UserID = @Member_AliceID AND CAST(MeasuredAt AS DATE) = CAST(GETDATE() AS DATE));
+    WHERE NOT EXISTS (SELECT 1 FROM BodyMetrics WHERE UserID = @Member_AliceID AND Weight = 54.5 AND BodyFat = 22.5);
 
     INSERT INTO ProgressPhotos (UserID, ImageURL)
     SELECT @Member_AliceID, '/uploads/progress/alice_20260418.jpg'
@@ -337,4 +344,113 @@ BEGIN CATCH
     PRINT 'Dòng: ' + CAST(ERROR_LINE() AS VARCHAR);
     THROW;
 END CATCH;
+GO
+
+-- ================================================================
+-- SEED BỔ SUNG: GÓI TẬP, AI & KHUYẾN MÃI (Từ Migration)
+-- ================================================================
+USE QLGymDB;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM MembershipPackages)
+BEGIN
+    INSERT INTO MembershipPackages (Name, Price, DurationMonths, Description, Benefits, IsVisible, IsFeatured)
+    VALUES 
+    (N'GÓI TIÊU CHUẨN', 299000, 1, N'Lựa chọn tiết kiệm nhất, dành cho hội viên có nhu cầu tập luyện cố định.', 
+     N'["Tập không giới hạn 24/7", "Sử dụng toàn bộ thiết bị hiện đại", "Ứng dụng The Pro Gym"]', 1, 0),
+    (N'GÓI CAO CẤP', 399000, 1, N'Tập luyện không giới hạn cùng AI, kèm theo nhiều đặc quyền bổ sung.', 
+     N'["Kiểm tra sức khỏe & tư thế miễn phí", "Sử dụng toàn bộ thiết bị hiện đại", "Sử dụng AI không giới hạn", "Ứng dụng The Pro Gym đầy đủ tính năng"]', 1, 1);
+    PRINT '> Da them du lieu mau cho MembershipPackages.';
+END
+
+IF NOT EXISTS (SELECT 1 FROM AIPackages)
+BEGIN
+    INSERT INTO AIPackages (Name, Price, Credits, Description, IsVisible)
+    VALUES
+    (N'Gói Khởi Động', 50000, 50, N'Gói dùng thử để trải nghiệm AI.', 1),
+    (N'Gói Tiêu Chuẩn', 100000, 150, N'Phù hợp cho nhu cầu hỏi đáp cơ bản hàng ngày.', 1),
+    (N'Gói Vô Cực', 200000, 500, N'Dành cho hội viên muốn lên lịch tập cá nhân hóa sâu.', 1);
+    PRINT '> Da them du lieu mau cho AIPackages.';
+END
+
+-- Tạo mã giới thiệu mặc định cho các User hiện tại (cập nhật nếu NULL)
+EXEC('UPDATE Users SET ReferralCode = LEFT(CAST(NEWID() AS VARCHAR(36)), 8) WHERE ReferralCode IS NULL;');
+GO
+
+-- ================================================================
+-- SEED BỔ SUNG: MODULE THIẾT BỊ, BÀI TẬP VÀ LỚP HỌC (Từ Migration)
+-- ================================================================
+USE QLGymDB;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM GymEquipments)
+BEGIN
+    INSERT INTO GymEquipments (Name, Category, Zone, Quantity, Status) VALUES
+    (N'Xe đạp tập (Spin Bike)',   N'Cardio',    N'Khu Cardio',    10, N'Hoạt động'),
+    (N'Máy chạy bộ (Treadmill)',  N'Cardio',    N'Khu Cardio',    12, N'Hoạt động'),
+    (N'Máy rowing (Rowing Machine)', N'Cardio', N'Khu Cardio',     4, N'Hoạt động'),
+    (N'Máy ép ngực (Chest Press)',N'Tạ máy',   N'Khu Tạ máy',     6, N'Hoạt động'),
+    (N'Máy kéo cáp (Cable Machine)', N'Tạ máy',N'Khu Tạ máy',     4, N'Đang bảo trì'),
+    (N'Tạ tay (Dumbbell set)',    N'Tạ tự do',  N'Khu Free Weight',1, N'Hoạt động'),
+    (N'Xà đơn (Pull-up bar)',     N'Thể lực',   N'Khu Thể lực',   4, N'Hoạt động'),
+    (N'Thảm tập yoga',            N'Yoga',      N'Studio 1',      30, N'Hoạt động');
+    PRINT N'> Đã thêm dữ liệu mẫu GymEquipments';
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM GymExercises)
+BEGIN
+    INSERT INTO GymExercises (Name, AssignmentName, Type, TargetMuscle, MetValue) VALUES
+    (N'Bench Press',    N'Đẩy ngực nằm',    N'Free Weights', N'Ngực',  5.0),
+    (N'Squat',          N'Squat',            N'Free Weights', N'Đùi',   6.0),
+    (N'Deadlift',       N'Kéo đất',          N'Free Weights', N'Lưng',  6.0),
+    (N'Pull Up',        N'Kéo xà',           N'Bodyweight',   N'Lưng',  8.0),
+    (N'Plank',          N'Plank',            N'Bodyweight',   N'Bụng',  3.5),
+    (N'Treadmill Run',  N'Chạy bộ',          N'Cardio',       N'Toàn thân', 9.8),
+    (N'Cycling',        N'Đạp xe',           N'Cardio',       N'Đùi',   7.5),
+    (N'Shoulder Press', N'Đẩy vai',          N'Machine',      N'Vai',   5.0),
+    (N'Leg Press',      N'Đẩy chân',         N'Machine',      N'Đùi',   6.5);
+    PRINT N'> Đã thêm dữ liệu mẫu GymExercises';
+END
+GO
+
+-- ================================================================
+-- SEED BỔ SUNG: LIÊN KẾT USER, GÓI TẬP VÀ SUBSCRIPTIONS
+-- ================================================================
+USE QLGymDB;
+GO
+
+DECLARE @AliceID INT = (SELECT UserID FROM Users WHERE Email = 'alice.member@gym.vn');
+DECLARE @BobID INT = (SELECT UserID FROM Users WHERE Email = 'bob.member@gym.vn');
+DECLARE @PackageGold INT = (SELECT PackageID FROM MembershipPackages WHERE Name = N'GÓI CAO CẤP');
+DECLARE @PackageSilver INT = (SELECT PackageID FROM MembershipPackages WHERE Name = N'GÓI TIÊU CHUẨN');
+DECLARE @AIPackageStd INT = (SELECT PackageID FROM AIPackages WHERE Name = N'Gói Tiêu Chuẩn');
+
+IF @AliceID IS NOT NULL AND @PackageGold IS NOT NULL
+BEGIN
+    UPDATE MemberProfiles SET PackageID = @PackageGold, AIPackageID = @AIPackageStd WHERE UserID = @AliceID;
+    
+    IF NOT EXISTS (SELECT 1 FROM UserSubscriptions WHERE UserID = @AliceID AND PackageID = @PackageGold AND PackageType = 'GYM')
+    BEGIN
+        INSERT INTO UserSubscriptions (UserID, PackageType, PackageID, StartDate, EndDate, Status)
+        VALUES (@AliceID, 'GYM', @PackageGold, GETDATE(), DATEADD(month, 1, GETDATE()), 'Active');
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM UserSubscriptions WHERE UserID = @AliceID AND PackageID = @AIPackageStd AND PackageType = 'AI')
+    BEGIN
+        INSERT INTO UserSubscriptions (UserID, PackageType, PackageID, StartDate, EndDate, Status)
+        VALUES (@AliceID, 'AI', @AIPackageStd, GETDATE(), DATEADD(month, 1, GETDATE()), 'Active');
+    END
+END
+
+IF @BobID IS NOT NULL AND @PackageSilver IS NOT NULL
+BEGIN
+    UPDATE MemberProfiles SET PackageID = @PackageSilver WHERE UserID = @BobID;
+    
+    IF NOT EXISTS (SELECT 1 FROM UserSubscriptions WHERE UserID = @BobID AND PackageID = @PackageSilver AND PackageType = 'GYM')
+    BEGIN
+        INSERT INTO UserSubscriptions (UserID, PackageType, PackageID, StartDate, EndDate, Status)
+        VALUES (@BobID, 'GYM', @PackageSilver, GETDATE(), DATEADD(month, 1, GETDATE()), 'Active');
+    END
+END
 GO

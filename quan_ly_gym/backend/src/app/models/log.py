@@ -10,6 +10,7 @@ class LogWorkout(Base):
     LogID = Column(Integer, primary_key=True, autoincrement=True)
     UserID = Column(Integer, ForeignKey("Users.UserID"))
     WorkoutDate = Column(DateTime, default=datetime.utcnow)
+    RPE = Column(Integer, nullable=True)
 
     user = relationship("User")
     details = relationship("LogWorkoutDetail", back_populates="log")
@@ -36,6 +37,8 @@ class BodyMetric(Base):
     UserID = Column(Integer, ForeignKey("Users.UserID"))
     Weight = Column(Float)
     BodyFat = Column(Float)
+    Muscle = Column(Float)
+    Height = Column(Float)
     BMI = Column(Float)
     MeasuredAt = Column(DateTime, default=datetime.utcnow)
 

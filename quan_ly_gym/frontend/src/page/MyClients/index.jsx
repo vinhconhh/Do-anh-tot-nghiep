@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useCallback, useContext } from "react";
-import { Search, UserRound, Loader2, Mail, Target, Calendar } from "lucide-react";
+import { Search, UserRound, Loader2, Mail, Target, Calendar, Dumbbell, Activity } from "lucide-react";
 import styles from "./MyClients.module.scss";
 import { usePtRequestsApi } from "../../api/ptRequestsApi";
 import { AuthContext } from "../../context/AuthContext";
@@ -83,8 +83,8 @@ export default function MyClients() {
               <div className={styles.clientList}>
                 {filtered.map((c) => (
                   <div
-                    key={c.requestId}
-                    className={`${styles.clientItem} ${selectedClient?.requestId === c.requestId ? styles.clientItemActive : ""}`}
+                    key={c.memberId}
+                    className={`${styles.clientItem} ${selectedClient?.memberId === c.memberId ? styles.clientItemActive : ""}`}
                     onClick={() => setSelectedClient(c)}
                   >
                     <div className={styles.clientAvatar}>
@@ -96,6 +96,17 @@ export default function MyClients() {
                     <div className={styles.clientInfo}>
                       <div className={styles.clientName}>{c.memberName}</div>
                       <div className={styles.clientGoal}>{c.goal || "Chưa có nhu cầu"}</div>
+                      {c.experienceLevel && (
+                        <span style={{
+                          display: "inline-block", marginTop: 4, fontSize: "0.9rem", fontWeight: 600,
+                          padding: "2px 8px", borderRadius: 12,
+                          background: c.experienceLevel === "new" ? "#1cc88a22" : c.experienceLevel === "experienced" ? "#36b9cc22" : "#f6c23e22",
+                          color: c.experienceLevel === "new" ? "#1cc88a" : c.experienceLevel === "experienced" ? "#36b9cc" : "#f6c23e",
+                          border: `1px solid ${c.experienceLevel === "new" ? "#1cc88a44" : c.experienceLevel === "experienced" ? "#36b9cc44" : "#f6c23e44"}`,
+                        }}>
+                          {c.experienceLevel === "new" ? "🆕 Người mới" : c.experienceLevel === "experienced" ? "💪 Đã từng tập" : "📝 Khác"}
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -138,6 +149,24 @@ export default function MyClients() {
                       </span>
                       <span className={styles.infoVal}>{selectedClient.memberEmail}</span>
                     </div>
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>
+                        <Activity size={16} /> Trình độ
+                      </span>
+                      <span className={styles.infoVal}>
+                        {selectedClient.experienceLevel === "new" ? "🆕 Người mới" : selectedClient.experienceLevel === "experienced" ? "💪 Đã từng tập" : "📝 Khác"}
+                      </span>
+                    </div>
+                    {selectedClient.bodyNote && (
+                      <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>
+                          📝 Tình trạng cơ thể
+                        </span>
+                        <span className={styles.infoVal} style={{ color: "#f6c23e", fontStyle: "italic" }}>
+                          "{selectedClient.bodyNote}"
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -160,6 +189,10 @@ export default function MyClients() {
                       <div className={styles.stat}>
                         <div className={styles.statLabel}>Điểm</div>
                         <div className={styles.statVal}>{clientProfile.totalPoints || 0}</div>
+                      </div>
+                      <div className={styles.stat}>
+                        <div className={styles.statLabel}><Dumbbell size={14} style={{ marginRight: 4 }}/> Bài tập hoàn thành</div>
+                        <div className={styles.statVal}>{clientProfile.exercisesCompleted || 0}</div>
                       </div>
                     </div>
                   </div>

@@ -1,16 +1,22 @@
-import { useMemo, useState } from "react";
-import { useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import ScheduleWeek, { startOfWeekMonday } from "../../components/ScheduleWeek";
 import styles from "./MyWorkoutSchedule.module.scss";
+import { useSchedulesApi } from "../../api/schedulesApi";
 
 export default function MyWorkoutSchedule() {
   const { user } = useContext(AuthContext) ?? {};
   const displayName = user?.hoTen || "Hội viên";
+  const schedulesApi = useSchedulesApi();
 
   const [weekStart, setWeekStart] = useState(() => startOfWeekMonday(new Date()));
+  const [events, setEvents] = useState([]);
 
-  const events = useMemo(() => [], [weekStart]);
+  useEffect(() => {
+    schedulesApi.mySchedule()
+      .then(setEvents)
+      .catch(console.error);
+  }, [schedulesApi, weekStart]);
 
   return (
     <>
